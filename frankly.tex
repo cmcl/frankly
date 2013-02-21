@@ -1,0 +1,816 @@
+\documentclass[preprint]{sigplanconf}
+
+% US Letter page size
+%\pdfpagewidth=8.5in
+%\pdfpageheight=11in
+
+
+% The following \documentclass options may be useful:
+%
+% 10pt          To set in 10-point type instead of 9-point.
+% 11pt          To set in 11-point type instead of 9-point.
+% authoryear    To obtain author/year citation style instead of numeric.
+
+\usepackage{mathpartir}
+\usepackage{amsmath}
+\usepackage{stmaryrd}
+
+
+\begin{document}
+
+%% \conferenceinfo{WXYZ '05}{date, City.} 
+%% \copyrightyear{2005} 
+%% \copyrightdata{[to be supplied]} 
+
+%% \titlebanner{banner above paper title}        % These are ignored unless
+%% \preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{Do Be Do Be Do}
+%% \subtitle{Subtitle Text, if any}
+
+\authorinfo{Frank Sinatra}
+           {University of Strathclyde}
+%%         {Email1}
+%% \authorinfo{Name2\and Name3}
+%%            {Affiliation2/3}
+%%            {Email2/3}
+
+\maketitle
+
+\newcommand{\inferv}[2]{{#1} \Rightarrow {#2}}
+\newcommand{\checkv}[2]{{#2} \Leftarrow {#1}}
+\newcommand{\inferc}[2]{{#1} \Rightarrow {#2}}
+\newcommand{\checkc}[2]{{#2} \Leftarrow {#1}}
+\newcommand{\checkp}[2]{{#2} \Leftarrow {#1}}
+
+\newcommand{\sigentails}[1]{\vdash_{#1}}
+
+\newcommand{\is}[4]  {#1 \sigentails{#2} \inferv{#3}{#4}}
+\newcommand{\has}[4] {#1 \sigentails{#2} \checkv{#3}{#4}}
+\newcommand{\does}[4]{#1 \sigentails{#2} \inferc{#3}{#4}}
+\newcommand{\can}[3] {#1 \vdash     \checkc{#2}{#3}}
+
+\newcommand{\pat}[3]{\checkp{#1}{#2} \vdash #3}
+\newcommand{\patg}[2]{\pat{#1}{#2}{\Gamma}}
+
+
+\newcommand{\isgs}{\is{\Gamma}{\sigs}}
+\newcommand{\hasgs}{\has{\Gamma}{\sigs}}
+\newcommand{\doesgs}{\does{\Gamma}{\sigs}}
+\newcommand{\cang}{\can{\Gamma}}
+
+\newcommand{\sig}{S}
+\newcommand{\sigs}{\mathit{Ss}}
+
+\newcommand{\U}{U}
+\newcommand{\V}{V}
+\newcommand{\Us}{\mathit{Us}}
+\newcommand{\Vs}{\mathit{Vs}}
+
+\newcommand{\C}{C}
+
+\newcommand{\tm}{t}
+\newcommand{\tu}{u}
+\newcommand{\tms}{ts}
+\newcommand{\tus}{us}
+
+\newcommand{\p}{p}
+\newcommand{\ps}{ps}
+
+\newcommand{\h}{h}
+
+\newcommand{\op}{\mathit{op}}
+
+\newcommand{\effbox}[1]{[#1]}
+\newcommand{\ret}[2]{\effbox{#1}{#2}}
+\newcommand{\template}[3]{{#1} \mathbin{\effbox{#2}} {#3}}
+
+\newcommand{\keyword}[1]{\mathsf{#1}}
+
+\newcommand{\handleSymbol}{\mathbin{?}}
+\newcommand{\yieldSymbol}{\mathbin{?}}
+\newcommand{\continueSymbol}{\mathbin{?}}
+\newcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol \ret{#2}{#3}}}
+\newcommand{\handleRet}[1]{\effbox{#1}}
+\newcommand{\handleOp}[2]{\effbox{{#1} \continueSymbol {#2}}}
+\newcommand{\handle}[2]{{#1} \handleSymbol {#2}}
+
+\newcommand{\handleGen}[2]{\keyword{handle}~{#1}~\keyword{with}~{#2}}
+
+\newcommand{\thunk}[1]{\{{#1}\}}
+%\newcommand{\athunk}[2]{\thunk{#1}_{#2}}
+\newcommand{\athunk}[2]{[#2]\thunk{#1}}
+
+\newcommand{\force}[1]{{#1}~!}
+\newcommand{\app}{\mathbin{\text{@}}}
+
+\newcommand{\con}{K}
+\newcommand{\D}{D}
+
+\newcommand{\args}{\mathit{args}}
+
+\newcommand{\rplus}{\mathbin{\mathord{+}\!\!\!\!\mathord{\shortrightarrow}}}
+\newcommand{\lplus}{\mathbin{\mathord{+}\!\!\!\!\!\mathord{\shortleftarrow}}}
+
+
+%% V ::= {C} | D V* | [Ss' ? [Ss'']V]
+%% C ::= V | V -> C
+
+%% val ::= con val* | {comp} | x | op
+
+%% comp ::= pat* -> val
+%%        | comp|comp
+%%        | val
+
+%% pat  ::= x
+%%        | con pat*
+%%        | [pat]
+%%        | [op pat* ? pat']
+
+
+%%%%%%%%%%%%%%%% monormophic frank
+
+\begin{figure*}
+$\boxed{\isgs{\tm}{\V}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\is{\Gamma,x:\V}{\sigs}{x}{\V}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\V} \in \sig}
+  {\isgs{\op}{\thunk{\Us \to \ret{\sig}{\V}}}}
+
+\inferrule
+  {\isgs{\tu}{\thunk{\Us \to \ret{\sigs'}{\V}}} \\
+   \hasgs{\Us}{\args} \\
+   \sigs' \leq \sigs}
+  {\isgs{\tu~\args}{\V}}
+
+\inferrule
+  {\isgs{\h}{\thunk{\handleType{\sigs'}{\sigs''}{\U} \to \ret{\sigs}{\V}}} \\
+   \has{\Gamma}{\sigs' \uplus \sigs''}{\U}{\tm} \\
+   \sigs'' \leq \sigs
+  }
+  {\isgs{\handle{\h}{\tm}}{\V}}
+
+\inferrule
+  {\hasgs{\V}{\tm}}
+  {\isgs{\tm : \V}{\V}}
+\end{mathpar}
+
+$\boxed{\hasgs{\V}{\tm}}$
+\begin{mathpar}
+\inferrule
+   {[\hasgs{\U_i}{\tm_i}] \\ \con : \Us \to \D~\Vs}
+   {\hasgs{\D~\Vs}{\con~\tms}}
+
+\inferrule
+  {\cang{\C}{\tm}}
+  {\hasgs{\thunk{\C}}{\thunk{\tm}}}
+
+\inferrule
+  {\isgs{\tu}{\U} \\ \U=\V}
+  {\hasgs{\V}{\tm}}
+\end{mathpar}
+
+$\boxed{\hasgs{\Vs}{\args}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\hasgs{\cdot}{!}} 
+
+\inferrule
+  {\hasgs{\U}{\tm} \\ [\hasgs{\U_i}{\tm_i}]}
+  {\hasgs{\U\,\Us}{\tm~\tms}}
+\end{mathpar}
+
+$\boxed{\cang{\C}{\tm}}$
+\begin{mathpar}
+\inferrule
+  {\hasgs{\V}{\tm}}
+  {\cang{\ret{\sigs}{\V}}{\tm}}
+
+\inferrule
+  {[\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \can{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\C}{\tm}}
+  {\cang{\Us \to \C}{\ps \to \tm}}
+
+\inferrule
+  {\cang{\C}{\tm} \\ \cang{\C}{\tu}}
+  {\cang{\C}{\tm \mid \tu}}
+\end{mathpar}
+
+$\boxed{\patg{\V}{\p}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{\V}{x}{x : \V}}
+
+\inferrule
+  {[\pat{\p_i}{\U_i}{\Gamma_i}] \\ \con : \Us \to \D~\Vs}
+  {\pat{\con~\ps}{\D~\Vs}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
+\\
+\inferrule
+  {\patg{\V}{\p}}
+  {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\U} \in \sig \in \sigs' \\
+   [\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \pat{\thunk{\U \to \ret{\sigs' \uplus \sigs''}{\V}}}{\p}{\Gamma}}
+  {\pat{\handleType{\sigs'}{\sigs''}{\V}}
+       {\handleOp{\op~\ps}{\p}}
+       {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
+\end{mathpar}
+\caption{Monomorphic Frank}
+\end{figure*}
+
+
+
+%%%%%%%%%%%%%%% annotated thunks
+
+\begin{figure*}
+$\boxed{\isgs{\tm}{\V}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\is{\Gamma,x:\V}{\sigs}{x}{\V}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\V} \in \sig}
+  {\isgs{\op}{\athunk{\Us \to \V}{\sig}}}
+
+\inferrule
+  {\isgs{\tu}{\athunk{\Us \to \V}{\sigs'}} \\
+   \hasgs{\Us}{\args} \\
+   \sigs' \leq \sigs}
+  {\isgs{\tu~\args}{\V}}
+
+\inferrule
+  {\isgs{\h}{\athunk{\handleType{\sigs'}{\sigs''}{\U} \to \V}{\sigs}} \\
+   \has{\Gamma}{\sigs' \uplus \sigs''}{\U}{\tm} \\
+   \sigs'' \leq \sigs
+  }
+  {\isgs{\handle{\h}{\tm}}{\V}}
+
+\inferrule
+  {\hasgs{\V}{\tm}}
+  {\isgs{\tm : \V}{\V}}
+\end{mathpar}
+
+$\boxed{\hasgs{\C}{\tm}}$
+\begin{mathpar}
+\inferrule
+   {[\hasgs{\U_i}{\tm_i}] \\ \con : \Us \to \D~\Vs}
+   {\hasgs{\D~\Vs}{\con~\tms}}
+
+\inferrule
+  {\has{\Gamma}{\sigs'}{\C}{\tm}}
+  {\hasgs{\athunk{\C}{\sigs'}}{\thunk{\tm}}}
+
+%% \end{mathpar}
+
+%% $\boxed{\hasgs{\C}{\tm}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {\hasgs{\V}{\tm}}
+%%   {\hasgs{\V}{\tm}}
+
+\inferrule
+  {[\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \has{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\sigs}{\C}{\tm}}
+  {\hasgs{\Us \to \C}{\ps \to \tm}}
+
+\inferrule
+  {\hasgs{\C}{\tm} \\ \hasgs{\C}{\tu}}
+  {\hasgs{\C}{\tm \mid \tu}}
+
+\inferrule
+  {\isgs{\tu}{\U} \\ \U=\V}
+  {\hasgs{\V}{\tm}}
+\end{mathpar}
+
+$\boxed{\hasgs{\Vs}{\args}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\hasgs{\cdot}{!}} 
+
+\inferrule
+  {\hasgs{\U}{\tm} \\ [\hasgs{\U_i}{\tm_i}]}
+  {\hasgs{\U\,\Us}{\tm~\tms}}
+\end{mathpar}
+
+$\boxed{\patg{\V}{\p}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{\V}{x}{x : \V}}
+
+\inferrule
+  {[\pat{\p_i}{\U_i}{\Gamma_i}] \\ \con : \Us \to \D~\Vs}
+  {\pat{\con~\ps}{\D~\Vs}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
+\\
+\inferrule
+  {\patg{\V}{\p}}
+  {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\U} \in \sig \in \sigs' \\
+   [\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \pat{\athunk{\U \to \V}{\sigs' \uplus \sigs''}}{\p}{\Gamma}}
+  {\pat{\handleType{\sigs'}{\sigs''}{\V}}
+       {\handleOp{\op~\ps}{\p}}
+       {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
+\end{mathpar}
+\caption{Annotated thunks}
+\end{figure*}
+
+
+%%%%%%%%%%%%%%% partial application
+
+
+\begin{figure*}
+\[
+\begin{array}{@{}r@{~}l@{}}
+\tu~\tm~\tms &\equiv (\tu \app \tm \app \tm_1 \app \cdots \app \tm_n)\,! \\
+\U\,\Us \to \C &\equiv \U \to \U_1 \to \dots \to \U_n \to \C \\
+\end{array}
+\]
+
+$\boxed{\isgs{\tm}{\V}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\is{\Gamma,x:\V}{\sigs}{x}{\V}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\V} \in \sig}
+  {\isgs{\op}{\athunk{\Us \to \V}{\sig}}}
+
+
+\inferrule
+  {\isgs{\tu}{\athunk{\U \to \C}{\sigs'}} \\
+   \hasgs{\U}{\tm}}
+  {\isgs{\tu \app \tm}{\athunk{\C}{\sigs'}}}
+
+\inferrule
+  {\isgs{\tu}{\athunk{\V}{\sigs'}} \\
+   \sigs' \leq \sigs}
+  {\isgs{\force{\tu}}{\V}}
+
+\inferrule
+  {\isgs{\h}{\athunk{\handleType{\sigs'}{\sigs''}{\U} \to \V}{\sigs}} \\
+   \has{\Gamma}{\sigs' \uplus \sigs''}{\U}{\tm} \\
+   \sigs'' \leq \sigs
+  }
+  {\isgs{\handle{\h}{\tm}}{\V}}
+
+\inferrule
+  {\hasgs{\V}{\tm}}
+  {\isgs{\tm : \V}{\V}}
+\end{mathpar}
+
+$\boxed{\hasgs{\C}{\tm}}$
+\begin{mathpar}
+\inferrule
+   {[\hasgs{\U_i}{\tm_i}] \\ \con : \Us \to \D~\Vs}
+   {\hasgs{\D~\Vs}{\con~\tms}}
+
+\inferrule
+  {\has{\Gamma}{\sigs'}{\C}{\tm}}
+  {\hasgs{\athunk{\C}{\sigs'}}{\thunk{\tm}}}
+
+%% \end{mathpar}
+
+%% $\boxed{\hasgs{\C}{\tm}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {\hasgs{\V}{\tm}}
+%%   {\hasgs{\V}{\tm}}
+
+\inferrule
+  {[\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \has{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\sigs}{\C}{\tm}}
+  {\hasgs{\Us \to \C}{\ps \to \tm}}
+
+\inferrule
+  {\hasgs{\C}{\tm} \\ \hasgs{\C}{\tu}}
+  {\hasgs{\C}{\tm \mid \tu}}
+
+\inferrule
+  {\isgs{\tu}{\U} \\ \U=\V}
+  {\hasgs{\V}{\tm}}
+\end{mathpar}
+
+$\boxed{\patg{\V}{\p}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{\V}{x}{x : \V}}
+
+\inferrule
+  {[\pat{\p_i}{\U_i}{\Gamma_i}] \\ \con : \Us \to \D~\Vs}
+  {\pat{\con~\ps}{\D~\Vs}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
+\\
+\inferrule
+  {\patg{\V}{\p}}
+  {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\U} \in \sig \in \sigs' \\
+   [\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \pat{\athunk{\U \to \V}{\sigs' \uplus \sigs''}}{\p}{\Gamma}}
+  {\pat{\handleType{\sigs'}{\sigs''}{\V}}
+       {\handleOp{\op~\ps}{\p}}
+       {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
+\end{mathpar}
+\caption{Partial application}
+\end{figure*}
+
+
+
+%%%%%%%%%%%%%%% partial application for handlers
+
+
+\begin{figure*}
+\[
+\begin{array}{@{}r@{~}l@{}}
+\tu~\tm~\tms     &\equiv (\tu \app \tm \app \tm_1 \app \cdots \app \tm_n)\,! \\
+\handle{\h}{\tm} &\equiv (\handleGen{\tm}{\h})\,! \\
+\U\,\Us \to \C &\equiv \U \to \U_1 \to \dots \to \U_n \to \C \\
+\\
+\tu \app \tm &= \handleGen{\tm}{[x] \to \tu \app x} \\
+\end{array}
+\]
+
+$\boxed{\isgs{\tm}{\C}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\is{\Gamma,x:\V}{\sigs}{x}{\V}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\V} \in \sig}
+  {\isgs{\op}{\athunk{\Us \to \V}{\sig}}}
+
+\inferrule
+  {\isgs{\tu}{\athunk{\U \to \C}{\sigs'}} \\
+   \hasgs{\U}{\tm}}
+  {\isgs{\tu \app \tm}{\athunk{\C}{\sigs'}}}
+
+\inferrule
+  {\isgs{\tu}{\athunk{\V}{\sigs'}} \\
+   \sigs' \leq \sigs}
+  {\isgs{\force{\tu}}{\V}}
+
+\inferrule
+  {\isgs{\h}{\athunk{\handleType{\sigs'}{\sigs''}{\U} \to \C}{\sigs'''}} \\
+   \has{\Gamma}{\sigs' \uplus \sigs''}{\U}{\tm} \\
+   \sigs'' \leq \sigs'''
+  }
+  {\isgs{\handleGen{\tm}{\h}}{\athunk{\C}{\sigs'''}}}
+
+\inferrule
+  {\hasgs{\C}{\tm}}
+  {\isgs{\tm : \C}{\C}}
+\end{mathpar}
+
+$\boxed{\hasgs{\C}{\tm}}$
+\begin{mathpar}
+\inferrule
+   {[\hasgs{\U_i}{\tm_i}] \\ \con : \Us \to \D~\Vs}
+   {\hasgs{\D~\Vs}{\con~\tms}}
+
+\inferrule
+  {\has{\Gamma}{\sigs'}{\C}{\tm}}
+  {\hasgs{\athunk{\C}{\sigs'}}{\thunk{\tm}}}
+
+%% \end{mathpar}
+
+%% $\boxed{\hasgs{\C}{\tm}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {\hasgs{\V}{\tm}}
+%%   {\hasgs{\V}{\tm}}
+
+\inferrule
+  {[\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \has{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\sigs}{\C}{\tm}}
+  {\hasgs{\Us \to \C}{\ps \to \tm}}
+
+\inferrule
+  {\hasgs{\C}{\tm} \\ \hasgs{\C}{\tu}}
+  {\hasgs{\C}{\tm \mid \tu}}
+
+\inferrule
+  {\isgs{\tu}{\U} \\ \U=\V}
+  {\hasgs{\V}{\tm}}
+\end{mathpar}
+
+$\boxed{\patg{\V}{\p}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{\V}{x}{x : \V}}
+
+\inferrule
+  {[\pat{\p_i}{\U_i}{\Gamma_i}] \\ \con : \Us \to \D~\Vs}
+  {\pat{\con~\ps}{\D~\Vs}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
+\\
+\inferrule
+  {\patg{\V}{\p}}
+  {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\U} \in \sig \in \sigs' \\
+   [\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \pat{\athunk{\U \to \V}{\sigs' \uplus \sigs''}}{\p}{\Gamma}}
+  {\pat{\handleType{\sigs'}{\sigs''}{\V}}
+       {\handleOp{\op~\ps}{\p}}
+       {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
+\end{mathpar}
+\caption{Partial application for handlers}
+\end{figure*}
+
+\newcommand{\shapeof}{\mathit{shapeof}}
+\newcommand{\Pres}{P}
+\newcommand{\Abs}{\mathit{Abs}}
+
+%%%%%%%%%%%%%%% rows
+\begin{figure*}
+\[
+\begin{array}{@{}r@{~}l@{}}
+\tu~\tm~\tms     &\equiv (\tu \app \tm \app \tm_1 \app \cdots \app \tm_n)\,! \\
+\handle{\h}{\tm} &\equiv (\handleGen{\tm}{\h})\,! \\
+\U\,\Us \to \C &\equiv \U \to \U_1 \to \dots \to \U_n \to \C \\
+\\
+\tu \app \tm &= \handleGen{\tm}{[x] \to \tu \app x} \\
+\\
+\shapeof(\sigs) &= \shapeof(\sig_1) \uplus \cdots \uplus \shapeof(\sig_n) \\
+\shapeof(   \template{\op_1\,\Us_1}{}{\V_1},
+    \cdots, \template{\op_n\,\Us_n}{}{\V_n}) &=
+  \op_1 \Pres_1, \cdots, \op_n \Pres_n \\
+\\
+\Pres &::= \Abs \mid \template{\Us}{}{\V} \mid \theta \\ 
+\end{array}
+\]
+
+$\boxed{\isgs{\tm}{\C}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\is{\Gamma,x:\V}{\sigs}{x}{\V}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\V} \in \sig}
+  {\isgs{\op}{\athunk{\Us \to \V}{\sig}}}
+
+
+\inferrule
+  {\isgs{\tu}{\athunk{\U \to \C}{\sigs'}} \\
+   \hasgs{\U}{\tm}}
+  {\isgs{\tu \app \tm}{\athunk{\C}{\sigs'}}}
+
+\inferrule
+  {\isgs{\tu}{\athunk{\V}{\sigs}}}
+  {\isgs{\force{\tu}}{\V}}
+
+\inferrule
+  {\isgs{\h}{\athunk{\handleType{\sigs'}{\sigs''}{\U} \to \C}{\sigs'''}} \\
+   \has{\Gamma}{\sigs' \uplus \sigs''}{\U}{\tm} \\
+   \sigs''' = \mathit{shapeof}(\sigs'') \uplus \sigs''   
+  }
+  {\isgs{\handleGen{\tm}{\h}}{\athunk{\C}{\sigs'''}}}
+
+\inferrule
+  {\hasgs{\C}{\tm}}
+  {\isgs{\tm : \C}{\C}}
+\end{mathpar}
+
+$\boxed{\hasgs{\C}{\tm}}$
+\begin{mathpar}
+\inferrule
+   {[\hasgs{\U_i}{\tm_i}] \\ \con : \Us \to \D~\Vs}
+   {\hasgs{\D~\Vs}{\con~\tms}}
+
+\inferrule
+  {\has{\Gamma}{\sigs'}{\C}{\tm}}
+  {\hasgs{\athunk{\C}{\sigs'}}{\thunk{\tm}}}
+
+\inferrule
+  {[\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \has{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\sigs}{\C}{\tm}}
+  {\hasgs{\Us \to \C}{\ps \to \tm}}
+
+\inferrule
+  {\hasgs{\C}{\tm} \\ \hasgs{\C}{\tu}}
+  {\hasgs{\C}{\tm \mid \tu}}
+
+\inferrule
+  {\isgs{\tu}{\U} \\ \U=\V}
+  {\hasgs{\V}{\tm}}
+\end{mathpar}
+
+$\boxed{\patg{\V}{\p}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{\V}{x}{x : \V}}
+
+\inferrule
+  {[\pat{\p_i}{\U_i}{\Gamma_i}] \\ \con : \Us \to \D~\Vs}
+  {\pat{\con~\ps}{\D~\Vs}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
+\\
+\inferrule
+  {\patg{\V}{\p}}
+  {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\U} \in \sig \in \sigs' \\
+   [\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \pat{\athunk{\U \to \V}{\sigs' \uplus \sigs''}}{\p}{\Gamma}}
+  {\pat{\handleType{\sigs'}{\sigs''}{\V}}
+       {\handleOp{\op~\ps}{\p}}
+       {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
+\end{mathpar}
+\caption{Rows}
+\end{figure*}
+
+
+%%%%%%%%%%%%%%%%%%%%%% what now?
+
+\begin{figure*}
+
+\newcommand{\judgeword}[1]{~\mathbf{#1}~}
+\renewcommand{\inferv}[2]{{#1} \judgeword{is} {#2}}
+\renewcommand{\checkv}[2]{{#1} \judgeword{has} {#2}}
+\renewcommand{\inferc}[2]{{#1} \judgeword{does} {#2}}
+\renewcommand{\checkc}[2]{{#1} \judgeword{can} {#2}}
+\renewcommand{\checkp}[2]{{#1} \judgeword{accepts} {#2}}
+
+\renewcommand{\yieldSymbol}{\mathbin{\Rightarrow}}
+\renewcommand{\continueSymbol}{\mathbin{\triangleright}}
+
+%\renewcommand{\sig}{\Sigma}
+%\renewcommand{\sigs}{\Sigma s}
+\renewcommand{\sigentails}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\text{-\!-}}}
+
+\[
+\begin{array}{@{}r@{~}l@{}}
+\U\,\Us \to \C &\equiv \U \to \U_1 \to \dots \to \U_n \to \C \\
+%\tu~\arg~\args &= \force{\tu} \app \tm \app \tm_1 \app \cdots \app \tm_n
+\end{array}
+\]
+
+$\boxed{\isgs{\tm}{\V}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\is{\Gamma,x:\V}{\sigs}{x}{\V}}
+
+\inferrule
+  {\doesgs{\tu}{\ret{\sigs'}{\V}} \\
+   \sigs' \leq \sigs}
+  {\isgs{\tu}{\V}}
+
+\inferrule
+  {\hasgs{\V}{\tm}}
+  {\isgs{\tm : \V}{\V}}
+\end{mathpar}
+
+$\boxed{\hasgs{\V}{\tm}}$
+\begin{mathpar}
+\inferrule
+   {[\hasgs{\U_i}{\tm_i}] \\ \con : \Us \to \D~\Vs}
+   {\hasgs{\D~\Vs}{\con~\tms}}
+
+\inferrule
+  {\cang{\C}{\tm}}
+  {\hasgs{\thunk{\C}}{\thunk{\tm}}}
+
+\inferrule
+  {\isgs{\tu}{\U} \\ \U=\V}
+  {\hasgs{\V}{\tm}}
+\end{mathpar}
+
+$\boxed{\doesgs{\tm}{\C}}$
+\begin{mathpar}
+\inferrule
+  {\template{\op\,\Us}{}{\V} \in \sig}
+  {\doesgs{\op}{\Us \to \ret{\sig}{\V}}}
+
+\inferrule
+  {\isgs{\tu}{\thunk{\C}}}
+  {\doesgs{\force{\tu}}{\C}}
+\\
+\inferrule
+  {\doesgs{\tu}{\U \to \C} \\
+   \hasgs{\U}{\tm}}
+  {\doesgs{\tu ~ \tm}{\C}}
+
+\inferrule
+  {\doesgs{\h}{\handleType{\sigs'}{\sigs''}{\U} \to \C} \\
+   \has{\Gamma}{\sigs''}{\U}{\tm} \\
+   \sigs' \leq \sigs'' \leq \sigs \rplus \sigs'
+  }
+  {\doesgs{\handle{\h}{\tm}}{\C}}
+\\
+\inferrule
+  {\isgs{\tu}{\thunk{\U \to \C}} \\
+   \hasgs{\U}{\tm}}
+  {\doesgs{\tu~\tm}{\C}}
+
+\inferrule
+  {\isgs{\h}{\thunk{\handleType{\sigs'}{\sigs''}{\U} \to \C}} \\
+   \has{\Gamma}{\sigs''}{\U}{\tm} \\
+   \sigs' \leq \sigs'' \leq \sigs \rplus \sigs'
+  }
+  {\doesgs{\handle{\h}{\tm}}{\C}}
+\end{mathpar}
+
+$\boxed{\cang{\C}{\tm}}$
+\begin{mathpar}
+\inferrule
+  {\hasgs{\V}{\tm}}
+  {\cang{\ret{\sigs}{\V}}{\tm}}
+
+\inferrule
+  {[\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \can{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\C}{\tm}}
+  {\cang{\Us \to \C}{\ps \to \tm}}
+
+\inferrule
+  {\cang{\C}{\tm} \\ \cang{\C}{\tu}}
+  {\cang{\C}{\tm \mid \tu}}
+\end{mathpar}
+
+$\boxed{\patg{\V}{\p}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{\V}{x}{x : \V}}
+
+\inferrule
+  {[\pat{\p_i}{\U_i}{\Gamma_i}] \\ \con : \Us \to \D~\Vs}
+  {\pat{\con~\ps}{\D~\Vs}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
+\\
+\inferrule
+  {\patg{\V}{\p}}
+  {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\U} \in \sig \\ \sig \in \sigs' \\
+   [\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \pat{\thunk{\U \to \ret{\sigs''}{\V}}}{k}{\Gamma}}
+  {\pat{\handleType{\sigs'}{\sigs''}{\V}}
+       {\handleOp{\op~\ps}{k}}
+       {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
+\end{mathpar}
+\caption{What now?}
+\end{figure*}
+
+
+
+
+%% \begin{abstract}
+%% This is the text of the abstract.
+%% \end{abstract}
+
+%% \category{CR-number}{subcategory}{third-level}
+
+%% \terms
+%% term1, term2
+
+%% \keywords
+%% keyword1, keyword2
+
+%% \section{Introduction}
+
+%% The text of the paper begins here.
+
+%% \appendix
+%% \section{Appendix Title}
+
+%% This is the text of the appendix, if you need one.
+
+%% \acks
+
+%% Acknowledgments, if needed.
+
+% We recommend abbrvnat bibliography style.
+
+\bibliographystyle{abbrvnat}
+
+% The bibliography should be embedded for final submission.
+
+%% \begin{thebibliography}{}
+%% \softraggedright
+
+%% \bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
+%% P. Q. Smith, and X. Y. Jones. ...reference text...
+
+%% \end{thebibliography}
+
+\end{document}
