@@ -651,7 +651,9 @@
 
 %\renewcommand{\sig}{\Sigma}
 %\renewcommand{\sigs}{\Sigma s}
-\renewcommand{\sigentails}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\text{-\!-}}}
+\renewcommand{\sigentails}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\text{-\!-}}\,}
+
+\newcommand{\sigmodels}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\mathord{=}}\,}
 
 %%%%%%%%%%%%%%%%%%%%%% Monomorphic Frank
 
@@ -969,7 +971,7 @@ $\boxed{\doesgs{\tm}{\C}}$
 
 \inferrule
   {\doesgs{\tm}{\forall \varepsilon~\keyword{where}~R.\V} \\
-   \Gamma \vdash \sig' \judgeword{satisfies} R}
+   \Gamma \sigentails{\sig'} R}
   {\doesgs{\tm~\sig'}{\V[\sig'/\varepsilon]}}
 \end{mathpar}
 
@@ -1031,6 +1033,14 @@ $\boxed{\patg{\V}{\p}}$
 
 \renewcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol_{#2} {#3}}}
 
+\newcommand{\VV}{\mathcal{V}}
+\newcommand{\VVs}{\VV{s}}
+\newcommand{\CC}{\mathcal{C}}
+
+\newcommand{\inst}[2]{\mathit{inst}_{#1}({#2})}
+\newcommand{\insts}[1]{\inst{S}{#1}}
+
+
 \[
 \begin{array}{@{}r@{~}l@{}}
 \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
@@ -1038,16 +1048,35 @@ $\boxed{\patg{\V}{\p}}$
 S &::= \template{\op\,\Us}{}{\V}, S \mid \cdot \\
 R &::= Q \wedge R \mid \mathit{true} \\
 Q &::= \template{\mathord{\ni}\op\,\Us}{}{\V} \mid \mathord{\not\ni}\op \\
+\\
+\VV &::= \alpha \mid \thunk{\CC} \mid \D~\VVs \mid \handleType{S}{\Sigma}{\VV} \\
+\CC &::= \ret{\Sigma}{\VV} \mid \VV \to \CC \\
 \end{array}
 \]
 
-\newcommand{\inst}{\mathit{inst}}
+\[
+\begin{array}{@{}r@{~}l@{\quad}l@{}}
+\insts{\alpha}      &= \alpha',  &\alpha' \text{ a fresh unification variable} \\
+\insts{\thunk{\CC}} &= \thunk{\insts{\CC}} \\
+\insts{\D~\VVs}     &= \D~\insts{\VVs} \\
+\insts{\handleType{S'}{S-S'}{\VV}} 
+                    &= \handleType{S'}{S-S'}{\insts{\VV}} \\
+\insts{\handleType{S'}{R}{\VV}} 
+                    &= \handleType{S'}{S-S'}{\insts{\VV}},
+                         &\sigentails{S-S'} R \\
+\\
+\insts{\ret{S}{\VV}} &= \ret{S}{\VV} \\
+\insts{\ret{R}{\VV}} &= \ret{S}{\VV},  &\sigentails{S} R \\
+\insts{\VV \to \CC}  &= \insts{\VV} \to \insts{\CC} \\
+\end{array}
+\]
+
 
 $\boxed{\isgs{\tm}{\V}}$
 \begin{mathpar}
 \inferrule
   { }
-  {\is{\Gamma,x:W}{\sig}{x}{\inst(W)}}
+  {\is{\Gamma,x:\VV}{\sig}{x}{\insts{\VV}}}
 
 \inferrule
   {\doesgs{\tu}{\ret{\sigs'}{\V}} \\
