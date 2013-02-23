@@ -786,6 +786,10 @@ $\boxed{\patg{\V}{\p}}$
 \renewcommand{\sig}{S}
 \renewcommand{\sigs}{\sig}
 
+%\renewcommand{\handleType}[3]{\effbox{{#1} \stackrel{#2}{\yieldSymbol}{ #3}}}
+\renewcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol_{#2} {#3}}}
+
+
 \[
 \begin{array}{@{}r@{~}l@{}}
 \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
@@ -840,8 +844,8 @@ $\boxed{\doesgs{\tm}{\C}}$
 
 \inferrule
   {\doesgs{\h}{\handleType{\sigs'}{\sigs''}{\U} \to \C} \\
-   \has{\Gamma}{\sigs''}{\U}{\tm} \\
-   \sigs' \leq \sigs'' \leq \sigs \rplus \sigs'
+   \has{\Gamma}{\sigs' \uplus \sigs''}{\U}{\tm} \\
+   \sigs'' \leq \sigs
   }
   {\doesgs{\handle{\h}{\tm}}{\C}}
 \end{mathpar}
@@ -879,12 +883,12 @@ $\boxed{\patg{\V}{\p}}$
 \inferrule
   {\template{\op\,\Us}{}{\U} \in \sig' \\
    [\pat{\U_i}{\p_i}{\Gamma_i}] \\
-   \pat{\thunk{\U \to \ret{\sigs''}{\V}}}{k}{\Gamma}}
+   \pat{\thunk{\U \to \ret{\sigs' \uplus \sigs''}{\V}}}{k}{\Gamma}}
   {\pat{\handleType{\sigs'}{\sigs''}{\V}}
        {\handleOp{\op~\ps}{k}}
        {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
 \end{mathpar}
-\caption{Flat signatures}
+\caption{Flat signatures and disjoint signatures in handler types}
 \end{figure*}
 
 
@@ -894,12 +898,16 @@ $\boxed{\patg{\V}{\p}}$
 \renewcommand{\sig}{\Sigma}
 \renewcommand{\sigs}{\sig}
 
+\renewcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol_{#2} {#3}}}
+
 \[
 \begin{array}{@{}r@{~}l@{}}
 \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
 \Sigma &::= S \mid \varepsilon \\
 S &::= \template{\op\,\Us}{}{\V}, S \mid \cdot \\
-R &::= \template{+\op\,\Us}{}{\V}, R \mid -\op, R \mid \cdot \\
+R &::= Q \wedge R \mid \mathit{true} \\
+Q &::= \template{\mathord{\ni}\op\,\Us}{}{\V} \mid \not\mathord{\ni}\op
+  \mid \mathord{\leq} \varepsilon \mid \mathord{\geq} \varepsilon \\
 \end{array}
 \]
 
@@ -910,7 +918,7 @@ $\boxed{\isgs{\tm}{\V}}$
   {\is{\Gamma,x:\V}{\sig}{x}{\V}}
 
 \inferrule
-  {\doesgs{\tu}{\ret{\sig}{\V}}}
+  {\doesgs{\tu}{\ret{\sig'}{\V}} \\ \Gamma \vdash \sig' \leq \sig}
   {\isgs{\tu}{\V}}
 
 \inferrule
@@ -950,8 +958,8 @@ $\boxed{\doesgs{\tm}{\C}}$
 
 \inferrule
   {\doesgs{\h}{\handleType{S}{\sig'}{\U} \to \C} \\
-   \has{\Gamma}{\sig'}{\U}{\tm} \\
-   \Gamma \vdash S \leq \sig' \leq \sig \rplus S
+   \has{\Gamma}{S \uplus \sig'}{\U}{\tm} \\
+   \Gamma \vdash \sig' \leq \sig
   }
   {\doesgs{\handle{\h}{\tm}}{\C}}
 \\
@@ -961,8 +969,8 @@ $\boxed{\doesgs{\tm}{\C}}$
 
 \inferrule
   {\doesgs{\tm}{\forall \varepsilon~\keyword{where}~R.\V} \\
-   \Gamma \vdash S \judgeword{satisfies} R}
-  {\doesgs{\tm~S}{\V[S/\varepsilon]}}
+   \Gamma \vdash \sig' \judgeword{satisfies} R}
+  {\doesgs{\tm~\sig'}{\V[\sig'/\varepsilon]}}
 \end{mathpar}
 
 $\boxed{\cang{\C}{\tm}}$
@@ -1007,7 +1015,7 @@ $\boxed{\patg{\V}{\p}}$
 \inferrule
   {\template{\op\,\Us}{}{\U} \in S \\
    [\pat{\U_i}{\p_i}{\Gamma_i}] \\
-   \pat{\thunk{\U \to \ret{\sig'}{\V}}}{k}{\Gamma}}
+   \pat{\thunk{\U \to \ret{S \uplus \sig'}{\V}}}{k}{\Gamma}}
   {\pat{\handleType{S}{\sig'}{\V}}
        {\handleOp{\op~\ps}{k}}
        {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
@@ -1021,12 +1029,15 @@ $\boxed{\patg{\V}{\p}}$
 \renewcommand{\sig}{S}
 \renewcommand{\sigs}{S}
 
+\renewcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol_{#2} {#3}}}
+
 \[
 \begin{array}{@{}r@{~}l@{}}
 \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
 \Sigma &::= S \mid R \\
 S &::= \template{\op\,\Us}{}{\V}, S \mid \cdot \\
-R &::= \template{+\op\,\Us}{}{\V}, R \mid -\op, R \mid \cdot \\
+R &::= Q \wedge R \mid \mathit{true} \\
+Q &::= \template{\mathord{\ni}\op\,\Us}{}{\V} \mid \mathord{\not\ni}\op \\
 \end{array}
 \]
 
@@ -1080,8 +1091,8 @@ $\boxed{\doesgs{\tm}{\C}}$
 
 \inferrule
   {\doesgs{\h}{\handleType{\sigs'}{\sigs''}{\U} \to \C} \\
-   \has{\Gamma}{\sigs''}{\U}{\tm} \\
-   \sigs' \leq \sigs'' \leq \sigs \rplus \sigs'
+   \has{\Gamma}{\sigs' \uplus \sigs''}{\U}{\tm} \\
+   \sigs'' \leq \sigs
   }
   {\doesgs{\handle{\h}{\tm}}{\C}}
 \end{mathpar}
@@ -1119,7 +1130,7 @@ $\boxed{\patg{\V}{\p}}$
 \inferrule
   {\template{\op\,\Us}{}{\U} \in \sig' \\
    [\pat{\U_i}{\p_i}{\Gamma_i}] \\
-   \pat{\thunk{\U \to \ret{\sigs''}{\V}}}{k}{\Gamma}}
+   \pat{\thunk{\U \to \ret{\sigs' \uplus \sigs''}{\V}}}{k}{\Gamma}}
   {\pat{\handleType{\sigs'}{\sigs''}{\V}}
        {\handleOp{\op~\ps}{k}}
        {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
