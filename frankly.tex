@@ -661,6 +661,9 @@
 \[
 \begin{array}{@{}r@{~}l@{}}
 \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
+\\
+\U, \V &::= \thunk{\C} \mid \D~\Vs \mid \handleType{\sigs'}{\sigs''}{\V} \\
+\C     &::= \ret{\sigs}{\V} \mid \V \to \C \\
 \end{array}
 \]
 
@@ -795,6 +798,9 @@ $\boxed{\patg{\V}{\p}}$
 \[
 \begin{array}{@{}r@{~}l@{}}
 \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
+\\
+\U, \V &::= \thunk{\C} \mid \D~\Vs \mid \handleType{\sigs'}{\sigs''}{\V} \\
+\C     &::= \ret{\sigs}{\V} \mid \V \to \C \\
 \end{array}
 \]
 
@@ -905,6 +911,13 @@ $\boxed{\patg{\V}{\p}}$
 \[
 \begin{array}{@{}r@{~}l@{}}
 \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
+\\
+\U, \V &::= \thunk{\C} \mid \D~\Vs \mid \handleType{S}{\sigs''}{\V}
+       \mid \alpha \\
+\C     &::= \ret{\sigs}{\V} \mid \V \to \C
+       \mid \forall \alpha.\C
+       \mid \forall \varepsilon~\keyword{where}~R \\
+\\
 \Sigma &::= S \mid \varepsilon \\
 S &::= \template{\op\,\Us}{}{\V}, S \mid \cdot \\
 R &::= Q \wedge R \mid \mathit{true} \\
@@ -1044,30 +1057,34 @@ $\boxed{\patg{\V}{\p}}$
 \[
 \begin{array}{@{}r@{~}l@{}}
 \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
+\\
+\U, \V &::= \thunk{\C} \mid \D~\Vs \mid \handleType{\sigs'}{\sigs''}{\V} \\
+\C     &::= \ret{\sigs}{\V} \mid \V \to \C \\
+\\
 \Sigma &::= S \mid R \\
 S &::= \template{\op\,\Us}{}{\V}, S \mid \cdot \\
 R &::= Q \wedge R \mid \mathit{true} \\
 Q &::= \template{\mathord{\ni}\op\,\Us}{}{\V} \mid \mathord{\not\ni}\op \\
 \\
-\VV &::= \alpha \mid \thunk{\CC} \mid \D~\VVs \mid \handleType{S}{\Sigma}{\VV} \\
+\VV &::= \thunk{\CC} \mid \D~\VVs \mid \handleType{S}{\Sigma}{\VV} \mid \alpha \\
 \CC &::= \ret{\Sigma}{\VV} \mid \VV \to \CC \\
 \end{array}
 \]
 
 \[
 \begin{array}{@{}r@{~}l@{\quad}l@{}}
-\insts{\alpha}      &= \alpha',  &\alpha' \text{ a fresh unification variable} \\
+\insts{\alpha}      &= \alpha,  &\alpha \text{ a unification variable} \\
 \insts{\thunk{\CC}} &= \thunk{\insts{\CC}} \\
 \insts{\D~\VVs}     &= \D~\insts{\VVs} \\
-\insts{\handleType{S'}{S-S'}{\VV}} 
-                    &= \handleType{S'}{S-S'}{\insts{\VV}} \\
+\insts{\handleType{S'}{S''}{\VV}} 
+                    &= \handleType{S'}{S''}{\insts{\VV}} \\
 \insts{\handleType{S'}{R}{\VV}} 
                     &= \handleType{S'}{S-S'}{\insts{\VV}},
                          &\sigentails{S-S'} R \\
 \\
-\insts{\ret{S}{\VV}} &= \ret{S}{\VV} \\
-\insts{\ret{R}{\VV}} &= \ret{S}{\VV},  &\sigentails{S} R \\
-\insts{\VV \to \CC}  &= \insts{\VV} \to \insts{\CC} \\
+\insts{\ret{S'}{\VV}} &= \ret{S'}{\VV} \\
+\insts{\ret{R}{\VV}}  &= \ret{S}{\VV},  &\sigentails{S} R \\
+\insts{\VV \to \CC}   &= \insts{\VV} \to \insts{\CC} \\
 \end{array}
 \]
 
