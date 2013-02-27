@@ -62,6 +62,8 @@
 \newcommand{\sig}{S}
 \newcommand{\sigs}{\mathit{Ss}}
 
+\newcommand{\X}{X}
+
 \newcommand{\U}{U}
 \newcommand{\V}{V}
 \newcommand{\Us}{\mathit{Us}}
@@ -91,6 +93,7 @@
 \newcommand{\yieldSymbol}{\mathbin{?}}
 \newcommand{\continueSymbol}{\mathbin{?}}
 \newcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol \ret{#2}{#3}}}
+\newcommand{\handleTypePoly}[2]{\effbox{{#1} \yieldSymbol #2}}
 \newcommand{\handleRet}[1]{\effbox{#1}}
 \newcommand{\handleOp}[2]{\effbox{{#1} \continueSymbol {#2}}}
 \newcommand{\handle}[2]{{#1} \handleSymbol {#2}}
@@ -111,6 +114,14 @@
 
 \newcommand{\rplus}{\mathbin{\mathord{+}\!\!\!\!\mathord{\shortrightarrow}}}
 \newcommand{\lplus}{\mathbin{\mathord{+}\!\!\!\!\!\mathord{\shortleftarrow}}}
+
+
+\newcommand{\VV}{\mathcal{V}}
+\newcommand{\VVs}{\VV{s}}
+\newcommand{\CC}{\mathcal{C}}
+
+\newcommand{\inst}[3]{\mathit{inst}_{{#1},{#2}}({#3})}
+\newcommand{\instts}[1]{\inst{\theta}{\sigs}{#1}}
 
 
 %% V ::= {C} | D V* | [Ss' ? [Ss'']V]
@@ -728,7 +739,7 @@ $\boxed{\doesgs{\tm}{\C}}$
 \inferrule
   {\doesgs{\h}{\handleType{\sigs'}{\sigs''}{\U} \to \C} \\
    \has{\Gamma}{\sigs''}{\U}{\tm} \\
-   \sigs' \leq \sigs'' \leq \sigs \rplus \sigs'
+   \sigs' \leq \sigs'' \leq \sigs' \lplus \sigs
   }
   {\doesgs{\handle{\h}{\tm}}{\C}}
 %% \inferrule
@@ -785,9 +796,58 @@ $\boxed{\patg{\V}{\p}}$
 \caption{Monomorphic Frank}
 \end{figure*}
 
+
+%%%%%%%%%%%%%%%%%%%%%% Polymorphic Frank
+
+\newcommand{\nothing}{\{\}}
+
+\begin{figure*}[p]
+\newcommand{\Rs}{\mathit{Rs}}
+\renewcommand{\instts}[1]{\inst{\theta}{Rs}{#1}}
+
+\[
+\begin{array}{@{}r@{~}l@{}}
+\Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
+\\
+\U, \V &::= \thunk{\C} \mid \D~\Vs \mid \handleType{\Rs'}{\Rs''}{\V} \\
+\C     &::= \ret{\Rs}{\V} \mid \V \to \C \\
+\\
+R &::= \template{\op\,\Us}{}{\V}, R \mid \nothing \\
+\sig &::= \template{\op\,\Us}{}{\V}, \sig \mid \nothing \mid \star \\
+\\
+\VV &::= \thunk{\CC} \mid \D~\VVs \mid \handleTypePoly{\Rs'}{\VV} \mid \X \\
+\CC &::= \ret{\sigs}{\VV} \mid \VV \to \CC \\
+\end{array}
+\]
+
+\[
+\begin{array}{@{}r@{~}l@{\quad}l@{}}
+\instts{\X}      &= \theta(\X) \\
+\instts{\thunk{\CC}} &= \thunk{\instts{\CC}} \\
+\instts{\D~\VVs}     &= \D~\instts{\VVs} \\
+\instts{\handleTypePoly{\Rs'}{\VV}} 
+                     &= \handleType{\Rs'}{\instts{\Rs'}}{\instts{\VV}} \\
+\\
+\instts{\template{\op\,\Us}{}{\V},\sig}
+                     &= \template{\op\,\instts{\Us}}{}{\instts{\V}} \lplus \instts{\sig} \\
+\instts{\nothing}    &= \nothing \\
+\instts{\star}       &= \sigs \\
+\\
+\instts{\ret{\sigs'}{\VV}} &= \ret{\instts{\sigs'}}{\VV} \\
+\instts{\VV \to \CC}       &= \instts{\VV} \to \instts{\CC} \\
+\end{array}
+\]
+
+
+\caption{Polymorphic Frank}
+\end{figure*}
+
+
 %%%%%%%%%%%%%%%%%%%%%% Flat signatures
 
 \begin{figure*}
+\vspace{5cm}
+
 \renewcommand{\sig}{S}
 \renewcommand{\sigs}{\sig}
 
@@ -1046,13 +1106,6 @@ $\boxed{\patg{\V}{\p}}$
 
 \renewcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol_{#2} {#3}}}
 
-\newcommand{\VV}{\mathcal{V}}
-\newcommand{\VVs}{\VV{s}}
-\newcommand{\CC}{\mathcal{C}}
-
-\newcommand{\inst}[2]{\mathit{inst}_{#1}({#2})}
-\newcommand{\insts}[1]{\inst{S}{#1}}
-
 
 \[
 \begin{array}{@{}r@{~}l@{}}
@@ -1073,18 +1126,18 @@ Q &::= \template{\mathord{\ni}\op\,\Us}{}{\V} \mid \mathord{\not\ni}\op \\
 
 \[
 \begin{array}{@{}r@{~}l@{\quad}l@{}}
-\insts{\alpha}      &= \alpha,  &\alpha \text{ a unification variable} \\
-\insts{\thunk{\CC}} &= \thunk{\insts{\CC}} \\
-\insts{\D~\VVs}     &= \D~\insts{\VVs} \\
-\insts{\handleType{S'}{S''}{\VV}} 
-                    &= \handleType{S'}{S''}{\insts{\VV}} \\
-\insts{\handleType{S'}{R}{\VV}} 
-                    &= \handleType{S'}{S-S'}{\insts{\VV}},
+\instts{\alpha}      &= \theta(\alpha) \\
+\instts{\thunk{\CC}} &= \thunk{\instts{\CC}} \\
+\instts{\D~\VVs}     &= \D~\instts{\VVs} \\
+\instts{\handleType{S'}{S''}{\VV}} 
+                    &= \handleType{S'}{S''}{\instts{\VV}} \\
+\instts{\handleType{S'}{R}{\VV}} 
+                    &= \handleType{S'}{S-S'}{\instts{\VV}},
                          &\sigentails{S-S'} R \\
 \\
-\insts{\ret{S'}{\VV}} &= \ret{S'}{\VV} \\
-\insts{\ret{R}{\VV}}  &= \ret{S}{\VV},  &\sigentails{S} R \\
-\insts{\VV \to \CC}   &= \insts{\VV} \to \insts{\CC} \\
+\instts{\ret{S'}{\VV}} &= \ret{S'}{\VV} \\
+\instts{\ret{R}{\VV}}  &= \ret{S}{\VV},  &\sigentails{S} R \\
+\instts{\VV \to \CC}   &= \instts{\VV} \to \instts{\CC} \\
 \end{array}
 \]
 
@@ -1093,7 +1146,7 @@ $\boxed{\isgs{\tm}{\V}}$
 \begin{mathpar}
 \inferrule
   { }
-  {\is{\Gamma,x:\VV}{\sig}{x}{\insts{\VV}}}
+  {\is{\Gamma,x:\VV}{\sig}{x}{\instts{\VV}}}
 
 \inferrule
   {\doesgs{\tu}{\ret{\sigs'}{\V}} \\
