@@ -1,0 +1,121 @@
+A transcription of Conor's whiteboard pictures.
+
+Types
+-----
+
+V ::= X | D V* | {C}           should C be polymorphic in some value types?
+C ::= [R ->]* R
+R ::= [Sig]V
+Sig ::= S V*, Sig | empty | epsilon
+
+  Sig1 Sig2 == Sig1{Sig2/epsilon}
+
+Contexts
+--------
+
+G, Delta ::= . | G, x:V  |G, f X*.C | G, X
+
+Terms
+-----
+
+u ::= x | c v*
+c ::= u! | f
+v ::= u | K v* | {b*}
+b ::= [r* ->]* v
+r ::= p | f p* ? f
+p ::= x | K p*
+
+
+Typing rules
+------------
+
+********************
+* G [Sig]- V has v *
+********************
+
+G [Sig]- u is U G |- U == V
+---------------------------
+G [Sig]- V has u
+
+[G [Sig]- [U*/X*]Vi has vi]i     D X* declares K V*
+---------------------------------------------------
+G [Sig]- D U* has K v*
+
+[G |- C allows bi]i
+---------------------
+G [Sig]- {C} has {b*}
+
+
+*******************
+* G [Sig]- u is V *
+*******************
+
+x:V in G
+----------------
+G [Sig]- x is V
+
+G [Sig]- c does C    G [Sig]- C with v* makes V
+-----------------------------------------------
+G [Sig]- c v* is V
+
+*********************
+* G [Sig]- c does V *
+*********************
+
+G [Sig]- u is {C}
+------------------
+G [Sig]- u! does C
+
+f X*.C in G    G |- V* type
+---------------------------
+G [Sig] f does [V*/X*]C
+
+******************************
+* G [Sig]- C with v* makes V *
+******************************
+
+[G [Sigi Sig]- Vi has vi]i    G |- Sig' Sig <= Sig
+--------------------------------------------------
+G [Sig]- ([Sigi]Vi ->)i [Sig']V with v* makes V
+
+Shouldn't it be:
+
+  [G [Sigi Sig]- Vi has vi]i    [G |- Sigi Sig <= Sig' Sig]i
+  ----------------------------------------------------------
+  G [Sig]- ([Sigi]Vi ->)i [Sig']V with v* makes V
+
+?
+
+*******************
+* G |- C allows b *
+*******************
+
+[G [Sig']- [Sigi]Vi lets ri bind Di]i    G, D* [Sig']- V has v
+--------------------------------------------------------------
+G |- ([Sigi]Vi] ->)i [Sig']V allows r* -> v
+
+*********************************
+* G [Sig]- [Sig]V lets r bind G *
+*********************************
+
+G |- V lets p bind Delta
+------------------------------
+G [Sig]- [Sig']V lets p bind Delta
+
+S U* in Sig'
+S X* declares f Y*.V*[Sig']V'    [G, Y* |- Vi lets pi bind Deltai]i
+------------------------------------------------------------------------
+G [Sig]- [Sig']V lets f p* ? g bind Y*, Delta*, g [].[]V' -> [Sig' Sig]V
+
+************************
+* G |- V lets p bind D *
+************************
+
+----------------------
+G |- V letx x bind x:V
+
+[G |- [U*/X*]Vi lets pi bind Deltai]i     D X* declares K V*
+------------------------------------------------------------
+G |- D U* lets K p* bind Delta*
+
+
