@@ -33,13 +33,13 @@ Typing rules
 * G [Sig]- V has v *
 ********************
 
-G [Sig]- u is U G |- U == V
----------------------------
+G [Sig]- u is U   G |- U == V
+-----------------------------
 G [Sig]- V has u
 
-[G [Sig]- [U*/X*]Vi has vi]i     D X* declares K V*
+[G [Sig]- [U*/X*]Vi has vi]i     D X* declares k V*
 ---------------------------------------------------
-G [Sig]- D U* has K v*
+G [Sig]- D U* has k v*
 
 [G |- C allows bi]i
 ---------------------
@@ -112,10 +112,10 @@ G [Sig]- [Sig']V lets f p* ? g bind Y*, Delta*, g [].[]V' -> [Sig' Sig]V
 ************************
 
 ----------------------
-G |- V letx x bind x:V
+G |- V lets x bind x:V
 
-[G |- [U*/X*]Vi lets pi bind Deltai]i     D X* declares K V*
+[G |- [U*/X*]Vi lets pi bind Deltai]i     D X* declares k V*
 ------------------------------------------------------------
-G |- D U* lets K p* bind Delta*
+G |- D U* lets k p* bind Delta*
 
 

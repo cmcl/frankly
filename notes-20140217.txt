@@ -1,0 +1,109 @@
+A transcription of Conor's whiteboard pictures.
+
+Types
+-----
+
+V ::= X | D V* | {C}
+C ::= [Sig]V | [Sig]V -> C
+
+Sig ::= S V*, Sig | empty | epsilon
+
+constructors have types like D X* declares k V*
+signatures S X* declares c Y*.V* [Sig] V'
+  (consider omitting Y* and Sig)
+
+Contexts
+--------
+
+G, Delta ::= . | G, X | G, x:V  ( | G, g C )
+
+Terms
+-----
+
+u ::= x | d             -- is
+d ::= u! | d v          -- does
+v ::= u | k v* | {b*}   -- has
+b ::= v | r -> b        -- allows
+r ::= p | c p* ? g      -- lets
+p ::= x | k p*          -- lets
+
+
+Typing rules
+------------
+
+*******************
+* G [Sig]- u is V *
+*******************
+
+x:V in G
+----------------
+G [Sig]- x is V
+
+G [Sig]- d does [Sig']V   Sig' <= Sig
+-------------------------------------
+G [Sig]- d is V
+
+********************
+* G [Sig]- V has v *
+********************
+
+G [Sig]- u is U
+----------------
+G [Sig]- V has u
+
+D X* declares K V*    G [Sig]- Vi[U*/X*] has vi
+-----------------------------------------------
+G [Sig]- D U* has K v*
+
+G |- C allows bi
+--------------------------------
+G [Sig]- {C} has {b1 | ... | bn}
+
+*********************
+* G [Sig]- c does V *
+*********************
+
+G [Sig]- u is {C}
+------------------
+G [Sig]- u! does C
+
+G [Sig]- d does [Sig']V -> C    G [Sig'] V has v
+------------------------------------------------
+G [Sig]- d v does C
+
+*******************
+* G |- C allows b *
+*******************
+
+G [Sig]- V has v
+--------------------
+G |- [Sig]V allows v
+
+[Sig]V lets r -| Delta   G, Delta |- C allows b
+-----------------------------------------------
+G |- [Sig]V -> C allows r -> b
+
+**************************
+* [Sig]V lets r -| Delta *
+**************************
+
+V lets p -| Delta
+----------------------
+[Sig]V lets p -| Delta
+
+S X* declares c Y*.V*[Sig']V'
+S U* in Sig
+Vi[U*/X*] lets pi -| Deltai
+--------------------------------------------------------------
+[Sig]V lets c p* ? g -| Y*, Delta*, g : {[]V[U*/X*] -> [Sig]V}
+
+*****************
+* V lets p -| D *
+*****************
+
+----------------------
+V lets x -| x:V
+
+D X* declares k V*    Vi[U*/X*] lets pi -| Deltai
+-------------------------------------------------
+D U* lets k p* -| Delta*
