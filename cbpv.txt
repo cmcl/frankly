@@ -1,0 +1,141 @@
+CBPV.
+
+Types
+-----
+
+V ::= X | D V* | [Sig]{C}
+C ::= F V | [Sig]V -> C
+
+Sig ::= S V*, Sig | empty | epsilon
+
+constructors have types like D X* declares k V*
+signatures S X* declares c Y*.V* [Sig] V'
+  (consider omitting Y* and Sig)
+
+Contexts
+--------
+
+G, Delta ::= . | G, X | G, x:V | G, op:[Sig]V  ( | G, g C )
+
+Terms
+-----
+
+u, v ::= x | k v* | {d}
+   d ::= u! | d d | c v* | op | ret v | r -> d | d|d
+   r ::= p | c p* ? g | op ? g
+   p ::= x | k p*
+
+Call-by-value embedding of Frank into CBPV:
+
+  val[[ x ]]           = ret x
+  val[[ d ]]           = comp[[d]]
+
+  comp[[ u! ]]         = let x=val[[u]] in x!
+  comp[[ d d' ]]       = comp[[d]] comp[[d']]
+  comp[[ c v* ]]       = let x*=val[[v*]] in c x*
+
+  val[[ k v* ]]        = let x*=val[[v*]] in ret (k x*)
+  val[[ {b} ]]         = {comp[[b]]}
+
+
+  comp[[ v ]]          = val[[v]]
+  comp[[ r -> b ]]     = r -> comp[[b]] 
+  comp[[ b|b' ]]       = comp[[b]]|comp[[b']]
+
+Or:
+
+  [[ x ]]           = ret x
+
+  [[ u! ]]          = let x=[[u]] in x!
+  [[ d v ]]         = [[d]] [[v]]
+  [[ c v* ]]        = let x*=[[v*]] in c x*
+
+  [[ k v* ]]        = let x*=[[v*]] in ret (k x*)
+  [[ {b} ]]         = {[[b]]}
+
+  [[ r -> b ]]       = r -> [[b]] 
+  [[ b|b' ]]         = [[b]]|[[b']]
+
+Sugar:
+
+  let x=d in d' == (x -> d') d
+
+Typing rules
+------------
+
+******************
+* G |- u : V *
+******************
+
+x:V in G
+----------
+G |- x : V
+
+D X* declares k V*    G |- vi : Vi[U*/X*]
+-----------------------------------------
+G |- k v* : D U*
+
+G [Sig']- d : C    Sig' <= Sig
+------------------------------
+G |- {d} : [Sig]{C}
+
+******************
+* G [Sig]- d : C *
+******************
+
+G |- u : [Sig]{C}
+-----------------
+G [Sig]- u! : C
+
+G [Sig]- d : [Sig']V -> C    G [Sig']- d' : F V
+-----------------------------------------------
+G [Sig]- d d' : C
+
+S X* declares c Y*.V* [Sig'] V
+S U* in Sig
+Sig' <= Sig
+G |- vi : Vi[U*/X*,W*/Y*]
+-------------------------------
+G [Sig]- c V* : V[U*/X*, W*/Y*]
+
+Sig' <= Sig
+-----------------------------
+G, op:[Sig']V [Sig]- op : F V
+
+G |- v : V
+--------------------
+G [Sig]- ret v : F V
+
+r : [Sig]V -| Delta   G, Delta |- d : C
+---------------------------------------
+G |- r -> d : [Sig]V -> C
+
+G [Sig]- d : C      G [Sig] d' : C
+----------------------------------
+G [Sig]- d|d : C
+
+***********************
+* p : [Sig]V -| Delta *
+***********************
+
+p : V -| Delta
+-----------------------
+ret p : [Sig]V -| Delta
+
+S X* declares c Y*.V*[Sig']V'
+S U* in Sig
+pi : Vi[U*/X*] -| Deltai
+--------------------------------------------------------------
+c p* ? g : [Sig]V -| Y*, Delta*, g : {[]V[U*/X*] -> [Sig]V}
+
+***********************
+* p : V lets -| Delta *
+***********************
+
+------------
+x : V -| x:V
+
+D X* declares k V*    pi : Vi[U*/X*] -| Deltai
+----------------------------------------------
+k p* : D U* -| Delta*
+

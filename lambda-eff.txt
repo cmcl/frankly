@@ -1,0 +1,32 @@
+Lambda eff (with shallow handlers).
+
+Types
+-----
+
+V ::= X | D V* | [Sig]{C}
+C ::= F V | V -> C
+R ::= [Sig]C | [Sig]V => R
+
+Sig ::= S V*, Sig | empty | epsilon
+
+constructors have types like D X* declares k V*
+signatures S X* declares c Y*.V* [Sig] V'
+  (consider omitting Y* and Sig)
+
+Contexts
+--------
+
+G, Delta ::= . | G, X | G, x:V  ( | G, g C )
+
+Terms
+-----
+
+u, v ::= x | k v* | {d}
+   d ::= u! | d v | c v* | ret v | x -> d
+       | handle d* with b*
+   b ::= d | r -> d
+   r ::= p | c p* ? g
+   p ::= x | k p*
+
+...?
+

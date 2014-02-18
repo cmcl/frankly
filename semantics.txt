@@ -1,0 +1,29 @@
+CBPV version:
+
+don't actually need:  (d1|d2)|d3 == d1|(d2|d3)
+
+  {d}!       --> d
+  (p -> d) o --> s(d),   if p@o = s
+  (p -> d) o --> wrong,  if p@o undefined
+
+  (n|n') d  --> (n d|n' d)
+  (wrong|d) --> d
+  (o|d)     --> o
+
+  x@v           = [x |-> v]
+  (k p*)@(k v*) = (p*)@(v*)
+
+  p@(ret v)          = p@v
+  (c p* ? g)@E[c v*] = (p*)@(v*) + [g |-> {x -> E[x]}]
+  (op ? g)@E[o]      = [op |-> o, g |-> {x -> E[x]}]
+
+  E ::= [] | E d | n E | E|d | n|E
+
+  m ::= k m* | {d}
+  n ::= r -> d | n|n | o
+  o ::= c m* | ret m
+
+Perhaps wrong should be a special command?
+
+It's more fiddly to do a small-step semantics for Frank as the syntax
+is (deliberately) not closed under small-step reduction.

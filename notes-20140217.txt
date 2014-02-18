@@ -21,9 +21,9 @@ Terms
 -----
 
 u ::= x | d             -- is
-d ::= u! | d v          -- does
-v ::= u | k v* | {b*}   -- has
-b ::= v | r -> b        -- allows
+d ::= u! | d v | c v*   -- does
+v ::= u | k v* | {b}    -- has
+b ::= v | r -> b | b|b  -- allows
 r ::= p | c p* ? g      -- lets
 p ::= x | k p*          -- lets
 
@@ -36,7 +36,7 @@ Typing rules
 *******************
 
 x:V in G
-----------------
+---------------
 G [Sig]- x is V
 
 G [Sig]- d does [Sig']V   Sig' <= Sig
@@ -51,13 +51,13 @@ G [Sig]- u is U
 ----------------
 G [Sig]- V has u
 
-D X* declares K V*    G [Sig]- Vi[U*/X*] has vi
+D X* declares k V*    G [Sig]- Vi[U*/X*] has vi
 -----------------------------------------------
-G [Sig]- D U* has K v*
+G [Sig]- D U* has k v*
 
-G |- C allows bi
---------------------------------
-G [Sig]- {C} has {b1 | ... | bn}
+G |- C allows b
+--------------------
+G [Sig]- {C} has {b}
 
 *********************
 * G [Sig]- c does V *
@@ -71,6 +71,13 @@ G [Sig]- d does [Sig']V -> C    G [Sig'] V has v
 ------------------------------------------------
 G [Sig]- d v does C
 
+S X* declares c Y*.V* [Sig'] V
+S U* in Sig
+Sig' <= Sig
+G [Sig]- Vi[U*/X*,W*/Y*] has vi
+--------------------------------
+G [Sig]- c V* is V[U*/X*, W*/Y*]
+
 *******************
 * G |- C allows b *
 *******************
@@ -82,6 +89,11 @@ G |- [Sig]V allows v
 [Sig]V lets r -| Delta   G, Delta |- C allows b
 -----------------------------------------------
 G |- [Sig]V -> C allows r -> b
+
+G |- [Sig]V allows b    G |- [Sig]V allows b'
+---------------------------------------------
+G |- [Sig]V allows b|b'
+
 
 **************************
 * [Sig]V lets r -| Delta *
@@ -97,9 +109,9 @@ Vi[U*/X*] lets pi -| Deltai
 --------------------------------------------------------------
 [Sig]V lets c p* ? g -| Y*, Delta*, g : {[]V[U*/X*] -> [Sig]V}
 
-*****************
-* V lets p -| D *
-*****************
+*********************
+* V lets p -| Delta *
+*********************
 
 ----------------------
 V lets x -| x:V

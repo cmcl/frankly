@@ -1,0 +1,105 @@
+A unidirectional version of Frank... does this make sense at all?
+
+Types
+-----
+
+V ::= X | D V* | {C}
+C ::= [Sig]V | [Sig]V -> C
+
+Sig ::= S V*, Sig | empty | epsilon
+
+constructors have types like D X* declares k V*
+signatures S X* declares c Y*.V* [Sig] V'
+  (consider omitting Y* and Sig)
+
+Contexts
+--------
+
+G, Delta ::= . | G, X | G, x:V  ( | G, g C )
+
+Terms
+-----
+
+u ::= x | d             -- is
+d ::= u! | d v          -- does
+v ::= u | k v* | {b*}   -- has
+b ::= v | r -> b        -- allows
+r ::= p | c p* ? g      -- lets
+p ::= x | k p*          -- lets
+
+
+Typing rules
+------------
+
+******************
+* G [Sig]- u : V *
+******************
+
+x:V in G
+---------------
+G [Sig]- x : V
+
+G [Sig]- d : [Sig']V   Sig' <= Sig
+-------------------------------------
+G [Sig]- d : V
+
+******************
+* G [Sig]- v : V *
+******************
+
+D X* declares k V*    G [Sig]- vi : Vi[U*/X*]
+---------------------------------------------
+G [Sig]- k v* : D U*
+
+G |- bi : C
+------------------------------
+G [Sig]- {b1 | ... | bn} : {C}
+
+******************
+* G [Sig]- c : V *
+******************
+
+G [Sig]- u : {C}
+----------------
+G [Sig]- u! : C
+
+G [Sig]- d : [Sig']V -> C    G [Sig'] v : V
+-------------------------------------------
+G [Sig]- d v : C
+
+**************
+* G |- b : C *
+**************
+
+G [Sig]- v : V
+---------------
+G |- v : [Sig]V
+
+r : [Sig]V => Delta   G, Delta |- b : C
+---------------------------------------
+G |- r -> b : [Sig]V -> C
+
+**************************
+* r : [Sig]V => Delta *
+**************************
+
+p : V => Delta
+-------------------
+p : [Sig]V => Delta
+
+S X* declares c Y*.V*[Sig']V'
+S U* in Sig
+pi : Vi[U*/X*] => Deltai
+--------------------------------------------------------------
+c p* ? g : [Sig]V => Y*, Delta*, g : {[]V[U*/X*] -> [Sig]V}
+
+*****************
+* p : V => D *
+*****************
+
+----------------------
+x : V => x:V
+
+D X* declares k V*    pi : Vi[U*/X*] => Deltai
+----------------------------------------------
+k p*  : D U* => Delta*
