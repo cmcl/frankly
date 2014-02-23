@@ -1,0 +1,424 @@
+\documentclass[preprint]{sigplanconf}
+
+% US Letter page size
+%\pdfpagewidth=8.5in
+%\pdfpageheight=11in
+
+
+% The following \documentclass options may be useful:
+%
+% 10pt          To set in 10-point type instead of 9-point.
+% 11pt          To set in 11-point type instead of 9-point.
+% authoryear    To obtain author/year citation style instead of numeric.
+
+\usepackage{mathpartir}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{stmaryrd}
+
+\newcommand{\set}[1]{\{#1\}}
+
+\newcommand{\judgeword}[1]{~\mathbf{#1}~}
+\newcommand{\inferv}[2]{{#1} \judgeword{is} {#2}}
+\newcommand{\checkv}[2]{{#1} \judgeword{has} {#2}}
+\newcommand{\inferc}[2]{{#1} \judgeword{does} {#2}}
+\newcommand{\checkc}[2]{{#1} \judgeword{can} {#2}}
+\newcommand{\checkp}[2]{{#1} \judgeword{sees} {#2}}
+
+
+%\renewcommand{\sig}{\Sigma}
+%\renewcommand{\sigs}{\Sigma s}
+\newcommand{\sigentails}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\text{-\!-}}\,}
+
+\newcommand{\sigmodels}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\mathord{=}}\,}
+
+
+% \newcommand{\sigentails}[1]{\vdash_{#1}}
+
+\newcommand{\is}[4]  {#1 \sigentails{#2} \inferv{#3}{#4}}
+\newcommand{\has}[4] {#1 \sigentails{#2} \checkv{#3}{#4}}
+\newcommand{\does}[4]{#1 \sigentails{#2} \inferc{#3}{#4}}
+\newcommand{\can}[3] {#1 \vdash     \checkc{#2}{#3}}
+
+\newcommand{\pat}[3]{\checkp{#1}{#2} \dashv #3}
+\newcommand{\patg}[2]{\pat{#1}{#2}{\Gamma}}
+
+
+\newcommand{\isgs}{\is{\Gamma}{\sigs}}
+\newcommand{\hasgs}{\has{\Gamma}{\sigs}}
+\newcommand{\doesgs}{\does{\Gamma}{\sigs}}
+\newcommand{\cang}{\can{\Gamma}}
+
+\newcommand{\sig}{S}
+\newcommand{\sigs}{\Sigma}
+
+\newcommand{\X}{X}  % a type variable
+
+\newcommand{\E}{E}  % the effect variable
+
+\newcommand{\U}{U}
+\newcommand{\V}{V}
+\newcommand{\Us}{\overline{\U}}
+\newcommand{\Vs}{\overline{\V}}
+
+\newcommand{\C}{C}
+
+\newcommand{\tm}{t}
+\newcommand{\tu}{u}
+\newcommand{\tms}{\overline{\tm}}
+\newcommand{\tus}{\overline{\tu}}
+
+\newcommand{\p}{p}
+\newcommand{\ps}{\overline{\p}}
+
+\newcommand{\h}{h}
+
+\newcommand{\op}{\mathit{op}}
+
+\newcommand{\effbox}[1]{[#1]}
+\newcommand{\ret}[2]{\effbox{#1}{#2}}
+\newcommand{\template}[3]{{#1} \mathbin{\effbox{#2}} {#3}}
+
+\newcommand{\keyword}[1]{\mathsf{#1}}
+
+\newcommand{\handleSymbol}{\mathbin{?}}
+\newcommand{\yieldSymbol}{\mathbin{\prec}}
+\newcommand{\continueSymbol}{\mathbin{\triangleleft}}
+\newcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol \ret{#2}{#3}}}
+\newcommand{\handleTypePoly}[2]{\effbox{{#1} \yieldSymbol #2}}
+\newcommand{\handleRet}[1]{\effbox{#1}}
+\newcommand{\handleOp}[2]{\effbox{{#1} \continueSymbol {#2}}}
+\newcommand{\handle}[2]{{#1} \handleSymbol {#2}}
+
+\newcommand{\handleGen}[2]{\keyword{handle}~{#1}~\keyword{with}~{#2}}
+
+\newcommand{\thunk}[1]{\{{#1}\}}
+%\newcommand{\athunk}[2]{\thunk{#1}_{#2}}
+\newcommand{\athunk}[2]{[#2]\thunk{#1}}
+
+\newcommand{\force}[1]{{#1}!}
+\newcommand{\app}{\mathbin{\text{@}}}
+
+\newcommand{\con}{K}
+\newcommand{\D}{D}
+
+\newcommand{\args}{\mathit{args}}
+
+\newcommand{\rplus}{\mathbin{\mathord{+}\!\!\!\!\mathord{\shortrightarrow}}}
+\newcommand{\lplus}{\mathbin{\mathord{+}\!\!\!\!\!\mathord{\shortleftarrow}}}
+
+
+\newcommand{\VV}{\mathbb{V}}
+\newcommand{\VVs}{\overline{\VV}}
+\newcommand{\CC}{\mathbb{C}}
+
+\newcommand{\inst}[2]{\mathit{inst}_{#1}({#2})}
+\newcommand{\instt}[1]{\inst{\theta}{#1}}
+
+%% \newcommand{\oldinst}[3]{\mathit{inst}({#1},{#2},{#3})}
+%% \newcommand{\oldinstts}[1]{\oldinst{\theta}{\sigs}{#1}}
+
+%% \newcommand{\appsig}[2]{{#1}\mathord{\cdot}{#2}}
+
+
+
+\begin{document}
+
+%% \conferenceinfo{WXYZ '05}{date, City.} 
+%% \copyrightyear{2005} 
+%% \copyrightdata{[to be supplied]} 
+
+%% \titlebanner{banner above paper title}        % These are ignored unless
+%% \preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{Do Be Do Be Do}
+%% \subtitle{Subtitle Text, if any}
+
+\authorinfo{Frank Sinatra}
+           {University of Strathclyde}
+%%         {Email1}
+%% \authorinfo{Name2\and Name3}
+%%            {Affiliation2/3}
+%%            {Email2/3}
+
+\maketitle
+
+%% Structure:
+
+%%   introduction
+%%   examples
+%%   thunk
+%%     monomorphic thunk
+%%     polymorphic thunk (key contribution - diff polymorphism)
+%%   frank = thunk + handlers
+%%   dynamic semantics - by translation to Haskell?
+  
+
+%%%%%%%%%%%%%%%%%%%%%% Monomorphic Thunk
+
+\begin{figure*}
+
+
+\[
+\begin{array}{@{}r@{~}l@{}}
+\Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
+\\
+\U, \V &::= \thunk{\C} \mid \D~\Vs \mid \X \\
+\C     &::= \ret{\sigs}{\V} \mid \V \to \C \\
+\\
+\Gamma &::= \cdot \mid \Gamma, x : \V \\
+\\
+\sig  &::= \cdot \mid \op : \C, \sig \\
+\sigs &::= \cdot \mid \sig~\Vs, \sigs \\
+\end{array}
+\]
+
+Convenience:
+\begin{mathpar}
+\inferrule
+  {\doesgs{\force{\tu}~\tm}{\C}}
+  {\doesgs{\tu~\tm}{\C}}
+
+\inferrule
+  {\doesgs{\handle{\force{\h}}{\tm}}{\C}}
+  {\doesgs{\handle{\h}{\tm}}{\C}}
+\end{mathpar}
+
+
+$\boxed{\isgs{\tm}{\V}}$
+\begin{mathpar}
+\inferrule
+  {x:\V \in \Gamma}
+  {\is{\Gamma}{\sigs}{x}{\V}}
+
+\inferrule
+  {\doesgs{\tu}{\ret{\sigs'}{\V}} \\
+   \sigs' \leq \sigs}
+  {\isgs{\tu}{\V}}
+\end{mathpar}
+
+$\boxed{\hasgs{\V}{\tm}}$
+\begin{mathpar}
+\inferrule
+   {[\hasgs{\U_i}{\tm_i}]_i \\ \con : \Us \to \D~\Vs}
+   {\hasgs{\D~\Vs}{\con~\tms}}
+
+\inferrule
+  {\cang{\C}{\tm}}
+  {\hasgs{\thunk{\C}}{\thunk{\tm}}}
+
+\inferrule
+  {\isgs{\tu}{\U} \\ \U=\V}
+  {\hasgs{\V}{\tu}}
+\end{mathpar}
+
+$\boxed{\doesgs{\tm}{\C}}$
+\begin{mathpar}
+\inferrule
+  {\op : \C \in \sigs}
+  {\doesgs{\op}{\C}}
+
+\inferrule
+  {\isgs{\tu}{\thunk{\C}}}
+  {\doesgs{\force{\tu}}{\C}}
+
+\inferrule
+  {\doesgs{\tu}{\U \to \C} \\
+   \hasgs{\U}{\tm}}
+  {\doesgs{\tu ~ \tm}{\C}}
+
+\end{mathpar}
+
+$\boxed{\cang{\C}{\tm}}$
+\begin{mathpar}
+\inferrule
+  {\hasgs{\V}{\tm}}
+  {\cang{\ret{\sigs}{\V}}{\tm}}
+
+\inferrule
+  {[\pat{\U_i}{\p_i}{\Gamma_i}]_i \\
+   \can{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\C}{\tm}}
+  {\cang{\Us \to \C}{\ps \to \tm}}
+
+%% \inferrule
+%%   {\pat{\U}{\p}{\Gamma'} \\
+%%    \can{\Gamma, \Gamma'}{\C}{\tm}}
+%%   {\cang{\U \to \C}{\ps \to \tm}}
+
+\inferrule
+  {\cang{\C}{\tm} \\ \cang{\C}{\tu}}
+  {\cang{\C}{\tm \mid \tu}}
+\end{mathpar}
+
+$\boxed{\patg{\V}{\p}}$
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{\V}{x}{x : \V}}
+
+\inferrule
+  {[\pat{\U_i}{\p_i}{\Gamma_i}]_i \\ \con : \Us \to \D~\Vs}
+  {\pat{\D~\Vs}{\con~\ps}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
+\end{mathpar}
+\caption{Monomorphic Thunk}
+\end{figure*}
+
+%%%%%%%%%%%%%%%%%%%%%% Polymorphic Thunk
+
+%% \begin{figure*}
+
+%% \newcommand{\asigs}{\sigma}
+
+%% \[
+%% \begin{array}{@{}r@{~}l@{}}
+%% \VV &::= \thunk{\CC} \mid \D~\VVs \mid \X \\
+%% \CC &::= \ret{\asigs}{\VV} \mid \VV \to \CC \\
+%% \\
+%% \asigs &::= \cdot \mid \sig~\Vs, \asigs \mid \E \\
+%% \\
+%% \Gamma &::= \cdot \mid \Gamma, f : \VV \mid \Gamma, x : \V \\
+%% \end{array}
+%% \]
+
+%% \[
+%% \begin{array}{@{}r@{~}l@{\quad}l@{}}
+%% \oldinstts{\X}          &= \theta(\X) \\
+%% \oldinstts{\thunk{\CC}} &= \thunk{\oldinstts{\CC}} \\
+%% \oldinstts{\D~\VVs}     &= \D~\oldinstts{\VVs} \\
+%% \\
+%% \oldinstts{\ret{\asigs}{\VV}} &= \ret{\appsig{\asigs}{\sigs}}{\oldinstts{\VV}} \\
+%% \oldinstts{\VV \to \CC}       &= \oldinstts{\VV} \to \oldinstts{\CC} \\
+%% \\
+%% \appsig{\cdot}{\sigs} &= \cdot \\
+%% \appsig{\E}{\sigs} &= \sigs \\
+%% \appsig{\sig~\Vs, \asigs}{\sigs} &= \sig~\Vs, (\appsig{\asigs}{\sigs}) \backslash \sig \\
+%% \end{array}
+%% \]
+%% \newcommand{\FV}{\mathit{FV}}
+
+%% \begin{mathpar}
+%% \inferrule
+%%   {f:\VV \in \Gamma \\ \theta \in \FV(\VV) \to \V}
+%%   {\is{\Gamma}{\sigs}{f}{\oldinstts{\VV}}}
+%% \end{mathpar}
+
+%% \caption{Polymorphic Thunk}
+
+%% \end{figure*}
+
+\begin{figure*}
+
+\newcommand{\asigs}{\sigma}
+
+\[
+\begin{array}{@{}r@{~}l@{}}
+\VV &::= \thunk{\CC} \mid \D~\VVs \mid \X \\
+\CC &::= \ret{\asigs}{\VV} \mid \VV \to \CC \\
+\\
+\asigs &::= \cdot \mid \sig~\Vs, \asigs \mid \E \\
+\\
+\Gamma &::= \cdot \mid \Gamma, f : \VV \mid \Gamma, x : \V \\
+\end{array}
+\]
+
+\[
+\begin{array}{@{}r@{~}l@{\quad}l@{}}
+\instt{\X}          &= \theta(\X) \\
+\instt{\thunk{\CC}} &= \thunk{\instt{\CC}} \\
+\instt{\D~\VVs}     &= \D~\instt{\VVs} \\
+\\
+\instt{\ret{\asigs}{\VV}} &= \ret{\instt{\asigs}}{\instt{\VV}} \\
+\instt{\VV \to \CC}       &= \instt{\VV} \to \instt{\CC} \\
+\\
+\instt{\cdot}            &= \cdot \\
+\instt{\E}               &= \theta(\E) \\
+\instt{\sig~\Vs, \asigs} &= \sig~\instt{\Vs}, (\instt{\asigs} \backslash \sig) \\
+\end{array}
+\]
+\newcommand{\FV}{\mathit{FV}}
+
+\begin{mathpar}
+\inferrule
+  {f:\VV \in \Gamma \\ \theta : \FV(\VV) \to \V \\ \theta(\E) = \Sigma }
+  {\is{\Gamma}{\sigs}{f}{\instt{\VV}}}
+\end{mathpar}
+
+\caption{Polymorphic Thunk}
+
+\end{figure*}
+
+
+%%%%%%%%%%%%%%%%%%%%%% Frank = Thunk + handlers
+
+\begin{figure*}
+
+
+\begin{mathpar}
+\inferrule
+  {\doesgs{\h}{\handleType{\sigs'}{\sigs''}{\U} \to \C} \\
+   \has{\Gamma}{\sigs''}{\U}{\tm} \\
+   \sigs' \leq \sigs'' \leq \sigs \oplus \sigs'
+  }
+  {\doesgs{\handle{\h}{\tm}}{\C}}
+
+\\
+
+\inferrule
+  {\patg{\V}{\p}}
+  {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
+
+\inferrule
+  {\template{\op\,\Us}{}{\U} \in \sig' \\
+   [\pat{\U_i}{\p_i}{\Gamma_i}] \\
+   \pat{\thunk{\U \to \ret{\sigs''}{\V}}}{k}{\Gamma}}
+  {\pat{\handleType{\sigs'}{\sigs''}{\V}}
+       {\handleOp{\op~\ps}{k}}
+       {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
+
+\end{mathpar}
+
+
+
+\caption{Frank = Thunk + handlers}
+\end{figure*}
+
+%% \begin{abstract}
+%% This is the text of the abstract.
+%% \end{abstract}
+
+%% \category{CR-number}{subcategory}{third-level}
+
+%% \terms
+%% term1, term2
+
+%% \keywords
+%% keyword1, keyword2
+
+%% \section{Introduction}
+
+%% The text of the paper begins here.
+
+%% \appendix
+%% \section{Appendix Title}
+
+%% This is the text of the appendix, if you need one.
+
+%% \acks
+
+%% Acknowledgments, if needed.
+
+% We recommend abbrvnat bibliography style.
+
+% \bibliographystyle{abbrvnat}
+
+% The bibliography should be embedded for final submission.
+
+%% \begin{thebibliography}{}
+%% \softraggedright
+
+%% \bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
+%% P. Q. Smith, and X. Y. Jones. ...reference text...
+
+%% \end{thebibliography}
+
+\end{document}
