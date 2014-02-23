@@ -18,11 +18,10 @@ Terms
 -----
 
 u, v ::= x | k v* | {d}                  -- values
-       | /\X.v | u V
-       | /\epsilon.v | u Sig
+       | /\Z.v | u T
 d    ::= c v* | \x.d | d v | ret v | u!  -- computations
-       | /\X.d | d V
-       | /\epsilon.d | d Sig
+       | /\Z.d | d T
+       | rec f x.d
        | case u of
            (k x* |-> d)* 
        | handle d with 
