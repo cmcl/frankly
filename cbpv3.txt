@@ -1,0 +1,151 @@
+Types
+-----
+
+Sig ::= alpha | epsilon | empty | Sig, S V*
+
+Sig epsilon = Sig
+Sig alpha = alpha
+Sig empty = empty
+Sig (Sig', S V*) = Sig Sig', S V*
+
+U,V ::= D V* | X | [Sig]{C}  -- values
+C   ::= F V | P -> C         -- computations
+P   ::= (Sig, C)
+
+Contexts
+--------
+
+G, Delta ::= . | G, x:V | G, g:P
+
+Terms
+-----
+
+u, v ::= x | k v* | {d}                      -- values
+d    ::= g | c v* | \g.d | d d | ret v | u!  -- computations
+       | case u of
+           (k x* |-> d)* 
+       | handle d with 
+           (c x* ? g |-> d)*
+            x        |-> d
+
+Call-by-value embedding of Frank into CBPV:
+
+  [[ x ]]    = ret x
+  [[ f s* ]] = [[f]] [[s]]*
+
+  [[ g ]]    = g
+  [[ c ]]    = \g*.let x*=g* in c x*
+  [[ t! ]]   = let x=[[t]] in x!
+
+  [[ k s* ]]      = let x*=[[s*]] in ret (k x*)
+  [[ {m* -> s} ]] = ret {(\gm.)* [[s]]}
+  [[ case x of (k x* |-> s)* ]] =
+       case x of (k x* |-> [[s]])*
+  [[ handle m with (c x* ? g |-> s)* | x |-> s ]] =
+       handle gm with
+         (c x* ? g |-> [[s]])*
+          x        |-> [[s]]
+
+Sugar:
+
+  let x=d in d' == handle d with x |-> d'
+
+Typing rules
+------------
+
+**************
+* G |- u : V *
+**************
+
+x:V in G
+------------------
+G |- x : V
+
+G |- vi : Vi[U*/X*]
+k V* : D X*
+-------------------
+G |- k v* : D U*
+
+G [Sig]- d : C
+-------------------
+G |- {d} : [Sig]{C}
+
+******************
+* G [Sig]- d : C *
+******************
+
+dom(theta) = FV(P) \ (FV(G) union FV(Sig))
+theta(alpha) = Sig
+theta(epsilon) = epsilon
+inst(theta, P) = (Sig, C)
+------------------------------------------ weird
+G, g:P [Sig]- g : C
+
+c : V'(V*) in S U* in Sig
+G |- xi : Vi
+--------------------------
+G [Sig]- c x* : F V
+
+G, g:P [Sig]- d : C
+---------------------- weird
+G [Sig]- \g.d : P -> C
+
+G [Sig]- d : (Sig', C') -> C
+G [Sig Sig']- d' : C'
+---------------------------- weird
+G [Sig]- d d' : C
+
+(
+Standard abstraction and application are special cases of weird
+abstraction and application:
+
+  G, g:([], F V) [Sig]- d : C
+  -----------------------------
+  G [Sig]- \g.d : ([], FV) -> C
+
+  G [Sig]- d : ([], F V) -> C
+  G |- v : V
+  ---------------------------
+  G [Sig]- d (ret v) : C
+)
+
+G |- v : V
+--------------------
+G [Sig]- ret v : F V
+
+G |- u : [Sig]{C}
+-----------------
+G [Sig]- u! : C
+
+G |- u : D U*
+forall k V* : D U*
+  G, x*:V* [Sig]- dk : C
+-------------------------------------
+G [Sig]- case u of (k x* |-> dk)* : C
+
+G [Sig Sig']- d:F V
+forall c : Vc'(Vc*) in S U* in Sig'
+  G, x*:Vc*, g:(Sig', Vc' -> F V) [Sig]- dc : C
+G, x:V [Sig]- d' : C
+-----------------------------------------------
+G [Sig]- handle d with
+           (c x* ? g |-> dc)*
+            x        |-> d'    : C
+
+Instantiation
+-------------
+
+inst(theta, D V*)        = D (inst (theta, V*))
+inst(theta, X)           = theta(X)
+inst(theta, [Sig]{C})    = [inst(theta, Sig)]{inst(theta, C)}
+
+inst(theta, F V)         = F (inst(theta, V))
+inst(theta, P -> C)      = inst(theta, P) -> inst(theta, C)
+
+inst(theta, (Sig, C))    = (inst(theta, Sig), inst(theta, C))
+
+inst(theta, alpha)       = theta(alpha)
+inst(theta, epsilon)     = theta(epsilon)
+inst(theta, empty)       = empty
+inst(theta, (Sig, S V*)) = (inst(theta, Sig), S (inst(theta, V*)))
+

@@ -1,0 +1,116 @@
+Types
+-----
+
+Sig ::= alpha | epsilon | empty | Sig, S V*
+
+Sig epsilon = Sig
+Sig alpha = alpha
+Sig empty = empty
+Sig (Sig', S V*) = Sig Sig', S V*
+
+U,V ::= D V* | X | {C}
+C   ::= P(P*)
+P   ::= [Sig]V
+
+Contexts
+--------
+
+G, Delta ::= . | G, x:V | G, m:P | G, g:C
+
+Terms
+-----
+
+t ::= x | f s*              -- makes
+f ::= g | c | t!            -- can
+s ::= t | k s* | {m* -> s}  -- has
+    | case x of
+        (k x* |-> s)*
+    | handle m with 
+        (c x* ? g |-> s)*
+         x        |-> s
+
+Typing rules
+------------
+
+**********************
+* G [Sig]- u makes V *
+**********************
+
+x:V in G
+------------------
+G [Sig]- x makes V
+
+G [Sig]- f can [Sig]V(([Sig']V)*)
+G [Sig Sig'i]- V has si
+---------------------------------
+G [Sig]- f s* makes V
+
+********************
+* G [Sig]- f can C *
+********************
+
+dom(theta) = FV(C) \ (FV(G) union FV(Sig))
+theta(alpha) = Sig
+theta(epsilon) = epsilon
+inst(theta, C) = [Sig]V(P*)
+------------------------------------------
+G, g:C [Sig]- g can [Sig]V(P*)
+
+c : V'(V*) in S U* in Sig
+-----------------------------------
+G [Sig]- c can [Sig]V'([epsilon]V*)
+
+G [Sig]- t makes {C}
+--------------------
+G [Sig]- t! can C
+
+********************
+* G [Sig]- V has s *
+********************
+
+G [Sig]- t is V
+----------------
+G [Sig]- V has t
+
+G [Sig]- Vi[U*/X*] has si
+k V* : D X*
+-------------------------
+G [Sig]- D U* has k v*
+
+G, m*:P*  [Sig']- V has s
+------------------------------------
+G [Sig]- {[Sig']V(P*)} has {m* -> s}
+
+forall c : Vc(Vc*) in S U* in Sig'
+  G, x*:Vc*, g:[Sig']V([epsilon]Vc) [Sig]- W has sc
+G, x:V [Sig]- W has s
+-------------------------------------------------------
+G, m:[Sig Sig']V [Sig]- W has
+                          handle m with
+                            (c x* ? g |-> sc)*
+                             x        |-> s
+
+G [Sig]- t makes D U*
+forall k V* : D U*
+  G, x*:V* [Sig]- V has sk
+--------------------------
+G [Sig]- V has
+           case t of
+             (k x* |-> sk)*
+
+
+Instantiation
+-------------
+
+inst(theta, D V*)        = D (inst (theta, V*))
+inst(theta, X)           = theta(X)
+inst(theta, {C})    	 = {inst(theta, C)}
+
+inst(theta, P(P*))       = inst(theta, P)(inst(theta,P*))
+
+inst(theta, [Sig]V)      = [inst(theta, Sig)](inst(theta, V))
+
+inst(theta, alpha)       = theta(alpha)
+inst(theta, epsilon)     = theta(epsilon)
+inst(theta, empty)       = empty
+inst(theta, (Sig, S V*)) = (inst(theta, Sig), S (inst(theta, V*)))

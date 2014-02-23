@@ -1,0 +1,152 @@
+Types
+-----
+
+Sig ::= epsilon | empty | Sig, S V*
+
+U,V ::= D V* | X | forall X.V | [Sig]{C}     -- values
+C   ::= F V | V -> C | forall X.C            -- computations
+
+Z ::= X | epsilon
+T ::= V | Sig
+
+Contexts
+--------
+
+G, Delta ::= . | G, x:V
+
+Terms
+-----
+
+u, v ::= x | k v* | {d}                  -- values
+       | /\X.v | u V
+       | /\epsilon.v | u Sig
+d    ::= c v* | \x.d | d v | ret v | u!  -- computations
+       | /\X.d | d V
+       | /\epsilon.d | d Sig
+       | case u of
+           (k x* |-> d)* 
+       | handle d with 
+           (c x* ? g |-> d)*
+            x        |-> d
+
+Sugar:
+
+  let x=d in d' == handle d with x |-> d'
+
+Weird to explicit:
+
+  [[
+    dom(theta) = (FV((Sig', C')) \ (FV(G) union FV(Sig))
+    theta(alpha) = Sig
+    theta(epsilon) = epsilon
+    inst(theta, (Sig', C')) = (Sig, C)
+    ---------------------------------------------------- weird
+    G, g:(Sig', C') [Sig]- g : C
+  ]]
+=
+    theta(X*) = U*
+    ------------------------------------------------------
+    G, g:forall alpha X*.[Sig']{C'} [Sig]- (g Sig U*)! : C
+
+
+  [[
+    G, g:P [Sig]- d : C
+    ---------------------- weird
+    G [Sig]- \g.d : P -> C
+  ]]
+=
+    G, g:[Sig']{C'} [Sig]- d : C
+    ------------------------------------------------------------
+    G [Sig]- /\epsilon.\g.[[d]] : forall epsilon.[Sig']{C'} -> C
+
+  [[
+    G [Sig]- d : (Sig', C') -> C
+    G [Sig Sig']- d' : C'
+    ---------------------------- weird
+    G [Sig]- d d' : C
+  ]]
+=
+    G [Sig]- d : forall epsilon.[Sig']{C'} -> C
+    G |- {d'} : [ Sig'[Sig/epsilon] ]{C'}
+    ----------------------------------------------------
+    G [Sig]- d Sig {d'} : C
+
+
+Typing rules
+------------
+
+**************
+* G |- u : V *
+**************
+
+x:V in G
+------------------
+G |- x : V
+
+G |- vi : Vi[U*/X*]
+k V* : D X*
+-------------------
+G |- k v* : D U*
+
+G [Sig]- d : C
+-------------------
+G |- {d} : [Sig]{C}
+
+G |- v : V    Z notin FV(G) or FV(Sig)
+------------------------------------------
+G |- /\Z.v : forall Z.V
+
+G [Sig]- u : forall Z.V
+-----------------------
+G [Sig]- u T : V[T/Z]
+
+******************
+* G [Sig]- d : C *
+******************
+
+c : V'(V*) in S U* in Sig
+G |- xi : Vi
+--------------------------
+G [Sig]- c x* : F V
+
+G, x:V [Sig]- d : C
+----------------------
+G [Sig]- \x.d : V -> C
+
+G [Sig]- d : V -> C
+G |- v : V
+-------------------
+G [Sig]- d v : C
+
+G [Sig]- d : C    Z notin FV(G) or FV(Sig)
+------------------------------------------
+G [Sig]- /\Z.d : forall Z.C
+
+G [Sig]- d : forall Z.C
+-----------------------
+G [Sig]- d T : C[T/Z]
+
+G |- v : V
+--------------------
+G [Sig]- ret v : F V
+
+G |- u : [Sig]{C}
+-----------------
+G [Sig]- u! : C
+
+G |- u : D U*
+forall k V* : D U*
+  G, x*:V* [Sig]- dk : C
+-------------------------------------
+G [Sig]- case u of (k x* |-> dk)* : C
+
+
+G [Sig Sig']- d:F V
+forall c : Vc'(Vc*) in S U* in Sig'
+  G, x*:Vc*, g:forall epsilon.[Sig']{Vc' -> F V} [Sig]- dc : C
+G, x:V [Sig]- d' : C
+--------------------------------------------------------------
+G [Sig]- handle d with
+           (c x* ? g |-> dc)*
+            x        |-> d'    : C
+
