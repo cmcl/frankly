@@ -90,7 +90,7 @@ G [Sig]- V has
              (k x* |-> sk)*
 
 forall c : Vc(Vc*) in S U* in Sig'
-  G, x*:Vc*, g:[Sig']V([epsilon]Vc) [Sig]- W has sc
+  G, x*:Vc*, g:[Sig Sig']V([epsilon]Vc) [Sig]- W has sc
 G, x:V [Sig]- W has s
 -------------------------------------------------------
 G, m:[Sig Sig']V [Sig]- W has

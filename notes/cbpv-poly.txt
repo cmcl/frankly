@@ -142,7 +142,7 @@ G [Sig]- case u of (k x* |-> dk)* : C
 
 G [Sig Sig']- d:F V
 forall c : Vc'(Vc*) in S U* in Sig'
-  G, x*:Vc*, g:forall epsilon.[Sig']{Vc' -> F V} [Sig]- dc : C
+  G, x*:Vc*, g:[Sig Sig']{Vc' -> F V} [Sig]- dc : C
 G, x:V [Sig]- d' : C
 --------------------------------------------------------------
 G [Sig]- handle d with
