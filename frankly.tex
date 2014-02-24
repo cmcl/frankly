@@ -391,13 +391,13 @@ Syntax
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
 u, v &::=& x \mid k~\many{s} \mid \thunk{d} \\  % values
-d &::=& g \mid c~\many{v}                       % computations
-   \mid \lambda g.d \mid d~d \mid \keyword{ret}~v \mid \force{u} \\
+d, e &::=& g \mid c~\many{v}                     % computations
+   \mid \lambda g.e \mid d~e \mid \keyword{ret}~v \mid \force{u} \\
   &\mid& \keyword{case}~u~\keyword{of}~
-           \many{(k~\many{x} \mapsto d)} \\
+           \many{(k~\many{x} \mapsto e)} \\
   &\mid& \keyword{handle} ~d~ \keyword{with}~
-           \many{(\handle{c~\many{x}}{g} \mapsto d)} \medvert
-            x        \mapsto d \\
+           \many{(\handle{c~\many{x}}{g} \mapsto e)} \medvert
+            x        \mapsto e \\
 \end{array}
 \]
 
@@ -416,11 +416,11 @@ $\boxed{\valg{v}{V}}$
   {\valg{D~\many{U}}{k~\many{v}}}
 
 \inferrule
-  {\compgs{d}{C}}
-  {\valg{\thunk{d}}{\effbox{\sigs}\thunk{C}}}
+  {\compgs{e}{C}}
+  {\valg{\thunk{e}}{\effbox{\sigs}\thunk{C}}}
 \end{mathpar}
 
-$\boxed{\compgs{d}{C}}$
+$\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
   {\dom(\theta) = \FV(P) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
@@ -440,8 +440,8 @@ $\boxed{\compgs{d}{C}}$
 
 \inferrule
   {\compgs{d}{\effbox{\sigs'}C' \to C} \\
-   \comp{\Gamma}{\sigs~\sigs'}{d'}{C'}}
-  {\compgs{d~d'}{C}}
+   \comp{\Gamma}{\sigs~\sigs'}{e}{C'}}
+  {\compgs{d~e}{C}}
 
 \inferrule
   {\valg{v}{V}}
@@ -453,21 +453,21 @@ $\boxed{\compgs{d}{C}}$
 
 \inferrule
   {\valg{u}{D~\many{U}} \\
-   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{d_k}{C})_{k~\many{V} \in D~\many{U}}}
+   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
   {\compgs{\keyword{case}~ u ~\keyword{of}~
-               \many{(k~\many{x_k} \mapsto d_k)}}
+               \many{(k~\many{x_k} \mapsto e_k)}}
           {C}}
 
 \inferrule
   {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
    (\comp{\Gamma, \many{x_c}:\many{V},
                   g:\effbox{\sigs~\sigs'}(V' \to F~U)}
-       {\sigs}{d_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
-   \comp{\Gamma, x:U}{\sigs}{d'}{C}}
+       {\sigs}{e_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
+   \comp{\Gamma, x:U}{\sigs}{e}{C}}
   {\compgs
      {\keyword{handle}~ d ~\keyword{with}~
-           \many{\handle{c~\many{x_c}}{g} \mapsto d_c} \medvert
-           x \mapsto d'}
+           \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
+           x \mapsto e}
      {C}}
 \end{mathpar}
 
@@ -512,14 +512,14 @@ Syntax
 \begin{array}{@{}r@{~}c@{~}l@{}}
 u, v &::=& x \mid k~\many{s} \mid \thunk{d}  % values
              \mid \Lambda Z.v \mid u~T \\
-d &::=& c~\many{v}                           % computations
-   \mid \lambda x.d \mid d~v \mid \keyword{ret}~v \mid \force{u}
-   \mid \Lambda Z.d \mid d~T \\
+d, e &::=& c~\many{v}                        % computations
+   \mid \lambda x.e \mid d~v \mid \keyword{ret}~v \mid \force{u}
+   \mid \Lambda Z.e \mid d~T \\
   &\mid& \keyword{case}~u~\keyword{of}~
-           \many{(k~\many{x} \mapsto d)} \\
+           \many{(k~\many{x} \mapsto e)} \\
   &\mid& \keyword{handle} ~d~ \keyword{with}~
-           \many{(\handle{c~\many{x}}{g} \mapsto d)} \medvert
-            x        \mapsto d \\
+           \many{(\handle{c~\many{x}}{g} \mapsto e)} \medvert
+            x        \mapsto e \\
 \end{array}
 \]
 
@@ -538,8 +538,8 @@ $\boxed{\valg{v}{V}}$
   {\valg{D~\many{U}}{k~\many{v}}}
 
 \inferrule
-  {\compgs{d}{C}}
-  {\valg{\thunk{d}}{\effbox{\sigs}\thunk{C}}}
+  {\compgs{e}{C}}
+  {\valg{\thunk{e}}{\effbox{\sigs}\thunk{C}}}
 
 \inferrule
   {\valg{v}{V} \\
@@ -551,7 +551,7 @@ $\boxed{\valg{v}{V}}$
   {\valg{u~T}{V[T/Z]}}
 \end{mathpar}
 
-$\boxed{\compgs{d}{C}}$
+$\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
   {c : V(\many{V}) \in \sigs \\
@@ -559,8 +559,8 @@ $\boxed{\compgs{d}{C}}$
   {\compgs{c~\many{v}}{F~V}}
 
 \inferrule
-  {\comp{\Gamma, x:V}{\sigs}{d}{C}}
-  {\compgs{\lambda x. d}{V \to C}}
+  {\comp{\Gamma, x:V}{\sigs}{e}{C}}
+  {\compgs{\lambda x.e}{V \to C}}
 
 \inferrule
   {\compgs{d}{V \to C} \\
@@ -576,9 +576,9 @@ $\boxed{\compgs{d}{C}}$
   {\compgs{\force{u}}{C}}
 
 \inferrule
-  {\compgs{d}{C} \\
+  {\compgs{e}{C} \\
    Z \notin (\FV(\Gamma) \cup \FV(\sigs))}
-  {\compgs{\Lambda Z.d}{\forall Z.C}}
+  {\compgs{\Lambda Z.e}{\forall Z.C}}
 
 \inferrule
   {\compgs{d}{\forall Z.C}}
@@ -586,21 +586,21 @@ $\boxed{\compgs{d}{C}}$
 
 \inferrule
   {\valg{u}{D~\many{U}} \\
-   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{d_k}{C})_{k~\many{V} \in D~\many{U}}}
+   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
   {\compgs{\keyword{case}~ u ~\keyword{of}~
-               \many{(k~\many{x_k} \mapsto d_k)}}
+               \many{(k~\many{x_k} \mapsto e_k)}}
           {C}}
 
 \inferrule
   {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
    (\comp{\Gamma, \many{x_c}:\many{V},
                   g:\effbox{\sigs~\sigs'}\thunk{V' \to F~U}}
-       {\sigs}{d_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
-   \comp{\Gamma, x:U}{\sigs}{d'}{C}}
+       {\sigs}{e_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
+   \comp{\Gamma, x:U}{\sigs}{e}{C}}
   {\compgs
      {\keyword{handle}~ d ~\keyword{with}~
-           \many{\handle{c~\many{x_c}}{g} \mapsto d_c} \medvert
-           x \mapsto d'}
+           \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
+           x \mapsto e}
      {C}}
 \end{mathpar}
 
