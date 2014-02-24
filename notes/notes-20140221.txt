@@ -33,7 +33,7 @@ Typing rules
 ------------
 
 **********************
-* G [Sig]- u makes V *
+* G [Sig]- t makes V *
 **********************
 
 x:V in G
@@ -68,18 +68,26 @@ G [Sig]- t! can C
 * G [Sig]- V has s *
 ********************
 
-G [Sig]- t is V
-----------------
+G [Sig]- t makes V
+------------------
 G [Sig]- V has t
 
 G [Sig]- Vi[U*/X*] has si
 k V* : D X*
 -------------------------
-G [Sig]- D U* has k v*
+G [Sig]- D U* has k s*
 
 G, m*:P*  [Sig']- V has s
 ------------------------------------
 G [Sig]- {[Sig']V(P*)} has {m* -> s}
+
+G [Sig]- t makes D U*
+forall k V* : D U*
+  G, x*:V* [Sig]- V has sk
+--------------------------
+G [Sig]- V has
+           case t of
+             (k x* |-> sk)*
 
 forall c : Vc(Vc*) in S U* in Sig'
   G, x*:Vc*, g:[Sig']V([epsilon]Vc) [Sig]- W has sc
@@ -90,13 +98,6 @@ G, m:[Sig Sig']V [Sig]- W has
                             (c x* ? g |-> sc)*
                              x        |-> s
 
-G [Sig]- t makes D U*
-forall k V* : D U*
-  G, x*:V* [Sig]- V has sk
---------------------------
-G [Sig]- V has
-           case t of
-             (k x* |-> sk)*
 
 
 Instantiation

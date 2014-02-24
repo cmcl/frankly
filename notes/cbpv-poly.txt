@@ -91,22 +91,22 @@ G [Sig]- d : C
 -------------------
 G |- {d} : [Sig]{C}
 
-G |- v : V    Z notin FV(G) or FV(Sig)
-------------------------------------------
+G |- v : V    Z notin FV(G)
+---------------------------
 G |- /\Z.v : forall Z.V
 
-G [Sig]- u : forall Z.V
+G |- u : forall Z.V
 -----------------------
-G [Sig]- u T : V[T/Z]
+G |- u T : V[T/Z]
 
 ******************
 * G [Sig]- d : C *
 ******************
 
-c : V'(V*) in S U* in Sig
-G |- xi : Vi
---------------------------
-G [Sig]- c x* : F V
+c : V(V*) in S U* in Sig
+G |- vi : Vi
+-------------------------
+G [Sig]- c v* : F V
 
 G, x:V [Sig]- d : C
 ----------------------
@@ -117,14 +117,6 @@ G |- v : V
 -------------------
 G [Sig]- d v : C
 
-G [Sig]- d : C    Z notin FV(G) or FV(Sig)
-------------------------------------------
-G [Sig]- /\Z.d : forall Z.C
-
-G [Sig]- d : forall Z.C
------------------------
-G [Sig]- d T : C[T/Z]
-
 G |- v : V
 --------------------
 G [Sig]- ret v : F V
@@ -132,6 +124,14 @@ G [Sig]- ret v : F V
 G |- u : [Sig]{C}
 -----------------
 G [Sig]- u! : C
+
+G [Sig]- d : C    Z notin FV(G) or FV(Sig)
+------------------------------------------
+G [Sig]- /\Z.d : forall Z.C
+
+G [Sig]- d : forall Z.C
+-----------------------
+G [Sig]- d T : C[T/Z]
 
 G |- u : D U*
 forall k V* : D U*

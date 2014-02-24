@@ -15,16 +15,15 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{stmaryrd}
+\usepackage{MnSymbol}
 
 \newcommand{\set}[1]{\{#1\}}
+\newcommand{\many}{\overline}
+
+\newcommand{\FV}{\mathit{FV}}
+\newcommand{\dom}{\mathit{dom}}
 
 \newcommand{\judgeword}[1]{~\mathbf{#1}~}
-\newcommand{\inferv}[2]{{#1} \judgeword{is} {#2}}
-\newcommand{\checkv}[2]{{#1} \judgeword{has} {#2}}
-\newcommand{\inferc}[2]{{#1} \judgeword{does} {#2}}
-\newcommand{\checkc}[2]{{#1} \judgeword{can} {#2}}
-\newcommand{\checkp}[2]{{#1} \judgeword{sees} {#2}}
-
 
 %\renewcommand{\sig}{\Sigma}
 %\renewcommand{\sigs}{\Sigma s}
@@ -35,19 +34,33 @@
 
 % \newcommand{\sigentails}[1]{\vdash_{#1}}
 
-\newcommand{\is}[4]  {#1 \sigentails{#2} \inferv{#3}{#4}}
-\newcommand{\has}[4] {#1 \sigentails{#2} \checkv{#3}{#4}}
-\newcommand{\does}[4]{#1 \sigentails{#2} \inferc{#3}{#4}}
-\newcommand{\can}[3] {#1 \vdash     \checkc{#2}{#3}}
+\newcommand{\val}[3]  {#1 \vdash {#2} : {#3}}
+\newcommand{\comp}[4]  {#1 \sigentails{#2} {#3} : {#4}}
 
-\newcommand{\pat}[3]{\checkp{#1}{#2} \dashv #3}
+\newcommand{\valg}{\val{\Gamma}}
+\newcommand{\compgs}{\comp{\Gamma}{\sigs}}
+
+\newcommand{\is}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
+
+\newcommand{\makes}[4]  {#1 \sigentails{#2} {#3} \judgeword{makes} {#4}}
+\newcommand{\has}[4] {#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
+\newcommand{\can}[4]{#1 \sigentails{#2} {#3} \judgeword{can} {#4}}
+
+\newcommand{\does}[4]{#1 \sigentails{#2} {#3} \judgeword{does} {#4}}
+\newcommand{\kan}[3] {#1 \vdash {#2} \judgeword{can} {#3}}
+
+\newcommand{\pat}[3]{{#1} \judgeword{sees} {#2} \dashv #3}
 \newcommand{\patg}[2]{\pat{#1}{#2}{\Gamma}}
 
 
 \newcommand{\isgs}{\is{\Gamma}{\sigs}}
+
+\newcommand{\makesgs}{\makes{\Gamma}{\sigs}}
 \newcommand{\hasgs}{\has{\Gamma}{\sigs}}
+\newcommand{\cangs}{\can{\Gamma}{\sigs}}
+
 \newcommand{\doesgs}{\does{\Gamma}{\sigs}}
-\newcommand{\cang}{\can{\Gamma}}
+\newcommand{\kang}{\kan{\Gamma}}
 
 \newcommand{\sig}{S}
 \newcommand{\sigs}{\Sigma}
@@ -58,18 +71,18 @@
 
 \newcommand{\U}{U}
 \newcommand{\V}{V}
-\newcommand{\Us}{\overline{\U}}
-\newcommand{\Vs}{\overline{\V}}
+\newcommand{\Us}{\many{\U}}
+\newcommand{\Vs}{\many{\V}}
 
 \newcommand{\C}{C}
 
 \newcommand{\tm}{t}
 \newcommand{\tu}{u}
-\newcommand{\tms}{\overline{\tm}}
-\newcommand{\tus}{\overline{\tu}}
+\newcommand{\tms}{\many{\tm}}
+\newcommand{\tus}{\many{\tu}}
 
 \newcommand{\p}{p}
-\newcommand{\ps}{\overline{\p}}
+\newcommand{\ps}{\many{\p}}
 
 \newcommand{\h}{h}
 
@@ -109,10 +122,10 @@
 
 
 \newcommand{\VV}{\mathbb{V}}
-\newcommand{\VVs}{\overline{\VV}}
+\newcommand{\VVs}{\many{\VV}}
 \newcommand{\CC}{\mathbb{C}}
 
-\newcommand{\inst}[2]{\mathit{inst}_{#1}({#2})}
+\newcommand{\inst}[2]{\mathit{inst}({#1}, {#2})}
 \newcommand{\instt}[1]{\inst{\theta}{#1}}
 
 %% \newcommand{\oldinst}[3]{\mathit{inst}({#1},{#2},{#3})}
@@ -134,8 +147,12 @@
 \title{Do Be Do Be Do}
 %% \subtitle{Subtitle Text, if any}
 
-\authorinfo{Frank Sinatra}
+\authorinfo{Sam Lindley}
+           {The University of Edinburgh}
+           {}
+\authorinfo{Conor McBride}
            {University of Strathclyde}
+           {}
 %%         {Email1}
 %% \authorinfo{Name2\and Name3}
 %%            {Affiliation2/3}
@@ -145,125 +162,469 @@
 
 %% Structure:
 
-%%   introduction
-%%   examples
-%%   thunk
-%%     monomorphic thunk
-%%     polymorphic thunk (key contribution - diff polymorphism)
-%%   frank = thunk + handlers
-%%   dynamic semantics - by translation to Haskell?
-  
+%%   Introduction
+%%   Examples
+%%     parsing
+%%     pipes
+%%     ...
+%%   Frank syntax and type system (source language)
+%%     semantics by elaboration into successively simpler languages
+%%   pattern matching compilation
+%%     option to expose non-exhaustive/incomplete pattern matching as
+%%     concrete effects
+%%   CBPV
+%%   Explicit polymorphism
+%%   Small-step semantics (see handlers in action)
+%%
+%%   Related work
+%%
+%%     Plotkin+Power, Plotkin+Pretnar, Hancock, Eff, Brady, Kiselyov
+%%     et al, Felleisen, Kammar et al, Filinski, Koka, Ahmen+Plotkin,
+%%     Staton, Kleisli arrows of outrageous fortune, data types a la carte
+%%
+%%   Future work
+%%     Efficient implementation
+%%     Dependent types/session types/indexing
+%%     Seemless syntactic support for the data type view of
+%%     computations
+%%     Handlers for arrows and idioms
+%%     Relationship with type classes/modules
 
-%%%%%%%%%%%%%%%%%%%%%% Monomorphic Thunk
+\section{Introduction}
+  
+\section{Examples}
+
+
+\section{The source language (Frank)}
+
+Frank has a number of distinctive features.
+
+Inspired by Levy's call-by-push-value (CBPV) calculus, Frank makes an
+explicit distinction between computation and value types. However,
+where CBPV also has a clear distinction between value terms and
+computation terms, Frank is less rigid. The motivation for this design
+is to reduce boilerplate in source programs. Frank combines the
+advantages of CBPV, call-by-value (a la ML), and effect typing.
+
+With future extensions for dependent types in mind, Frank adopts a
+bidirectional typing discipline. A side-effect is that one cannot
+write beta-redexes in Frank. We do not view this as a disadvantage.
+
+Inspired by the observation that applying a function to a value is
+equivalent to applying a handler to a pure computation, handlers and
+functions are unified in Frank. Handlers are further generalised to
+multi-handlers, which handle multiple computations simulataneously.
+
+Frank provides a novel form of effect polymorphism, in which it is
+never necessary to mention the names of effect variables.
+
+We explain the semantics of Frank programs through a series of program
+transformations.
+
+First, we take a fairly standard approach to compiling away pattern
+matching (Core Frank). As we may match simultaneously against multiple
+side-effecting computations, we must be careful about
+order. Optionally, we can expose non-exhaustive/incomplete pattern
+matching as concrete effects.
+
+Second, we make the distinction between values terms and computations
+explicit, as in CBPV (comp-eff).
+
+Finally, we make polymorphism explicit. Our ultimate target is F-eff,
+an effect-polymorphic variant of Kammar et al's CBPV-inspired
+lambda-eff calculus. The small-step semantics of F-eff is a
+straightforward variant of that of lambda-eff.
+
+
+
+
+
+
+\section{Pattern matching compilation (Core Frank)}
 
 \begin{figure*}
-
+Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-\Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
+U, V &::= D~\many{V} \mid X \mid  \thunk{C} \\
+C    &::= P(\many{P}) \\
+P    &::= \effbox{\sigs} \\
 \\
-\U, \V &::= \thunk{\C} \mid \D~\Vs \mid \X \\
-\C     &::= \ret{\sigs}{\V} \mid \V \to \C \\
+\sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+\sigs &::=
+  \alpha \mid \varepsilon \mid \emptyset \mid \sigs, \sig (\many{V}) \\
 \\
-\Gamma &::= \cdot \mid \Gamma, x : \V \\
-\\
-\sig  &::= \cdot \mid \op : \C, \sig \\
-\sigs &::= \cdot \mid \sig~\Vs, \sigs \\
+\Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, g:C \\
 \end{array}
 \]
 
-Convenience:
+Syntax
+
+\[
+\begin{array}{@{}r@{~}c@{~}l@{}}
+t &::=& x \mid f~\many{s}       \\ % makes
+f &::=& g \mid c \mid \force{t}     \\ % can
+s &::=& t \mid k~\many{s}          % has
+          \mid \thunk{\many{m} \to s}  \\ 
+  &\mid& \keyword{case}~x~\keyword{of}~
+           \many{(k~\many{x} \mapsto s)} \\
+  &\mid& \keyword{handle} ~m~ \keyword{with}~
+           \many{(\handle{c~\many{x}}{g} \mapsto s)} \medvert
+            x        \mapsto s \\
+\end{array}
+\]
+
+Typing rules
+\medskip
+
+$\boxed{\makesgs{t}{V}}$
 \begin{mathpar}
 \inferrule
-  {\doesgs{\force{\tu}~\tm}{\C}}
-  {\doesgs{\tu~\tm}{\C}}
+  {x:V \in \Gamma}
+  {\makesgs{x}{V}}
 
 \inferrule
-  {\doesgs{\handle{\force{\h}}{\tm}}{\C}}
-  {\doesgs{\handle{\h}{\tm}}{\C}}
+  {\cangs{f}{\effbox{\sigs}V(\many{\effbox{\sigs'}V})} \\
+   \has{\Gamma}{\sigs\,\sigs'_i}{V_i}{s_i}}
+  {\makesgs{f~\many{s}}{V}}
 \end{mathpar}
 
+$\boxed{\cangs{f}{C}}$
 
-$\boxed{\isgs{\tm}{\V}}$
 \begin{mathpar}
 \inferrule
-  {x:\V \in \Gamma}
-  {\is{\Gamma}{\sigs}{x}{\V}}
+  {\dom(\theta) = \FV(C) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+   \theta(\alpha) = \sigs \\
+   \theta(\varepsilon) = \varepsilon \\
+   \inst{\theta}{C} = \effbox{\sigs}V(\many{P})}
+  {\can{\Gamma, g:C}{\sigs}{g}{\effbox{\sigs}V(\many{P})}}
 
 \inferrule
-  {\doesgs{\tu}{\ret{\sigs'}{\V}} \\
-   \sigs' \leq \sigs}
-  {\isgs{\tu}{\V}}
+  {c : V'(\many{V}) \in \sig~\many{U} \in \sigs}
+  {\cangs{c}{\effbox{\sigs}V'(\effbox{\varepsilon}\many{V})}}
+
+\inferrule
+  {\makesgs{t}{\thunk{C}}}
+  {\cangs{\force{t}}{C}}
 \end{mathpar}
 
-$\boxed{\hasgs{\V}{\tm}}$
+$\boxed{\hasgs{V}{s}}$
+
 \begin{mathpar}
 \inferrule
-   {[\hasgs{\U_i}{\tm_i}]_i \\ \con : \Us \to \D~\Vs}
-   {\hasgs{\D~\Vs}{\con~\tms}}
+  {\makesgs{t}{V}}
+  {\hasgs{V}{t}}
 
 \inferrule
-  {\cang{\C}{\tm}}
-  {\hasgs{\thunk{\C}}{\thunk{\tm}}}
+  {\hasgs{V_i[\many{U}/\many{X}]}{s_i} \\
+   k~\many{V} \in D~\many{X}}
+  {\hasgs{D~\many{U}}{k~\many{s}}}
 
 \inferrule
-  {\isgs{\tu}{\U} \\ \U=\V}
-  {\hasgs{\V}{\tu}}
+  {\has{\Gamma, \many{m}:\many{P}}{\sigs'}{V}{s}}
+  {\hasgs{\thunk{\effbox{\sigs'}V(\many{P})}}{\thunk{\many{m} \to s}}}
+
+\inferrule
+  {\makesgs{t}{D~\many{U}} \\
+   (\has{\Gamma, \many{x_k}:\many{V}}{\sigs}{V}{s_k})_{k~\many{V} \in D~\many{U}}}
+  {\hasgs{V}{\keyword{case}~ t ~\keyword{of}~
+               \many{(k~\many{x_k} \mapsto s_k)}}}
+
+\inferrule
+  {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs'}V'(\effbox{\varepsilon}U)}
+       {\sig}{W}{s_c})_{c : V'(\many{V}) \in \sigs'} \\
+   \has{\Gamma, x:U}{\sigs}{W}{s}}
+  {\has{\Gamma, m:\effbox{\sigs~\sigs'}V}{\sigs}
+     {W}{\keyword{handle}~ m ~\keyword{with}~
+           \many{\handle{c~\many{x_c}}{g} \mapsto s_c} \medvert
+           x \mapsto s}}
 \end{mathpar}
 
-$\boxed{\doesgs{\tm}{\C}}$
-\begin{mathpar}
-\inferrule
-  {\op : \C \in \sigs}
-  {\doesgs{\op}{\C}}
-
-\inferrule
-  {\isgs{\tu}{\thunk{\C}}}
-  {\doesgs{\force{\tu}}{\C}}
-
-\inferrule
-  {\doesgs{\tu}{\U \to \C} \\
-   \hasgs{\U}{\tm}}
-  {\doesgs{\tu ~ \tm}{\C}}
-
-\end{mathpar}
-
-$\boxed{\cang{\C}{\tm}}$
-\begin{mathpar}
-\inferrule
-  {\hasgs{\V}{\tm}}
-  {\cang{\ret{\sigs}{\V}}{\tm}}
-
-\inferrule
-  {[\pat{\U_i}{\p_i}{\Gamma_i}]_i \\
-   \can{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\C}{\tm}}
-  {\cang{\Us \to \C}{\ps \to \tm}}
-
-%% \inferrule
-%%   {\pat{\U}{\p}{\Gamma'} \\
-%%    \can{\Gamma, \Gamma'}{\C}{\tm}}
-%%   {\cang{\U \to \C}{\ps \to \tm}}
-
-\inferrule
-  {\cang{\C}{\tm} \\ \cang{\C}{\tu}}
-  {\cang{\C}{\tm \mid \tu}}
-\end{mathpar}
-
-$\boxed{\patg{\V}{\p}}$
-\begin{mathpar}
-\inferrule
-  { }
-  {\pat{\V}{x}{x : \V}}
-
-\inferrule
-  {[\pat{\U_i}{\p_i}{\Gamma_i}]_i \\ \con : \Us \to \D~\Vs}
-  {\pat{\D~\Vs}{\con~\ps}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
-\end{mathpar}
-\caption{Monomorphic Thunk}
+\caption{Core Frank}
 \end{figure*}
 
-%%%%%%%%%%%%%%%%%%%%%% Polymorphic Thunk
+\section{Towards call-by-push value (comp-eff)}
+
+\section{Explicit polymorphism (F-eff)}
+
+\begin{figure*}
+
+Types, signatures, type environments
+
+\[
+\begin{array}{@{}r@{~}l@{}}
+U, V &::= D~\many{V} \mid X \mid \effbox{\sigs}\thunk{C} \mid \forall X.V \\
+C    &::= F~V \mid V \to C \mid \forall X.C \\
+\\
+Z    &::= X \mid \varepsilon \\
+T    &::= V \mid \sigs \\
+\\
+\sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+\sigs &::=
+  \varepsilon \mid \emptyset \mid \sigs, \sig (\many{V}) \\
+\\
+\Gamma &::= \cdot \mid \Gamma, x:V \\
+\end{array}
+\]
+
+Syntax
+
+\[
+\begin{array}{@{}r@{~}c@{~}l@{}}
+u, v &::=& x \mid k~\many{s} \mid \thunk{d}  % values
+             \mid \Lambda Z.v \mid u~T \\
+d &::=& c~\many{v}                           % computations
+   \mid \lambda x.d \mid d~v \mid \keyword{ret}~v \mid \force{u}
+   \mid \Lambda Z.d \mid d~T \\
+  &\mid& \keyword{case}~u~\keyword{of}~
+           \many{(k~\many{x} \mapsto d)} \\
+  &\mid& \keyword{handle} ~d~ \keyword{with}~
+           \many{(\handle{c~\many{x}}{g} \mapsto d)} \medvert
+            x        \mapsto d \\
+\end{array}
+\]
+
+Typing rules
+\medskip
+
+$\boxed{\valg{v}{V}}$
+\begin{mathpar}
+\inferrule
+  {x:V \in \Gamma}
+  {\valg{x}{V}}
+
+\inferrule
+  {\valg{V_i[\many{U}/\many{X}]}{v_i} \\
+   k~\many{V} \in D~\many{X}}
+  {\valg{D~\many{U}}{k~\many{v}}}
+
+\inferrule
+  {\compgs{d}{C}}
+  {\valg{\thunk{d}}{\effbox{\sigs}\thunk{C}}}
+
+\inferrule
+  {\valg{v}{V} \\
+   Z \notin \FV(\Gamma)}
+  {\valg{\Lambda Z.v}{\forall Z.V}}
+
+\inferrule
+  {\valg{u}{\forall Z.V}}
+  {\valg{u~T}{V[T/Z]}}
+\end{mathpar}
+
+$\boxed{\compgs{d}{C}}$
+\begin{mathpar}
+\inferrule
+  {c : V(\many{V}) \in \sigs \\
+   \valg{v_i}{V_i}}
+  {\compgs{c~\many{v}}{F~V}}
+
+\inferrule
+  {\comp{\Gamma, x:V}{\sigs}{d}{C}}
+  {\compgs{\lambda x. d}{V \to C}}
+
+\inferrule
+  {\compgs{d}{V \to C}}
+  {\valg{v}{V}}
+
+\inferrule
+  {\valg{v}{V}}
+  {\compgs{\keyword{ret}~v}{F~V}}
+
+\inferrule
+  {\valg{u}{\effbox{\sigs}\thunk{C}}}
+  {\compgs{\force{u}}{C}}
+
+\inferrule
+  {\compgs{d}{C} \\
+   Z \notin (\FV(\Gamma) \cup \FV(\sigs))}
+  {\compgs{\Lambda Z.d}{\forall Z.C}}
+
+\inferrule
+  {\compgs{d}{\forall Z.C}}
+  {\compgs{d~T}{V[T/Z]}}
+
+\inferrule
+  {\valg{u}{D~\many{U}} \\
+   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{d_k}{C})_{k~\many{V} \in D~\many{U}}}
+  {\compgs{\keyword{case}~ u ~\keyword{of}~
+               \many{(k~\many{x_k} \mapsto d_k)}}
+          {C}}
+
+\inferrule
+  {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
+   (\comp{\Gamma, \many{x_c}:\many{V},
+                  g:\forall \varepsilon.\effbox{\sigs'}\thunk{V' \to F~U}}
+       {\sigs}{d_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
+   \comp{\Gamma, x:U}{\sigs}{d'}{C}}
+  {\compgs
+     {\keyword{handle}~ m ~\keyword{with}~
+           \many{\handle{c~\many{x_c}}{g} \mapsto d_c} \medvert
+           x \mapsto d'}
+     {C}}
+\end{mathpar}
+
+\caption{F-eff}
+\end{figure*}
+
+\section{Small-step semantics}
+
+\section{Related work}
+
+\section{Conclusion and future work}
+
+%% %%%%%%%%%%%%%%%%%%%%%% Monomorphic Thunk
+
+%% \begin{figure*}
+
+
+%% \[
+%% \begin{array}{@{}r@{~}l@{}}
+%% \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
+%% \\
+%% \U, \V &::= \thunk{\C} \mid \D~\Vs \mid \X \\
+%% \C     &::= \ret{\sigs}{\V} \mid \V \to \C \\
+%% \\
+%% \Gamma &::= \cdot \mid \Gamma, x : \V \\
+%% \\
+%% \sig  &::= \cdot \mid \op : \C, \sig \\
+%% \sigs &::= \cdot \mid \sig~\Vs, \sigs \\
+%% \end{array}
+%% \]
+
+%% Convenience:
+%% \begin{mathpar}
+%% \inferrule
+%%   {\doesgs{\force{\tu}~\tm}{\C}}
+%%   {\doesgs{\tu~\tm}{\C}}
+
+%% \inferrule
+%%   {\doesgs{\handle{\force{\h}}{\tm}}{\C}}
+%%   {\doesgs{\handle{\h}{\tm}}{\C}}
+%% \end{mathpar}
+
+
+%% $\boxed{\isgs{\tm}{\V}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {x:\V \in \Gamma}
+%%   {\is{\Gamma}{\sigs}{x}{\V}}
+
+%% \inferrule
+%%   {\doesgs{\tu}{\ret{\sigs'}{\V}} \\
+%%    \sigs' \leq \sigs}
+%%   {\isgs{\tu}{\V}}
+%% \end{mathpar}
+
+%% $\boxed{\hasgs{\V}{\tm}}$
+%% \begin{mathpar}
+%% \inferrule
+%%    {[\hasgs{\U_i}{\tm_i}]_i \\ \con : \Us \to \D~\Vs}
+%%    {\hasgs{\D~\Vs}{\con~\tms}}
+
+%% \inferrule
+%%   {\kang{\C}{\tm}}
+%%   {\hasgs{\thunk{\C}}{\thunk{\tm}}}
+
+%% \inferrule
+%%   {\isgs{\tu}{\U} \\ \U=\V}
+%%   {\hasgs{\V}{\tu}}
+%% \end{mathpar}
+
+%% $\boxed{\doesgs{\tm}{\C}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {\op : \C \in \sigs}
+%%   {\doesgs{\op}{\C}}
+
+%% \inferrule
+%%   {\isgs{\tu}{\thunk{\C}}}
+%%   {\doesgs{\force{\tu}}{\C}}
+
+%% \inferrule
+%%   {\doesgs{\tu}{\U \to \C} \\
+%%    \hasgs{\U}{\tm}}
+%%   {\doesgs{\tu ~ \tm}{\C}}
+
+%% \end{mathpar}
+
+%% $\boxed{\kang{\C}{\tm}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {\hasgs{\V}{\tm}}
+%%   {\kang{\ret{\sigs}{\V}}{\tm}}
+
+%% \inferrule
+%%   {[\pat{\U_i}{\p_i}{\Gamma_i}]_i \\
+%%    \kan{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\C}{\tm}}
+%%   {\kang{\Us \to \C}{\ps \to \tm}}
+
+%% %% \inferrule
+%% %%   {\pat{\U}{\p}{\Gamma'} \\
+%% %%    \kan{\Gamma, \Gamma'}{\C}{\tm}}
+%% %%   {\kang{\U \to \C}{\ps \to \tm}}
+
+%% \inferrule
+%%   {\kang{\C}{\tm} \\ \kang{\C}{\tu}}
+%%   {\kang{\C}{\tm \mid \tu}}
+%% \end{mathpar}
+
+%% $\boxed{\patg{\V}{\p}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   { }
+%%   {\pat{\V}{x}{x : \V}}
+
+%% \inferrule
+%%   {[\pat{\U_i}{\p_i}{\Gamma_i}]_i \\ \con : \Us \to \D~\Vs}
+%%   {\pat{\D~\Vs}{\con~\ps}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
+%% \end{mathpar}
+%% \caption{Monomorphic Thunk}
+%% \end{figure*}
+
+%% %%%%%%%%%%%%%%%%%%%%%% Polymorphic Thunk
+
+%% %% \begin{figure*}
+
+%% %% \newcommand{\asigs}{\sigma}
+
+%% %% \[
+%% %% \begin{array}{@{}r@{~}l@{}}
+%% %% \VV &::= \thunk{\CC} \mid \D~\VVs \mid \X \\
+%% %% \CC &::= \ret{\asigs}{\VV} \mid \VV \to \CC \\
+%% %% \\
+%% %% \asigs &::= \cdot \mid \sig~\Vs, \asigs \mid \E \\
+%% %% \\
+%% %% \Gamma &::= \cdot \mid \Gamma, f : \VV \mid \Gamma, x : \V \\
+%% %% \end{array}
+%% %% \]
+
+%% %% \[
+%% %% \begin{array}{@{}r@{~}l@{\quad}l@{}}
+%% %% \oldinstts{\X}          &= \theta(\X) \\
+%% %% \oldinstts{\thunk{\CC}} &= \thunk{\oldinstts{\CC}} \\
+%% %% \oldinstts{\D~\VVs}     &= \D~\oldinstts{\VVs} \\
+%% %% \\
+%% %% \oldinstts{\ret{\asigs}{\VV}} &= \ret{\appsig{\asigs}{\sigs}}{\oldinstts{\VV}} \\
+%% %% \oldinstts{\VV \to \CC}       &= \oldinstts{\VV} \to \oldinstts{\CC} \\
+%% %% \\
+%% %% \appsig{\cdot}{\sigs} &= \cdot \\
+%% %% \appsig{\E}{\sigs} &= \sigs \\
+%% %% \appsig{\sig~\Vs, \asigs}{\sigs} &= \sig~\Vs, (\appsig{\asigs}{\sigs}) \backslash \sig \\
+%% %% \end{array}
+%% %% \]
+%% %% \newcommand{\FV}{\mathit{FV}}
+
+%% %% \begin{mathpar}
+%% %% \inferrule
+%% %%   {f:\VV \in \Gamma \\ \theta \in \FV(\VV) \to \V}
+%% %%   {\is{\Gamma}{\sigs}{f}{\oldinstts{\VV}}}
+%% %% \end{mathpar}
+
+%% %% \caption{Polymorphic Thunk}
+
+%% %% \end{figure*}
 
 %% \begin{figure*}
 
@@ -282,105 +643,63 @@ $\boxed{\patg{\V}{\p}}$
 
 %% \[
 %% \begin{array}{@{}r@{~}l@{\quad}l@{}}
-%% \oldinstts{\X}          &= \theta(\X) \\
-%% \oldinstts{\thunk{\CC}} &= \thunk{\oldinstts{\CC}} \\
-%% \oldinstts{\D~\VVs}     &= \D~\oldinstts{\VVs} \\
+%% \instt{\X}          &= \theta(\X) \\
+%% \instt{\thunk{\CC}} &= \thunk{\instt{\CC}} \\
+%% \instt{\D~\VVs}     &= \D~\instt{\VVs} \\
 %% \\
-%% \oldinstts{\ret{\asigs}{\VV}} &= \ret{\appsig{\asigs}{\sigs}}{\oldinstts{\VV}} \\
-%% \oldinstts{\VV \to \CC}       &= \oldinstts{\VV} \to \oldinstts{\CC} \\
+%% \instt{\ret{\asigs}{\VV}} &= \ret{\instt{\asigs}}{\instt{\VV}} \\
+%% \instt{\VV \to \CC}       &= \instt{\VV} \to \instt{\CC} \\
 %% \\
-%% \appsig{\cdot}{\sigs} &= \cdot \\
-%% \appsig{\E}{\sigs} &= \sigs \\
-%% \appsig{\sig~\Vs, \asigs}{\sigs} &= \sig~\Vs, (\appsig{\asigs}{\sigs}) \backslash \sig \\
+%% \instt{\cdot}            &= \cdot \\
+%% \instt{\E}               &= \theta(\E) \\
+%% \instt{\sig~\Vs, \asigs} &= \sig~\instt{\Vs}, (\instt{\asigs} \backslash \sig) \\
 %% \end{array}
 %% \]
-%% \newcommand{\FV}{\mathit{FV}}
 
 %% \begin{mathpar}
 %% \inferrule
-%%   {f:\VV \in \Gamma \\ \theta \in \FV(\VV) \to \V}
-%%   {\is{\Gamma}{\sigs}{f}{\oldinstts{\VV}}}
+%%   {f:\VV \in \Gamma \\ \theta : \FV(\VV) \to \V \\ \theta(\E) = \Sigma }
+%%   {\is{\Gamma}{\sigs}{f}{\instt{\VV}}}
 %% \end{mathpar}
 
 %% \caption{Polymorphic Thunk}
 
 %% \end{figure*}
 
-\begin{figure*}
 
-\newcommand{\asigs}{\sigma}
+%% %%%%%%%%%%%%%%%%%%%%%% Frank = Thunk + handlers
 
-\[
-\begin{array}{@{}r@{~}l@{}}
-\VV &::= \thunk{\CC} \mid \D~\VVs \mid \X \\
-\CC &::= \ret{\asigs}{\VV} \mid \VV \to \CC \\
-\\
-\asigs &::= \cdot \mid \sig~\Vs, \asigs \mid \E \\
-\\
-\Gamma &::= \cdot \mid \Gamma, f : \VV \mid \Gamma, x : \V \\
-\end{array}
-\]
-
-\[
-\begin{array}{@{}r@{~}l@{\quad}l@{}}
-\instt{\X}          &= \theta(\X) \\
-\instt{\thunk{\CC}} &= \thunk{\instt{\CC}} \\
-\instt{\D~\VVs}     &= \D~\instt{\VVs} \\
-\\
-\instt{\ret{\asigs}{\VV}} &= \ret{\instt{\asigs}}{\instt{\VV}} \\
-\instt{\VV \to \CC}       &= \instt{\VV} \to \instt{\CC} \\
-\\
-\instt{\cdot}            &= \cdot \\
-\instt{\E}               &= \theta(\E) \\
-\instt{\sig~\Vs, \asigs} &= \sig~\instt{\Vs}, (\instt{\asigs} \backslash \sig) \\
-\end{array}
-\]
-\newcommand{\FV}{\mathit{FV}}
-
-\begin{mathpar}
-\inferrule
-  {f:\VV \in \Gamma \\ \theta : \FV(\VV) \to \V \\ \theta(\E) = \Sigma }
-  {\is{\Gamma}{\sigs}{f}{\instt{\VV}}}
-\end{mathpar}
-
-\caption{Polymorphic Thunk}
-
-\end{figure*}
+%% \begin{figure*}
 
 
-%%%%%%%%%%%%%%%%%%%%%% Frank = Thunk + handlers
+%% \begin{mathpar}
+%% \inferrule
+%%   {\doesgs{\h}{\handleType{\sigs'}{\sigs''}{\U} \to \C} \\
+%%    \has{\Gamma}{\sigs''}{\U}{\tm} \\
+%%    \sigs' \leq \sigs'' \leq \sigs \oplus \sigs'
+%%   }
+%%   {\doesgs{\handle{\h}{\tm}}{\C}}
 
-\begin{figure*}
+%% \\
 
+%% \inferrule
+%%   {\patg{\V}{\p}}
+%%   {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
 
-\begin{mathpar}
-\inferrule
-  {\doesgs{\h}{\handleType{\sigs'}{\sigs''}{\U} \to \C} \\
-   \has{\Gamma}{\sigs''}{\U}{\tm} \\
-   \sigs' \leq \sigs'' \leq \sigs \oplus \sigs'
-  }
-  {\doesgs{\handle{\h}{\tm}}{\C}}
+%% \inferrule
+%%   {\template{\op\,\Us}{}{\U} \in \sig' \\
+%%    [\pat{\U_i}{\p_i}{\Gamma_i}] \\
+%%    \pat{\thunk{\U \to \ret{\sigs''}{\V}}}{k}{\Gamma}}
+%%   {\pat{\handleType{\sigs'}{\sigs''}{\V}}
+%%        {\handleOp{\op~\ps}{k}}
+%%        {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
 
-\\
-
-\inferrule
-  {\patg{\V}{\p}}
-  {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
-
-\inferrule
-  {\template{\op\,\Us}{}{\U} \in \sig' \\
-   [\pat{\U_i}{\p_i}{\Gamma_i}] \\
-   \pat{\thunk{\U \to \ret{\sigs''}{\V}}}{k}{\Gamma}}
-  {\pat{\handleType{\sigs'}{\sigs''}{\V}}
-       {\handleOp{\op~\ps}{k}}
-       {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
-
-\end{mathpar}
+%% \end{mathpar}
 
 
 
-\caption{Frank = Thunk + handlers}
-\end{figure*}
+%% \caption{Frank = Thunk + handlers}
+%% \end{figure*}
 
 %% \begin{abstract}
 %% This is the text of the abstract.
