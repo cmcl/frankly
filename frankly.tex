@@ -259,6 +259,9 @@ P    &::= \effbox{\sigs}V \\
 \end{array}
 \]
 
+\[
+\sigs~\sigs' \equiv \sigs'[\sigs/\varepsilon]
+\]
 Syntax
 
 \[
@@ -346,6 +349,118 @@ $\boxed{\hasgs{V}{s}}$
 
 \section{Towards call-by-push value (comp-eff)}
 
+\begin{figure*}
+
+Types, signatures, type environments
+
+\[
+\begin{array}{@{}r@{~}l@{}}
+U, V &::= D~\many{V} \mid X \mid \effbox{\sigs}\thunk{C} \mid \forall X.V \\
+C    &::= F~V \mid P \to C \\
+P    &::= \effbox{\sigs}C \\
+\\
+\sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+\sigs &::=
+  \alpha \mid \varepsilon \mid \emptyset \mid \sigs, \sig (\many{V}) \\
+\\
+\Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, g:P \\
+\end{array}
+\]
+
+\[
+\sigs~\sigs' \equiv \sigs'[\sigs/\varepsilon]
+\]
+
+
+Syntax
+
+\[
+\begin{array}{@{}r@{~}c@{~}l@{}}
+u, v &::=& x \mid k~\many{s} \mid \thunk{d} \\  % values
+d &::=& g \mid c~\many{v}                       % computations
+   \mid \lambda g.d \mid d~d \mid \keyword{ret}~v \mid \force{u} \\
+  &\mid& \keyword{case}~u~\keyword{of}~
+           \many{(k~\many{x} \mapsto d)} \\
+  &\mid& \keyword{handle} ~d~ \keyword{with}~
+           \many{(\handle{c~\many{x}}{g} \mapsto d)} \medvert
+            x        \mapsto d \\
+\end{array}
+\]
+
+Typing rules
+\medskip
+
+$\boxed{\valg{v}{V}}$
+\begin{mathpar}
+\inferrule
+  {x:V \in \Gamma}
+  {\valg{x}{V}}
+
+\inferrule
+  {\valg{V_i[\many{U}/\many{X}]}{v_i} \\
+   k~\many{V} \in D~\many{X}}
+  {\valg{D~\many{U}}{k~\many{v}}}
+
+\inferrule
+  {\compgs{d}{C}}
+  {\valg{\thunk{d}}{\effbox{\sigs}\thunk{C}}}
+\end{mathpar}
+
+$\boxed{\compgs{d}{C}}$
+\begin{mathpar}
+\inferrule
+  {\dom(\theta) = \FV(P) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+   \theta(\alpha) = \sigs \\
+   \theta(\varepsilon) = \varepsilon \\
+   \theta(P) = \effbox{\sigs}C}
+  {\can{\Gamma, g:P}{\sigs}{g}{C}}
+
+\inferrule
+  {c : V(\many{V}) \in \sigs \\
+   \valg{v_i}{V_i}}
+  {\compgs{c~\many{v}}{F~V}}
+
+\inferrule
+  {\comp{\Gamma, g:P}{\sigs}{d}{C}}
+  {\compgs{\lambda g. d}{V \to C}}
+
+\inferrule
+  {\compgs{d}{\effbox{\sigs'}C' \to C} \\
+   \comp{\Gamma}{\sigs~\sigs'}{d'}{C'}}
+  {\compgs{d~d'}{C}}
+
+\inferrule
+  {\valg{v}{V}}
+  {\compgs{\keyword{ret}~v}{F~V}}
+
+\inferrule
+  {\valg{u}{\effbox{\sigs}\thunk{C}}}
+  {\compgs{\force{u}}{C}}
+
+\inferrule
+  {\valg{u}{D~\many{U}} \\
+   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{d_k}{C})_{k~\many{V} \in D~\many{U}}}
+  {\compgs{\keyword{case}~ u ~\keyword{of}~
+               \many{(k~\many{x_k} \mapsto d_k)}}
+          {C}}
+
+\inferrule
+  {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
+   (\comp{\Gamma, \many{x_c}:\many{V},
+                  g:\effbox{\sigs~\sigs'}(V' \to F~U)}
+       {\sigs}{d_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
+   \comp{\Gamma, x:U}{\sigs}{d'}{C}}
+  {\compgs
+     {\keyword{handle}~ d ~\keyword{with}~
+           \many{\handle{c~\many{x_c}}{g} \mapsto d_c} \medvert
+           x \mapsto d'}
+     {C}}
+\end{mathpar}
+
+\caption{comp-eff}
+\end{figure*}
+
+
 \section{Explicit polymorphism (F-eff)}
 
 \begin{figure*}
@@ -367,6 +482,11 @@ T    &::= V \mid \sigs \\
 \Gamma &::= \cdot \mid \Gamma, x:V \\
 \end{array}
 \]
+
+\[
+\sigs~\sigs' \equiv \sigs'[\sigs/\varepsilon]
+\]
+
 
 Syntax
 
@@ -425,8 +545,9 @@ $\boxed{\compgs{d}{C}}$
   {\compgs{\lambda x. d}{V \to C}}
 
 \inferrule
-  {\compgs{d}{V \to C}}
-  {\valg{v}{V}}
+  {\compgs{d}{V \to C} \\
+   \valg{v}{V}}
+  {\compgs{d~v}{C}}
 
 \inferrule
   {\valg{v}{V}}
