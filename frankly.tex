@@ -274,22 +274,22 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-t &::=& x \mid f~\many{s}       \\ % makes
-f &::=& g \mid c \mid \force{t}     \\ % can
-s &::=& t \mid k~\many{s}          % has
-          \mid \thunk{\many{m} \to s}  \\ 
+s &::=& x \mid f~\many{t}       \\ % makes
+f &::=& g \mid c \mid \force{s} \\ % can
+t &::=& s \mid k~\many{t}          % has
+          \mid \thunk{\many{m} \to t}  \\ 
   &\mid& \keyword{case}~x~\keyword{of}~
-           \many{(k~\many{x} \mapsto s)} \\
+           \many{(k~\many{x} \mapsto t)} \\
   &\mid& \keyword{handle} ~m~ \keyword{with}~
-           \many{(\handle{c~\many{x}}{g} \mapsto s)} \medvert
-            x        \mapsto s \\
+           \many{(\handle{c~\many{x}}{g} \mapsto t)} \medvert
+            x        \mapsto t \\
 \end{array}
 \]
 
 Typing rules
 \medskip
 
-$\boxed{\makesgs{t}{V}}$
+$\boxed{\makesgs{s}{V}}$
 \begin{mathpar}
 \inferrule
   {x:V \in \Gamma}
@@ -297,8 +297,8 @@ $\boxed{\makesgs{t}{V}}$
 
 \inferrule
   {\cangs{f}{\effbox{\sigs}V(\many{\effbox{\sigs'}V})} \\
-   \has{\Gamma}{\sigs\,\sigs'_i}{V_i}{s_i}}
-  {\makesgs{f~\many{s}}{V}}
+   \has{\Gamma}{\sigs\,\sigs'_i}{V_i}{t_i}}
+  {\makesgs{f~\many{t}}{V}}
 \end{mathpar}
 
 $\boxed{\cangs{f}{C}}$
@@ -316,40 +316,40 @@ $\boxed{\cangs{f}{C}}$
   {\cangs{c}{\effbox{\sigs}V'(\many{\effbox{\beta}V})}}
 
 \inferrule
-  {\makesgs{t}{\thunk{C}}}
-  {\cangs{\force{t}}{C}}
+  {\makesgs{s}{\thunk{C}}}
+  {\cangs{\force{s}}{C}}
 \end{mathpar}
 
-$\boxed{\hasgs{V}{s}}$
+$\boxed{\hasgs{V}{t}}$
 
 \begin{mathpar}
 \inferrule
-  {\makesgs{t}{V}}
-  {\hasgs{V}{t}}
+  {\makesgs{s}{V}}
+  {\hasgs{V}{s}}
 
 \inferrule
-  {\hasgs{V_i[\many{U}/\many{X}]}{s_i} \\
+  {\hasgs{V_i[\many{U}/\many{X}]}{t_i} \\
    k~\many{V} \in D~\many{X}}
-  {\hasgs{D~\many{U}}{k~\many{s}}}
+  {\hasgs{D~\many{U}}{k~\many{t}}}
 
 \inferrule
-  {\has{\Gamma, \many{m}:\many{P}}{\sigs'}{V}{s}}
-  {\hasgs{\thunk{\effbox{\sigs'}V(\many{P})}}{\thunk{\many{m} \to s}}}
+  {\has{\Gamma, \many{m}:\many{P}}{\sigs'}{V}{t}}
+  {\hasgs{\thunk{\effbox{\sigs'}V(\many{P})}}{\thunk{\many{m} \to t}}}
 
 \inferrule
-  {\makesgs{t}{D~\many{U}} \\
-   (\has{\Gamma, \many{x_k}:\many{V}}{\sigs}{V}{s_k})_{k~\many{V} \in D~\many{U}}}
-  {\hasgs{V}{\keyword{case}~ t ~\keyword{of}~
-               \many{(k~\many{x_k} \mapsto s_k)}}}
+  {\makesgs{s}{D~\many{U}} \\
+   (\has{\Gamma, \many{x_k}:\many{V}}{\sigs}{V}{t_k})_{k~\many{V} \in D~\many{U}}}
+  {\hasgs{V}{\keyword{case}~ s ~\keyword{of}~
+               \many{(k~\many{x_k} \mapsto t_k)}}}
 
 \inferrule
   {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs~\sigs'}U(\effbox{\beta}V')}
-       {\sigs}{W}{s_c})_{c : V'(\many{V}) \in \sigs'} \\
-   \has{\Gamma, x:U}{\sigs}{W}{s}}
+       {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \sigs'} \\
+   \has{\Gamma, x:U}{\sigs}{W}{t}}
   {\has{\Gamma, m:\effbox{\sigs~\sigs'}V}{\sigs}
      {W}{\keyword{handle}~ m ~\keyword{with}~
-           \many{\handle{c~\many{x_c}}{g} \mapsto s_c} \medvert
-           x \mapsto s}}
+           \many{\handle{c~\many{x_c}}{g} \mapsto t_c} \medvert
+           x \mapsto t}}
 \end{mathpar}
 
 \caption{Core Frank}
