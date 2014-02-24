@@ -249,17 +249,25 @@ Types, signatures, type environments
 \[
 \begin{array}{@{}r@{~}l@{}}
 U, V &::= D~\many{V} \mid X \mid  \thunk{C} \\
-C    &::= P(\many{Q}) \\
+C    &::= P(\many{P}) \\
 P    &::= \effbox{\sigs}V \\
-Q    &::= \effbox{\psigs}V \\
 \\
 \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
 \sigs &::=
-  \emptyset \mid \alpha \mid \sigs, \sig~\many{V} \\
-\psigs &::=
-  \emptyset \mid \beta \mid \psigs, \sig~\many{V} \\
+  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \\
-\Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, m:Q \mid \Gamma, g:C \\
+\Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, m:P \mid \Gamma, g:C \\
+\end{array}
+\]
+
+Type substitution is lifted homomorphically except on computation types
+\[
+\begin{array}{@{}r@{~}l@{}}
+\theta(P(\many{P})) &= \theta(P)(\theta^\star(\many{P})) \\
+\theta^\star(\effbox{\sigs}V) &= \effbox{\theta^\star(\sigs)}\theta(V) \\
+\theta^\star(\emptyset) &= \emptyset \\
+\theta^\star(\varepsilon) &= \varepsilon \\
+\theta^\star(\sigs, \sig~\many{V}) &= \theta^\star(\sigs), \theta(S~\many{V}) \\
 \end{array}
 \]
 
@@ -267,8 +275,8 @@ Flat signature extension
 \[
 \begin{array}{@{}r@{~}l@{}}
 \sigs~\emptyset &= \emptyset \\
-\sigs~\beta &= \sigs \\
-\sigs~(\psigs, \sig~\many{V}) &= (\sigs~\psigs), \sig~\many{V} \\
+\sigs~\varepsilon &= \sigs \\
+\sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
 \end{array}
 \]
 
@@ -298,8 +306,8 @@ $\boxed{\makes{\Gamma}{\sigs}{s}{V}}$
   {\makesgs{x}{V}}
 
 \inferrule
-  {\cangs{f}{\effbox{\sigs}V(\many{\effbox{\psigs}V})} \\
-   \has{\Gamma}{\sigs~\psigs_i}{V_i}{t_i}}
+  {\cangs{f}{\effbox{\sigs}V(\many{\effbox{\sigs'}V})} \\
+   \has{\Gamma}{\sigs~\sigs'_i}{V_i}{t_i}}
   {\makesgs{f~\many{t}}{V}}
 \end{mathpar}
 
@@ -307,14 +315,14 @@ $\boxed{\can{\Gamma}{\sigs}{f}{C}}$
 
 \begin{mathpar}
 \inferrule
-  {\dom(\theta) = \FV(C) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-   \theta(\alpha) = \sigs \\
-   \theta(C) = \effbox{\sigs}V(\many{Q})}
-  {\can{\Gamma, g:C}{\sigs}{g}{\effbox{\sigs}V(\many{Q})}}
+  {\dom(\theta) = \set{\varepsilon} \cup \FV(C) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+   \theta(\varepsilon) = \sigs \\
+   \theta(C) = \effbox{\sigs}V(\many{P})}
+  {\can{\Gamma, g:C}{\sigs}{g}{\effbox{\sigs}V(\many{P})}}
 
 \inferrule
   {c : V'(\many{V}) \in \sigs}
-  {\cangs{c}{\effbox{\sigs}V'(\many{\effbox{\beta}V})}}
+  {\cangs{c}{\effbox{\sigs}V'(\many{\effbox{\varepsilon}V})}}
 
 \inferrule
   {\makesgs{s}{\thunk{C}}}
@@ -334,8 +342,8 @@ $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
   {\hasgs{D~\many{U}}{k~\many{t}}}
 
 \inferrule
-  {\has{\Gamma, \many{m}:\many{Q}}{\sigs'}{V}{t}}
-  {\hasgs{\thunk{\effbox{\sigs'}V(\many{Q})}}{\thunk{\many{m} \to t}}}
+  {\has{\Gamma, \many{m}:\many{P}}{\sigs'}{V}{t}}
+  {\hasgs{\thunk{\effbox{\sigs'}V(\many{P})}}{\thunk{\many{m} \to t}}}
 
 \inferrule
   {\makesgs{s}{D~\many{U}} \\
@@ -344,10 +352,10 @@ $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
                \many{(k~\many{x_k} \mapsto t_k)}}}
 
 \inferrule
-  {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs~\psigs}U(\effbox{\beta}V')}
-       {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \psigs} \\
+  {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs~\sigs'}U(\effbox{\varepsilon}V')}
+       {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \sigs'} \\
    \has{\Gamma, x:U}{\sigs}{W}{t}}
-  {\has{\Gamma, m:\effbox{\sigs~\psigs}V}{\sigs}
+  {\has{\Gamma, m:\effbox{\sigs~\sigs'}V}{\sigs}
      {W}{\keyword{handle}~ m ~\keyword{with}~
            \many{\handle{c~\many{x_c}}{g} \mapsto t_c} \medvert
            x \mapsto t}}
