@@ -249,13 +249,13 @@ Types, signatures, type environments
 \begin{array}{@{}r@{~}l@{}}
 U, V &::= D~\many{V} \mid X \mid  \thunk{C} \\
 C    &::= P(\many{P}) \\
-P    &::= \effbox{\sigs} \\
+P    &::= \effbox{\sigs}V \\
 \\
 \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
 \sigs &::=
   \alpha \mid \varepsilon \mid \emptyset \mid \sigs, \sig (\many{V}) \\
 \\
-\Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, g:C \\
+\Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, m:P \mid \Gamma, g:C \\
 \end{array}
 \]
 
@@ -297,7 +297,7 @@ $\boxed{\cangs{f}{C}}$
   {\dom(\theta) = \FV(C) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
    \theta(\alpha) = \sigs \\
    \theta(\varepsilon) = \varepsilon \\
-   \inst{\theta}{C} = \effbox{\sigs}V(\many{P})}
+   \theta(C) = \effbox{\sigs}V(\many{P})}
   {\can{\Gamma, g:C}{\sigs}{g}{\effbox{\sigs}V(\many{P})}}
 
 \inferrule
