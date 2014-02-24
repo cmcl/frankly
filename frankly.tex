@@ -301,8 +301,8 @@ $\boxed{\cangs{f}{C}}$
   {\can{\Gamma, g:C}{\sigs}{g}{\effbox{\sigs}V(\many{P})}}
 
 \inferrule
-  {c : V'(\many{V}) \in \sig~\many{U} \in \sigs}
-  {\cangs{c}{\effbox{\sigs}V'(\effbox{\varepsilon}\many{V})}}
+  {c : V'(\many{V}) \in \sigs}
+  {\cangs{c}{\effbox{\sigs}V'(\many{\effbox{\varepsilon}V})}}
 
 \inferrule
   {\makesgs{t}{\thunk{C}}}
@@ -332,8 +332,8 @@ $\boxed{\hasgs{V}{s}}$
                \many{(k~\many{x_k} \mapsto s_k)}}}
 
 \inferrule
-  {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs'}V'(\effbox{\varepsilon}U)}
-       {\sig}{W}{s_c})_{c : V'(\many{V}) \in \sigs'} \\
+  {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs~\sigs'}U(\effbox{\varepsilon}V')}
+       {\sigs}{W}{s_c})_{c : V'(\many{V}) \in \sigs'} \\
    \has{\Gamma, x:U}{\sigs}{W}{s}}
   {\has{\Gamma, m:\effbox{\sigs~\sigs'}V}{\sigs}
      {W}{\keyword{handle}~ m ~\keyword{with}~
@@ -455,11 +455,11 @@ $\boxed{\compgs{d}{C}}$
 \inferrule
   {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
    (\comp{\Gamma, \many{x_c}:\many{V},
-                  g:\forall \varepsilon.\effbox{\sigs'}\thunk{V' \to F~U}}
+                  g:\effbox{\sigs~\sigs'}\thunk{V' \to F~U}}
        {\sigs}{d_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
    \comp{\Gamma, x:U}{\sigs}{d'}{C}}
   {\compgs
-     {\keyword{handle}~ m ~\keyword{with}~
+     {\keyword{handle}~ d ~\keyword{with}~
            \many{\handle{c~\many{x_c}}{g} \mapsto d_c} \medvert
            x \mapsto d'}
      {C}}
