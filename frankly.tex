@@ -253,7 +253,7 @@ P    &::= \effbox{\sigs}V \\
 \\
 \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
 \sigs &::=
-  \varepsilon \mid \emptyset \mid \sigs, \sig~\many{V} \\
+  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \varepsilon &::= \alpha \mid \beta \\
 \\
 \Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, m:P \mid \Gamma, g:C \\
@@ -263,9 +263,9 @@ P    &::= \effbox{\sigs}V \\
 Flat signature extension
 \[
 \begin{array}{@{}r@{~}l@{}}
+\sigs~\emptyset &= \emptyset \\
 \sigs~\alpha &= \alpha \\
 \sigs~\beta &= \sigs \\
-\sigs~\emptyset &= \emptyset \\
 \sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
 \end{array}
 \]
@@ -369,7 +369,7 @@ P    &::= \effbox{\sigs}C \\
 \\
 \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
 \sigs &::=
-  \varepsilon \mid \emptyset \mid \sigs, \sig~\many{V} \\
+  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \varepsilon &::= \alpha \mid \beta \\
 \\
 \Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, g:P \\
@@ -379,9 +379,9 @@ P    &::= \effbox{\sigs}C \\
 Flat signature extension
 \[
 \begin{array}{@{}r@{~}l@{}}
+\sigs~\emptyset &= \emptyset \\
 \sigs~\alpha &= \alpha \\
 \sigs~\beta &= \sigs \\
-\sigs~\emptyset &= \emptyset \\
 \sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
 \end{array}
 \]
@@ -491,7 +491,7 @@ T    &::= V \mid \sigs \\
 \\
 \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
 \sigs &::=
-  \varepsilon \mid \emptyset \mid \sigs, \sig~\many{V} \\
+  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \\
 \Gamma &::= \cdot \mid \Gamma, x:V \\
 \end{array}
@@ -500,8 +500,8 @@ T    &::= V \mid \sigs \\
 Flat signature extension
 \[
 \begin{array}{@{}r@{~}l@{}}
-\sigs~\varepsilon &= \sigs \\
 \sigs~\emptyset &= \emptyset \\
+\sigs~\varepsilon &= \sigs \\
 \sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
 \end{array}
 \]
