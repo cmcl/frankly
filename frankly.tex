@@ -404,9 +404,9 @@ t &::=& s \mid k~\many{t}                            % has
 d &::=& c~\many{t} \mid d~t \mid \force{s} \\        % can
 e &::=& t \mid \lambda x.e \\                        % does
   &\mid& \keyword{case}~s~\keyword{of}~
-           \many{(k~\many{x} \mapsto e)} \\
+           (k~\many{x_k} \mapsto e_k)_k \\
   &\mid& \keyword{handle} ~d~ \keyword{with}~
-           \many{(\handle{c~\many{x}}{g} \mapsto e)} \medvert
+           (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
             x        \mapsto e \\
 \end{array}
 \]
@@ -438,7 +438,7 @@ $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
   {\hasgs{V}{s}}
 
 \inferrule
-  {\hasgs{V_i}{t_i} \\
+  {(\hasgs{V_i}{t_i})_i \\
    k~\many{V} \in D~\many{U}}
   {\hasgs{D~\many{U}}{k~\many{t}}}
 
@@ -452,7 +452,7 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 \begin{mathpar}
 \inferrule
   {c : V(\many{U}) \in \sigs \\
-   \hasgs{t_i}{U_i}}
+   (\hasgs{U_i}{t_i})_i}
   {\cangs{c~\many{t}}{F~V}}
 
 \inferrule
@@ -480,17 +480,17 @@ $\boxed{\doesgs{C}{e}}$
   {\makesgs{s}{D~\many{U}} \\
    (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
   {\doesgs{C}{\keyword{case}~ s ~\keyword{of}~
-               \many{(k~\many{x_k} \mapsto e_k)}}}
+               (k~\many{x_k} \mapsto e_k)_k}}
 
 \inferrule
   {\sigs' \text{ closed} \\
    \can{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
-   (\does{\Gamma, \many{x_c}:\many{U}, g:\effbox{\sigs~\sigs'}\thunk{U' \to F~V}}
+   (\does{\Gamma, \many{x_c}:\many{U}, g_c:\effbox{\sigs~\sigs'}\thunk{U' \to F~V}}
          {\sigs}{C}{e_c})_{c : U'(\many{U}) \in \sigs'} \\
    \does{\Gamma, x:V}{\sigs}{C}{e}}
   {\does{\Gamma}{\sigs}
          {C}{\keyword{handle}~ d ~\keyword{with}~
-               \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
+               (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
                 x \mapsto e}}
 \end{mathpar}
 
