@@ -375,10 +375,10 @@ Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{V} \mid X \mid  \effbox{\sigs}\thunk{C} \\
+U, V &::= D~\many{U} \mid X \mid  \effbox{\sigs}\thunk{C} \\
 C    &::= F~V \mid V \to C \\
 \\
-\sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+\sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \\
@@ -627,13 +627,13 @@ Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{V} \mid X \mid \effbox{\sigs}\thunk{C} \\
+U, V &::= D~\many{U} \mid X \mid \effbox{\sigs}\thunk{C} \\
 C    &::= F~V \mid V \to C \\
 \\
 Z    &::= X \mid \varepsilon \\
 T    &::= V \mid \sigs \\
 \\
-\sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+\sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \\
@@ -691,9 +691,9 @@ $\boxed{\valg{v}{V}}$
 $\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
-  {c : V(\many{V}) \in \sigs \\
+  {c : U(\many{V}) \in \sigs \\
    \valg{v_i}{V_i}}
-  {\compgs{c~\many{v}}{F~V}}
+  {\compgs{c~\many{v}}{F~U}}
 
 \inferrule
   {\comp{\Gamma, x:V}{\sigs}{e}{C}}
@@ -722,9 +722,9 @@ $\boxed{\compgs{e}{C}}$
 \inferrule
   {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
    (\comp{\Gamma, \many{x_c}:\many{V},
-                  g:\effbox{\sigs~\sigs'}\thunk{V' \to F~U}}
-       {\sigs}{e_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
-   \comp{\Gamma, x:U}{\sigs}{e}{C}}
+                  g:\effbox{\sigs~\sigs'}\thunk{U \to F~V}}
+       {\sigs}{e_c}{C})_{c : U(\many{V}) \in \sigs'} \\
+   \comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs
      {\keyword{handle}~ d ~\keyword{with}~
            \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
@@ -744,13 +744,13 @@ Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{V} \mid X \mid \effbox{\sigs}\thunk{C} \mid \forall X.V \\
+U, V &::= D~\many{U} \mid X \mid \effbox{\sigs}\thunk{C} \mid \forall X.V \\
 C    &::= F~V \mid V \to C \mid \forall X.C \\
 \\
 Z    &::= X \mid \varepsilon \\
 T    &::= V \mid \sigs \\
 \\
-\sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+\sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \\
@@ -815,9 +815,9 @@ $\boxed{\valg{v}{V}}$
 $\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
-  {c : V(\many{V}) \in \sigs \\
+  {c : U(\many{V}) \in \sigs \\
    \valg{v_i}{V_i}}
-  {\compgs{c~\many{v}}{F~V}}
+  {\compgs{c~\many{v}}{F~U}}
 
 \inferrule
   {\comp{\Gamma, x:V}{\sigs}{e}{C}}
@@ -855,9 +855,9 @@ $\boxed{\compgs{e}{C}}$
 \inferrule
   {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
    (\comp{\Gamma, \many{x_c}:\many{V},
-                  g:\effbox{\sigs~\sigs'}\thunk{V' \to F~U}}
-       {\sigs}{e_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
-   \comp{\Gamma, x:U}{\sigs}{e}{C}}
+                  g:\effbox{\sigs~\sigs'}\thunk{U \to F~V}}
+       {\sigs}{e_c}{C})_{c : U(\many{V}) \in \sigs'} \\
+   \comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs
      {\keyword{handle}~ d ~\keyword{with}~
            \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
