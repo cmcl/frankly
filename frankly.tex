@@ -20,8 +20,23 @@
 \newcommand{\set}[1]{\{#1\}}
 \newcommand{\many}{\overline}
 
+\newcommand{\sem}[1]{\llbracket{#1}\rrbracket}
+
+\newcommand{\seml}{\left\llbracket}
+\newcommand{\semr}{\right\rrbracket}
+
 \newcommand{\FV}{\mathit{FV}}
 \newcommand{\dom}{\mathit{dom}}
+
+
+\newcommand\ba{\begin{array}}
+\newcommand\ea{\end{array}}
+
+\newcommand{\bl}{\ba{@{}c@{}}}
+\newcommand{\el}{\ea}
+
+\newenvironment{equations}{\[\ba{@{}r@{~}c@{~}l@{}}}{\ea\]}
+\newenvironment{eqs}{\ba{@{}r@{~}c@{~}l@{}}}{\ea}
 
 \newcommand{\judgeword}[1]{~\mathbf{#1}~}
 
@@ -98,7 +113,7 @@
 \newcommand{\ret}[2]{\effbox{#1}{#2}}
 \newcommand{\template}[3]{{#1} \mathbin{\effbox{#2}} {#3}}
 
-\newcommand{\keyword}[1]{\mathsf{#1}}
+\newcommand{\key}[1]{\mathsf{#1}}
 
 \newcommand{\handleSymbol}{\mathbin{?}}
 \newcommand{\yieldSymbol}{\mathbin{\prec}}
@@ -109,7 +124,7 @@
 \newcommand{\handleOp}[2]{\effbox{{#1} \continueSymbol {#2}}}
 \newcommand{\handle}[2]{{#1} \handleSymbol {#2}}
 
-\newcommand{\handleGen}[2]{\keyword{handle}~{#1}~\keyword{with}~{#2}}
+\newcommand{\handleGen}[2]{\key{handle}~{#1}~\key{with}~{#2}}
 
 \newcommand{\thunk}[1]{\{{#1}\}}
 %\newcommand{\athunk}[2]{\thunk{#1}_{#2}}
@@ -293,9 +308,9 @@ straightforward variant of that of lambda-eff.
 %% f &::=& g \mid c \mid \force{s} \\ % can
 %% t &::=& s \mid k~\many{t}          % has
 %%           \mid \thunk{\many{m} \to t}  \\ 
-%%   &\mid& \keyword{case}~x~\keyword{of}~
+%%   &\mid& \key{case}~x~\key{of}~
 %%            \many{(k~\many{x} \mapsto t)} \\
-%%   &\mid& \keyword{handle} ~m~ \keyword{with}~
+%%   &\mid& \key{handle} ~m~ \key{with}~
 %%            \many{(\handle{c~\many{x}}{g} \mapsto t)} \medvert
 %%             x        \mapsto t \\
 %% \end{array}
@@ -353,7 +368,7 @@ straightforward variant of that of lambda-eff.
 %% \inferrule
 %%   {\makesgs{s}{D~\many{U}} \\
 %%    (\has{\Gamma, \many{x_k}:\many{V}}{\sigs}{V}{t_k})_{k~\many{V} \in D~\many{U}}}
-%%   {\hasgs{V}{\keyword{case}~ s ~\keyword{of}~
+%%   {\hasgs{V}{\key{case}~ s ~\key{of}~
 %%                \many{(k~\many{x_k} \mapsto t_k)}}}
 
 %% \inferrule
@@ -361,7 +376,7 @@ straightforward variant of that of lambda-eff.
 %%        {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \sigs'} \\
 %%    \has{\Gamma, x:U}{\sigs}{W}{t}}
 %%   {\has{\Gamma, m:\effbox{\sigs~\sigs'}V}{\sigs}
-%%      {W}{\keyword{handle}~ m ~\keyword{with}~
+%%      {W}{\key{handle}~ m ~\key{with}~
 %%            \many{\handle{c~\many{x_c}}{g} \mapsto t_c} \medvert
 %%            x \mapsto t}}
 %% \end{mathpar}
@@ -400,14 +415,14 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-u &::=& x \mid d                                  \\ % makes
+u &::=& x \mid f \mid d                           \\ % makes
 v &::=& u \mid k~\many{v}                            % has
           \mid \thunk{e}  \\[1ex]
 d &::=& c~\many{v} \mid d~v \mid \force{u} \\        % can
 e &::=& v \mid \lambda x.e \\                        % does
-  &\mid& \keyword{case}~u~\keyword{of}~
+  &\mid& \key{case}~u~\key{of}~
            (k~\many{x_k} \mapsto e_k)_k \\
-  &\mid& \keyword{handle} ~d~ \keyword{with}~
+  &\mid& \key{handle} ~d~ \key{with}~
            (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
             x        \mapsto e \\
 \end{array}
@@ -418,14 +433,20 @@ Typing rules
 
 $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
 \begin{mathpar}
+\inferrule
+  {x:V \in \Gamma}
+  {\makesgs{x}{V}}
+
 %% \inferrule
-%%   {x:V \in \Gamma}
-%%   {\makesgs{x}{V}}
+%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%    \theta(\varepsilon) = \sigs}
+%%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
 
 \inferrule
-  {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+  {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+   \dom(\theta) = \set{\varepsilon, \many{X}} \\
    \theta(\varepsilon) = \sigs}
-  {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
+  {\makesgs{f}{\theta(V)}}
 
 \inferrule
   {\cangs{d}{\rt{V}}}
@@ -481,7 +502,7 @@ $\boxed{\doesgs{C}{e}}$
 \inferrule
   {\makesgs{u}{D~\many{U}} \\
    (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
-  {\doesgs{C}{\keyword{case}~ u ~\keyword{of}~
+  {\doesgs{C}{\key{case}~ u ~\key{of}~
                (k~\many{x_k} \mapsto e_k)_k}}
 
 \inferrule
@@ -491,7 +512,7 @@ $\boxed{\doesgs{C}{e}}$
          {\sigs}{C}{e_c})_{c : U(\many{V}) \in \sigs'} \\
    \does{\Gamma, x:V}{\sigs}{C}{e}}
   {\does{\Gamma}{\sigs}
-         {C}{\keyword{handle}~ d ~\keyword{with}~
+         {C}{\key{handle}~ d ~\key{with}~
                (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
                 x \mapsto e}}
 \end{mathpar}
@@ -538,10 +559,10 @@ $\boxed{\doesgs{C}{e}}$
 %% \begin{array}{@{}r@{~}c@{~}l@{}}
 %% u, v &::=& x \mid k~\many{s} \mid \thunk{d} \\  % values
 %% d, e &::=& g \mid c~\many{v}                     % computations
-%%    \mid \lambda g.e \mid d~e \mid \keyword{ret}~v \mid \force{u} \\
-%%   &\mid& \keyword{case}~u~\keyword{of}~
+%%    \mid \lambda g.e \mid d~e \mid \key{ret}~v \mid \force{u} \\
+%%   &\mid& \key{case}~u~\key{of}~
 %%            \many{(k~\many{x} \mapsto e)} \\
-%%   &\mid& \keyword{handle} ~d~ \keyword{with}~
+%%   &\mid& \key{handle} ~d~ \key{with}~
 %%            \many{(\handle{c~\many{x}}{g} \mapsto e)} \medvert
 %%             x        \mapsto e \\
 %% \end{array}
@@ -591,7 +612,7 @@ $\boxed{\doesgs{C}{e}}$
 
 %% \inferrule
 %%   {\valg{v}{V}}
-%%   {\compgs{\keyword{ret}~v}{\rt{V}}}
+%%   {\compgs{\key{ret}~v}{\rt{V}}}
 
 %% \inferrule
 %%   {\valg{u}{\effbox{\sigs}\thunk{C}}}
@@ -600,7 +621,7 @@ $\boxed{\doesgs{C}{e}}$
 %% \inferrule
 %%   {\valg{u}{D~\many{U}} \\
 %%    (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
-%%   {\compgs{\keyword{case}~ u ~\keyword{of}~
+%%   {\compgs{\key{case}~ u ~\key{of}~
 %%                \many{(k~\many{x_k} \mapsto e_k)}}
 %%           {C}}
 
@@ -611,7 +632,7 @@ $\boxed{\doesgs{C}{e}}$
 %%        {\sigs}{e_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
 %%    \comp{\Gamma, x:U}{\sigs}{e}{C}}
 %%   {\compgs
-%%      {\keyword{handle}~ d ~\keyword{with}~
+%%      {\key{handle}~ d ~\key{with}~
 %%            \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
 %%            x \mapsto e}
 %%      {C}}
@@ -623,6 +644,28 @@ $\boxed{\doesgs{C}{e}}$
 
 \section{CBPV with Implicit polymorphism}
 
+Call by value embedding of Core Frank into implicit-eff:
+
+\begin{equations}
+\sem{x} &=& \key{ret}~x \\
+\\
+\sem{k~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~\key{ret}~(k~\many{x}) \\
+\sem{\thunk{e}} &=& \key{ret}~\thunk{\sem{e}} \\
+\\
+\sem{c~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~c~\many{x} \\
+\sem{d~v} &=& \key{let}~x=\sem{v} ~\key{in}~d~x \\
+\sem{\force{u}} &=& \key{let}~x=\sem{u} ~\key{in}~\force{x} \\
+\\
+\sem{\lambda x.e} &=& \lambda x.\sem{e} \\
+\sem{\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k}
+  &=& \key{let}~x=\sem{u} ~\key{in} \\
+  &&  \quad \key{case}~x~\key{of}~(k~\many{x_k} \mapsto \sem{e_k})_k \\
+\sem{\key{handle}~d~\key{with}~(\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert x \mapsto e}
+  &=& \key{handle}~\sem{d}~\key{with} \\
+  &&  \quad (\handle{c~\many{x_c}}{g_c} \mapsto \sem{e_c})_c \\
+  &&  \quad x \mapsto \sem{e}\\
+\end{equations}
+
 \begin{figure*}
 
 Types, signatures, type environments
@@ -631,9 +674,6 @@ Types, signatures, type environments
 \begin{array}{@{}r@{~}l@{}}
 U, V &::= D~\many{U} \mid X \mid \effbox{\sigs}\thunk{C} \\
 C    &::= \rt{V} \mid V \to C \\
-\\
-Z    &::= X \mid \varepsilon \\
-T    &::= V \mid \sigs \\
 \\
 \sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
@@ -655,12 +695,12 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-u, v &::=& x \mid k~\many{s} \mid \thunk{d}  \\ % values
-d, e &::=& c~\many{v}                        % computations
-   \mid \lambda x.e \mid d~v \mid \keyword{ret}~v \mid \force{u} \\
-  &\mid& \keyword{case}~u~\keyword{of}~
+u, v &::=& x \mid f \mid k~\many{s} \mid \thunk{d}  \\ % values
+d, e &::=& c~\many{v}                                  % computations
+   \mid \lambda x.e \mid d~v \mid \key{ret}~v \mid \force{u} \\
+  &\mid& \key{case}~u~\key{of}~
            (k~\many{x} \mapsto e)_k \\
-  &\mid& \keyword{handle} ~d~ \keyword{with}~
+  &\mid& \key{handle} ~d~ \key{with}~
            (\handle{c~\many{x}}{g} \mapsto e)_c \medvert
            x        \mapsto e \\
 \end{array}
@@ -671,14 +711,20 @@ Typing rules
 
 $\boxed{\valg{v}{V}}$
 \begin{mathpar}
-%% \inferrule
-%%   {x:V \in \Gamma}
-%%   {\valg{x}{V}}
+\inferrule
+  {x:V \in \Gamma}
+  {\valg{x}{V}}
 
 \inferrule
-  {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+  {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+   \dom(\theta) = \set{\varepsilon, \many{X}} \\
    \theta(\varepsilon) = \sigs}
-  {\val{\Gamma, x:V}{x}{\theta(V)}}
+  {\valg{f}{\theta(V)}}
+
+%% \inferrule
+%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%    \theta(\varepsilon) = \sigs}
+%%   {\val{\Gamma, x:V}{x}{\theta(V)}}
 
 \inferrule
   {\valg{V_i}{v_i} \\
@@ -708,7 +754,7 @@ $\boxed{\compgs{e}{C}}$
 
 \inferrule
   {\valg{v}{V}}
-  {\compgs{\keyword{ret}~v}{\rt{V}}}
+  {\compgs{\key{ret}~v}{\rt{V}}}
 
 \inferrule
   {\valg{u}{\effbox{\sigs}\thunk{C}}}
@@ -717,7 +763,7 @@ $\boxed{\compgs{e}{C}}$
 \inferrule
   {\valg{u}{D~\many{U}} \\
    (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
-  {\compgs{\keyword{case}~ u ~\keyword{of}~
+  {\compgs{\key{case}~ u ~\key{of}~
                (k~\many{x_k} \mapsto e_k)_k}
           {C}}
 
@@ -728,7 +774,7 @@ $\boxed{\compgs{e}{C}}$
        {\sigs}{e_c}{C})_{c : U(\many{V}) \in \sigs'} \\
    \comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs
-     {\keyword{handle}~ d ~\keyword{with}~
+     {\key{handle}~ d ~\key{with}~
            (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
            x \mapsto e}
      {C}}
@@ -739,6 +785,27 @@ $\boxed{\compgs{e}{C}}$
 
 
 \section{Explicit polymorphism (F-eff)}
+
+As we only allow top-level polymorphism, the translation from
+implicit-eff to explicit-eff is straightforward. Generalisation (type
+abstraction) only occurs on top-level definitions, and instantiation
+(type application) only occurs on top-level variable lookup.
+
+%% \[
+%% \bl
+%% \seml
+%%   \inferrule
+%%     {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\val{\Gamma, x:V}{x}{\theta(V)}}
+%% \semr
+%% = \\
+%%   \inferrule
+%%     {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\val{\Gamma, x:\forall \many{Z}.V}{x~\theta(\many{Z})}{\theta{V}}} \\
+%% \el
+%% \]
 
 \begin{figure*}
 
@@ -775,11 +842,11 @@ Syntax
 u, v &::=& x \mid k~\many{s} \mid \thunk{d}  % values
              \mid \Lambda Z.v \mid u~T \\
 d, e &::=& c~\many{v}                        % computations
-   \mid \lambda x.e \mid d~v \mid \keyword{ret}~v \mid \force{u} \\
+   \mid \lambda x.e \mid d~v \mid \key{ret}~v \mid \force{u} \\
 %%   \mid \Lambda Z.e \mid d~T \\
-  &\mid& \keyword{case}~u~\keyword{of}~
+  &\mid& \key{case}~u~\key{of}~
            (k~\many{x} \mapsto e)_k \\
-  &\mid& \keyword{handle} ~d~ \keyword{with}~
+  &\mid& \key{handle} ~d~ \key{with}~
            (\handle{c~\many{x}}{g} \mapsto e)_c \medvert
            x        \mapsto e \\
 \end{array}
@@ -831,7 +898,7 @@ $\boxed{\compgs{e}{C}}$
 
 \inferrule
   {\valg{v}{V}}
-  {\compgs{\keyword{ret}~v}{\rt{V}}}
+  {\compgs{\key{ret}~v}{\rt{V}}}
 
 \inferrule
   {\valg{u}{\effbox{\sigs}\thunk{C}}}
@@ -849,7 +916,7 @@ $\boxed{\compgs{e}{C}}$
 \inferrule
   {\valg{u}{D~\many{U}} \\
    (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
-  {\compgs{\keyword{case}~ u ~\keyword{of}~
+  {\compgs{\key{case}~ u ~\key{of}~
                (k~\many{x_k} \mapsto e_k)_k}
           {C}}
 
@@ -860,7 +927,7 @@ $\boxed{\compgs{e}{C}}$
        {\sigs}{e_c}{C})_{c : U(\many{V}) \in \sigs'} \\
    \comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs
-     {\keyword{handle}~ d ~\keyword{with}~
+     {\key{handle}~ d ~\key{with}~
            (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
            x \mapsto e}
      {C}}
@@ -1111,7 +1178,7 @@ $\boxed{\compgs{e}{C}}$
 %% \terms
 %% term1, term2
 
-%% \keywords
+%% \keys
 %% keyword1, keyword2
 
 %% \section{Introduction}
