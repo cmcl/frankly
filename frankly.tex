@@ -46,6 +46,9 @@
 \newcommand{\has}[4] {#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
 \newcommand{\can}[4]{#1 \sigentails{#2} {#3} \judgeword{can} {#4}}
 
+\newcommand{\chas}[3] {#1 \vdash {#2} \judgeword{does} {#3}}
+\newcommand{\chasg}[2]{\chas{\Gamma}{#1}{#2}}
+
 \newcommand{\does}[4]{#1 \sigentails{#2} {#3} \judgeword{does} {#4}}
 \newcommand{\kan}[3] {#1 \vdash {#2} \judgeword{can} {#3}}
 
@@ -363,6 +366,138 @@ $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
 
 \caption{Core Frank}
 \end{figure*}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure*}
+Types, signatures, type environments
+
+\[
+\begin{array}{@{}r@{~}l@{}}
+U, V &::= D~\many{V} \mid X \mid  \thunk{C} \\
+C    &::= \effbox{\sigs}V \mid V \to C \\
+\\
+\sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+\sigs &::=
+  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
+\\
+\Gamma &::= \cdot \mid \Gamma, x:V \\
+\end{array}
+\]
+
+Flat signature extension (the right signature must be closed)
+\[
+\begin{array}{@{}r@{~}l@{}}
+\sigs~\emptyset &= \sigs \\
+\sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
+\end{array}
+\]
+
+Syntax
+
+\[
+\begin{array}{@{}r@{~}c@{~}l@{}}
+s &::=& x \mid f                                  \\ % makes
+f &::=& c~\many{t} \mid f~t \mid \force{s} \\ % can
+t &::=& s \mid k~\many{t}                            % has
+          \mid \thunk{h}  \\ 
+  &\mid& \keyword{case}~x~\keyword{of}~
+           \many{(k~\many{x} \mapsto t)} \\
+  &\mid& \keyword{handle} ~s~ \keyword{with}~
+           \many{(\handle{c~\many{x}}{g} \mapsto t)} \medvert
+            x        \mapsto t \\
+h &::=& t \mid \lambda x.h \\                        % does
+\end{array}
+\]
+
+Typing rules
+\medskip
+
+$\boxed{\makes{\Gamma}{\sigs}{s}{V}}$
+\begin{mathpar}
+%% \inferrule
+%%   {x:V \in \Gamma}
+%%   {\makesgs{x}{V}}
+
+\inferrule
+  {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+   \theta(\varepsilon) = \sigs}
+  {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
+
+\inferrule
+  {\cangs{f}{\effbox{\sigs}V}}
+  {\makesgs{f}{V}}
+\end{mathpar}
+
+$\boxed{\can{\Gamma}{\sigs}{f}{C}}$
+
+\begin{mathpar}
+\inferrule
+  {c : V'(\many{V}) \in \sigs \\
+   \hasgs{t_i}{V_i}}
+  {\cangs{c~\many{t}}{\effbox{\sigs}V'}}
+
+\inferrule
+  {\cangs{f}{V \to C} \\
+   \has{\Gamma}{\sigs}{V}{t}}
+  {\cangs{f~t}{C}}
+
+\inferrule
+  {\makesgs{s}{\thunk{C}}}
+  {\cangs{\force{s}}{C}}
+\end{mathpar}
+
+$\boxed{\has{\Gamma}{\sigs}{V}{t}}$
+
+\begin{mathpar}
+\inferrule
+  {\makesgs{s}{V}}
+  {\hasgs{V}{s}}
+
+\inferrule
+  {\hasgs{V_i[\many{U}/\many{X}]}{t_i} \\
+   k~\many{V} \in D~\many{X}}
+  {\hasgs{D~\many{U}}{k~\many{t}}}
+
+\inferrule
+  {\chasg{C}{t}}
+  {\hasgs{\thunk{C}}{\thunk{t}}}
+
+\inferrule
+  {\makesgs{s}{D~\many{U}} \\
+   (\has{\Gamma, \many{x_k}:\many{V}}{\sigs}{V}{t_k})_{k~\many{V} \in D~\many{U}}}
+  {\hasgs{V}{\keyword{case}~ s ~\keyword{of}~
+               \many{(k~\many{x_k} \mapsto t_k)}}}
+
+\inferrule
+  {\sigs' \text{ closed} \\
+   \has{\Gamma}{\sigs~\sigs'}{U}{s} \\
+   (\has{\Gamma, \many{x_c}:\many{V}, g:\thunk{V' \to \effbox{\sigs~\sigs'}U}}
+       {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \sigs'} \\
+   \has{\Gamma, x:U}{\sigs}{W}{t}}
+  {\has{\Gamma}{\sigs}
+     {W}{\keyword{handle}~ s ~\keyword{with}~
+           \many{\handle{c~\many{x_c}}{g} \mapsto t_c} \medvert
+           x \mapsto t}}
+\end{mathpar}
+
+$\boxed{\chasg{C}{h}}$
+
+\begin{mathpar}
+\inferrule
+  {\hasgs{V}{t}}
+  {\chasg{\effbox{\sigs}V}{t}}
+
+\inferrule
+  {\chas{\Gamma, x:V}{C}{h}}
+  {\chasg{V \to C}{\lambda x.h}}
+\end{mathpar}
+
+\caption{Core Frank (another attempt)}
+\end{figure*}
+
+
 
 \section{Towards call-by-push value (comp-eff)}
 
