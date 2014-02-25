@@ -59,14 +59,14 @@
 
 \newcommand{\is}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
 
-\newcommand{\makes}[4]  {#1 \sigentails{#2} {#3} \judgeword{makes} {#4}}
+\newcommand{\makes}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
 \newcommand{\has}[4] {#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
-\newcommand{\can}[4]{#1 \sigentails{#2} {#3} \judgeword{can} {#4}}
+\newcommand{\can}[4]{#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
 
 \newcommand{\chas}[3] {#1 \vdash {#2} \judgeword{does} {#3}}
 \newcommand{\chasg}[2]{\chas{\Gamma}{#1}{#2}}
 
-\newcommand{\does}[4]{#1 \sigentails{#2} {#3} \judgeword{does} {#4}}
+\newcommand{\does}[4]{#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
 \newcommand{\kan}[3] {#1 \vdash {#2} \judgeword{can} {#3}}
 
 \newcommand{\pat}[3]{{#1} \judgeword{lets} {#2} \dashv #3}
