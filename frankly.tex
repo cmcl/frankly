@@ -434,9 +434,9 @@ $\boxed{\can{\Gamma}{\sigs}{f}{C}}$
 
 \begin{mathpar}
 \inferrule
-  {c : V'(\many{V}) \in \sigs \\
-   \hasgs{t_i}{V_i}}
-  {\cangs{c~\many{t}}{\effbox{\sigs}V'}}
+  {c : V(\many{U}) \in \sigs \\
+   \hasgs{t_i}{U_i}}
+  {\cangs{c~\many{t}}{\effbox{\sigs}V}}
 
 \inferrule
   {\cangs{f}{V \to C} \\
@@ -472,12 +472,12 @@ $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
 
 \inferrule
   {\sigs' \text{ closed} \\
-   \has{\Gamma}{\sigs~\sigs'}{U}{s} \\
-   (\has{\Gamma, \many{x_c}:\many{V}, g:\thunk{V' \to \effbox{\sigs~\sigs'}U}}
-       {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \sigs'} \\
-   \has{\Gamma, x:U}{\sigs}{W}{t}}
+   \has{\Gamma}{\sigs~\sigs'}{V}{s} \\
+   (\has{\Gamma, \many{x_c}:\many{U}, g:\thunk{U' \to \effbox{\sigs~\sigs'}V}}
+       {\sigs}{W}{t_c})_{c : U'(\many{U}) \in \sigs'} \\
+   \has{\Gamma, x:V}{\sigs}{V'}{t}}
   {\has{\Gamma}{\sigs}
-     {W}{\keyword{handle}~ s ~\keyword{with}~
+     {V'}{\keyword{handle}~ s ~\keyword{with}~
            \many{\handle{c~\many{x_c}}{g} \mapsto t_c} \medvert
            x \mapsto t}}
 \end{mathpar}
