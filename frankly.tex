@@ -438,9 +438,9 @@ $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
   {\hasgs{V}{s}}
 
 \inferrule
-  {(\hasgs{V_i}{t_i})_i \\
-   k~\many{V} \in D~\many{U}}
-  {\hasgs{D~\many{U}}{k~\many{t}}}
+  {(\hasgs{U_i}{t_i})_i \\
+   k~\many{U} \in D~\many{V}}
+  {\hasgs{D~\many{V}}{k~\many{t}}}
 
 \inferrule
   {\does{\Gamma}{\sigs'}{C}{e}}
@@ -477,8 +477,8 @@ $\boxed{\doesgs{C}{e}}$
   {\doesgs{V \to C}{\lambda x.e}}
 
 \inferrule
-  {\makesgs{s}{D~\many{U}} \\
-   (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
+  {\makesgs{s}{D~\many{V}} \\
+   (\does{\Gamma, \many{x_k}:\many{U}}{\sigs}{C}{e_k})_{k~\many{U} \in D~\many{V}}}
   {\doesgs{C}{\keyword{case}~ s ~\keyword{of}~
                (k~\many{x_k} \mapsto e_k)_k}}
 
