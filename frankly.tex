@@ -69,7 +69,7 @@
 \newcommand{\does}[4]{#1 \sigentails{#2} {#3} \judgeword{does} {#4}}
 \newcommand{\kan}[3] {#1 \vdash {#2} \judgeword{can} {#3}}
 
-\newcommand{\pat}[3]{{#1} \judgeword{sees} {#2} \dashv #3}
+\newcommand{\pat}[3]{{#1} \judgeword{lets} {#2} \dashv #3}
 \newcommand{\patg}[2]{\pat{#1}{#2}{\Gamma}}
 
 
@@ -259,6 +259,165 @@ straightforward variant of that of lambda-eff.
 
 
 
+\begin{figure*}
+Types, signatures, type environments
+
+\[
+\begin{array}{@{}r@{~}l@{}}
+U, V &::= D~\many{U} \mid X \mid  \effbox{\sigs}\thunk{C} \\
+C    &::= \rt{V} \mid \effbox{\sigs}V \to C \\
+\\
+\sig  &::= \cdot \mid c : U(\many{V}), \sig \\
+\sigs &::=
+  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
+\\
+\Gamma &::= \cdot \mid \Gamma, x:V \mid f:\forall \varepsilon \many{X}.V \mid g:C \\
+\end{array}
+\]
+
+Flat signature extension (the right signature must be closed)
+\[
+\begin{array}{@{}r@{~}l@{}}
+\sigs~\emptyset &= \sigs \\
+\sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
+\end{array}
+\]
+
+Syntax
+
+\[
+\begin{array}{@{}r@{~}c@{~}l@{}}
+u &::=& x \mid f \mid d                              \\ % makes
+v &::=& u \mid k~\many{v}                               % has
+          \mid \thunk{e}
+\\[1ex]
+d &::=& g \mid c~\many{v} \mid d~e \mid \force{u}    \\ % can
+e &::=& v \mid r \mapsto e \mid e \medvert e            % does
+\\[1ex]
+r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \thunk{g} \\ % request
+p &::=& x \mid k~\many{p}                            \\ % pattern 
+\end{array}
+\]
+
+Typing rules
+\medskip
+
+$\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
+\begin{mathpar}
+\inferrule
+  {x:V \in \Gamma}
+  {\makesgs{x}{V}}
+
+%% \inferrule
+%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%    \theta(\varepsilon) = \sigs}
+%%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
+
+\inferrule
+  {f:\forall \varepsilon \many{X}.V \in \Phi \\
+   \dom(\theta) = \set{\varepsilon, \many{X}} \\
+   \theta(\varepsilon) = \sigs}
+  {\makesgs{f}{\theta(V)}}
+
+\inferrule
+  {\cangs{d}{\rt{V}}}
+  {\makesgs{d}{V}}
+\end{mathpar}
+
+$\boxed{\has{\Gamma}{\sigs}{V}{v}}$
+
+\begin{mathpar}
+\inferrule
+  {\makesgs{s}{V}}
+  {\hasgs{V}{s}}
+
+\inferrule
+  {(\hasgs{V_i}{v_i})_i \\
+   k~\many{V} \in D~\many{U}}
+  {\hasgs{D~\many{U}}{k~\many{v}}}
+
+\inferrule
+  {\does{\Gamma}{\sigs'}{C}{e}}
+  {\hasgs{\effbox{\sigs'}\thunk{C}}{\thunk{e}}}
+\end{mathpar}
+
+$\boxed{\can{\Gamma}{\sigs}{d}{C}}$
+
+\begin{mathpar}
+\inferrule
+  {g:C \in \Gamma}
+  {\cangs{g}{C}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs \\
+   (\hasgs{V_i}{v_i})_i}
+  {\cangs{c~\many{v}}{\rt{U}}}
+
+\inferrule
+  {\cangs{d}{\effbox{\sigs'}V \to C} \\
+   \does{\Gamma}{\sigs~\sigs'}{\rt{V}}{e}}
+  {\can{\Gamma}{\sigs}{d~e}{C}}
+
+\inferrule
+  {\makesgs{u}{\effbox{\sigs}\thunk{C}}}
+  {\cangs{\force{u}}{C}}
+\end{mathpar}
+
+$\boxed{\doesgs{C}{e}}$
+
+\begin{mathpar}
+\inferrule
+  {\hasgs{V}{v}}
+  {\doesgs{\rt{V}}{v}}
+
+\inferrule
+  {\pat{\effbox{\sigs'}V}{r}{\Delta} \\
+   \does{\Gamma, \Delta}{\sigs}{C}{e}}
+  {\doesgs{\effbox{\sigs'}V \to C}{r \mapsto e}}
+
+\inferrule
+  {\doesgs{V}{e} \\ \doesgs{V}{e'}}
+  {\doesgs{V}{e \medvert e'}}
+\end{mathpar}
+
+$\boxed{\pat{V}{p}{\Delta}}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{V}{x}{x:V}}
+
+\inferrule
+  {k~\many{V} \in D~\many{U} \\
+   (\pat{V_i}{p_i}{\Delta_i})_i}
+  {\pat{D~\many{U}}{k~\many{p}}{\many{\Delta}}}
+\end{mathpar}
+
+$\boxed{\pat{\effbox{\sigs}V}{r}{\Delta}}$
+
+\begin{mathpar}
+\inferrule
+  {\pat{V}{p}{\Delta}}
+  {\pat{\effbox{\sigs}V}{p}{\Delta}}
+
+\inferrule
+  {c:U(\many{V}) \in \sigs \\
+   (\pat{V_i}{p_i}{\Delta_i})_i}
+  {\pat{\effbox{\sigs}V}
+       {\handle{c~\many{p}}{g}}
+       {\many{\Delta}, g:{\effbox{}U \to \effbox{\sigs}V}}}
+
+\inferrule
+  { }
+  {\pat{C}{\thunk{g}}{g:C}}
+\end{mathpar}
+
+
+\caption{Frank}
+\end{figure*}
+
+
+
 
 
 \section{Pattern matching compilation (Core Frank)}
@@ -399,7 +558,7 @@ C    &::= \rt{V} \mid V \to C \\
 \sigs &::=
   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \\
-\Gamma &::= \cdot \mid \Gamma, x:V \\
+\Gamma &::= \cdot \mid \Gamma, x:V \mid f:\forall \varepsilon \many{X}.V \\
 \end{array}
 \]
 
@@ -681,7 +840,7 @@ C    &::= \rt{V} \mid V \to C \\
 \sigs &::=
   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \\
-\Gamma &::= \cdot \mid \Gamma, x:V \\
+\Gamma &::= \cdot \mid \Gamma, x:V \mid f:\forall \varepsilon \many{X}.V \\
 \end{array}
 \]
 
