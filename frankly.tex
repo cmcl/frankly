@@ -271,7 +271,7 @@ C    &::= \rt{V} \mid \effbox{\sigs}V \to C \\
 \sigs &::=
   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
 \\
-\Gamma &::= \cdot \mid \Gamma, x:V \mid f:\forall \varepsilon \many{X}.V \mid g:C \\
+\Gamma &::= \cdot \mid \Gamma, x:V \mid f:\forall \varepsilon \many{X}.V \\
 \end{array}
 \]
 
@@ -287,15 +287,15 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-u &::=& x \mid f \mid d                              \\ % makes
-v &::=& u \mid k~\many{v}                               % has
+u &::=& x \mid f \mid d                                \\ % makes
+v &::=& u \mid k~\many{v}                                 % has
           \mid \thunk{e}
 \\[1ex]
-d &::=& g \mid c~\many{v} \mid d~e \mid \force{u}    \\ % can
-e &::=& v \mid r \mapsto e \mid e \medvert e            % does
+d &::=& c~\many{v} \mid d~e \mid \force{u}             \\ % can
+e &::=& v \mid r \mapsto e \mid e \medvert e              % does
 \\[1ex]
+p &::=& x \mid k~\many{p}                              \\ % pattern 
 r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \thunk{g} \\ % request
-p &::=& x \mid k~\many{p}                            \\ % pattern 
 \end{array}
 \]
 
@@ -344,10 +344,6 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
 $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 
 \begin{mathpar}
-\inferrule
-  {g:C \in \Gamma}
-  {\cangs{g}{C}}
-
 \inferrule
   {c : U(\many{V}) \in \sigs \\
    (\hasgs{V_i}{v_i})_i}
@@ -406,11 +402,11 @@ $\boxed{\pat{\effbox{\sigs}V}{r}{\Delta}}$
    (\pat{V_i}{p_i}{\Delta_i})_i}
   {\pat{\effbox{\sigs}V}
        {\handle{c~\many{p}}{g}}
-       {\many{\Delta}, g:{\effbox{}U \to \effbox{\sigs}V}}}
+       {\many{\Delta}, g:\effbox{\sigs}\thunk{\effbox{}U \to \rt{V}}}}
 
 \inferrule
   { }
-  {\pat{C}{\thunk{g}}{g:C}}
+  {\pat{\effbox{\sigs}V}{\thunk{g}}{g:\effbox{\sigs}\thunk{\rt{V}}}}
 \end{mathpar}
 
 
