@@ -371,7 +371,8 @@ $\boxed{\doesgs{C}{e}}$
   {\doesgs{\rt{V}}{v}}
 
 \inferrule
-  {\pat{\effbox{\sigs'}V}{r}{\Delta} \\
+  {\sigs' \text{ closed} \\
+   \pat{\effbox{\sigs'}V}{r}{\Delta} \\
    \does{\Gamma, \Delta}{\sigs}{C}{e}}
   {\doesgs{\effbox{\sigs'}V \to C}{r \mapsto e}}
 
