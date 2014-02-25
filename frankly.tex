@@ -265,7 +265,7 @@ Types, signatures, type environments
 \[
 \begin{array}{@{}r@{~}l@{}}
 U, V &::= D~\many{U} \mid X \mid  \effbox{\sigs}\thunk{C} \\
-C    &::= \rt{V} \mid \effbox{\sigs}V \to C \\
+C    &::= \rt{V} \mid \many{\effbox{\sigs}V} \to C \\
 \\
 \sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
@@ -291,8 +291,8 @@ u &::=& x \mid f \mid d                                \\ % makes
 v &::=& u \mid k~\many{v}                                 % has
           \mid \thunk{e}
 \\[1ex]
-d &::=& c~\many{v} \mid d~e \mid \force{u}             \\ % can
-e &::=& v \mid r \mapsto e \mid e \medvert e              % does
+d &::=& c~\many{v} \mid d~\many{e} \mid \force{u}      \\ % can
+e &::=& v \mid \many{r} \mapsto e \mid e \medvert e       % does
 \\[1ex]
 p &::=& x \mid k~\many{p}                              \\ % pattern 
 r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \thunk{g} \\ % request
@@ -350,9 +350,9 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\cangs{c~\many{v}}{\rt{U}}}
 
 \inferrule
-  {\cangs{d}{\effbox{\sigs'}V \to C} \\
-   \does{\Gamma}{\sigs~\sigs'}{\rt{V}}{e}}
-  {\can{\Gamma}{\sigs}{d~e}{C}}
+  {\cangs{d}{\many{\effbox{\sigs'}V} \to C} \\
+   (\does{\Gamma}{\sigs~\sigs'_i}{\rt{V_i}}{e_i})_i}
+  {\can{\Gamma}{\sigs}{d~\many{e}}{C}}
 
 \inferrule
   {\makesgs{u}{\effbox{\sigs}\thunk{C}}}
@@ -368,9 +368,9 @@ $\boxed{\doesgs{C}{e}}$
 
 \inferrule
   {\sigs' \text{ closed} \\
-   \pat{\effbox{\sigs'}V}{r}{\Delta} \\
-   \does{\Gamma, \Delta}{\sigs}{C}{e}}
-  {\doesgs{\effbox{\sigs'}V \to C}{r \mapsto e}}
+   (\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
+   \does{\Gamma, \many{\Delta}}{\sigs}{C}{e}}
+  {\doesgs{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
 
 \inferrule
   {\doesgs{V}{e} \\ \doesgs{V}{e'}}
