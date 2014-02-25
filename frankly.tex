@@ -248,126 +248,126 @@ straightforward variant of that of lambda-eff.
 
 \section{Pattern matching compilation (Core Frank)}
 
-\begin{figure*}
-Types, signatures, type environments
+%% \begin{figure*}
+%% Types, signatures, type environments
 
-\[
-\begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{V} \mid X \mid  \thunk{C} \\
-C    &::= P(\many{P}) \\
-P    &::= \effbox{\sigs}V \\
-\\
-\sig  &::= \cdot \mid c : V(\many{V}), \sig \\
-\sigs &::=
-  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
-\\
-\Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, m:P \mid \Gamma, g:C \\
-\end{array}
-\]
+%% \[
+%% \begin{array}{@{}r@{~}l@{}}
+%% U, V &::= D~\many{V} \mid X \mid  \thunk{C} \\
+%% C    &::= P(\many{P}) \\
+%% P    &::= \effbox{\sigs}V \\
+%% \\
+%% \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+%% \sigs &::=
+%%   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
+%% \\
+%% \Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, m:P \mid \Gamma, g:C \\
+%% \end{array}
+%% \]
 
-Type substitution is lifted homomorphically except on computation types
-\[
-\begin{array}{@{}r@{~}l@{}}
-\theta(P(\many{P})) &= \theta(P)(\theta^\star(\many{P})) \\
-\theta^\star(\effbox{\sigs}V) &= \effbox{\theta^\star(\sigs)}\theta(V) \\
-\theta^\star(\emptyset) &= \emptyset \\
-\theta^\star(\varepsilon) &= \varepsilon \\
-\theta^\star(\sigs, \sig~\many{V}) &= \theta^\star(\sigs), \theta(S~\many{V}) \\
-\end{array}
-\]
+%% Type substitution is lifted homomorphically except on computation types
+%% \[
+%% \begin{array}{@{}r@{~}l@{}}
+%% \theta(P(\many{P})) &= \theta(P)(\theta^\star(\many{P})) \\
+%% \theta^\star(\effbox{\sigs}V) &= \effbox{\theta^\star(\sigs)}\theta(V) \\
+%% \theta^\star(\emptyset) &= \emptyset \\
+%% \theta^\star(\varepsilon) &= \varepsilon \\
+%% \theta^\star(\sigs, \sig~\many{V}) &= \theta^\star(\sigs), \theta(S~\many{V}) \\
+%% \end{array}
+%% \]
 
-Flat signature extension
-\[
-\begin{array}{@{}r@{~}l@{}}
-\sigs~\emptyset &= \emptyset \\
-\sigs~\varepsilon &= \sigs \\
-\sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
-\end{array}
-\]
+%% Flat signature extension
+%% \[
+%% \begin{array}{@{}r@{~}l@{}}
+%% \sigs~\emptyset &= \emptyset \\
+%% \sigs~\varepsilon &= \sigs \\
+%% \sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
+%% \end{array}
+%% \]
 
-Syntax
+%% Syntax
 
-\[
-\begin{array}{@{}r@{~}c@{~}l@{}}
-s &::=& x \mid f~\many{t}       \\ % makes
-f &::=& g \mid c \mid \force{s} \\ % can
-t &::=& s \mid k~\many{t}          % has
-          \mid \thunk{\many{m} \to t}  \\ 
-  &\mid& \keyword{case}~x~\keyword{of}~
-           \many{(k~\many{x} \mapsto t)} \\
-  &\mid& \keyword{handle} ~m~ \keyword{with}~
-           \many{(\handle{c~\many{x}}{g} \mapsto t)} \medvert
-            x        \mapsto t \\
-\end{array}
-\]
+%% \[
+%% \begin{array}{@{}r@{~}c@{~}l@{}}
+%% s &::=& x \mid f~\many{t}       \\ % makes
+%% f &::=& g \mid c \mid \force{s} \\ % can
+%% t &::=& s \mid k~\many{t}          % has
+%%           \mid \thunk{\many{m} \to t}  \\ 
+%%   &\mid& \keyword{case}~x~\keyword{of}~
+%%            \many{(k~\many{x} \mapsto t)} \\
+%%   &\mid& \keyword{handle} ~m~ \keyword{with}~
+%%            \many{(\handle{c~\many{x}}{g} \mapsto t)} \medvert
+%%             x        \mapsto t \\
+%% \end{array}
+%% \]
 
-Typing rules
-\medskip
+%% Typing rules
+%% \medskip
 
-$\boxed{\makes{\Gamma}{\sigs}{s}{V}}$
-\begin{mathpar}
-\inferrule
-  {x:V \in \Gamma}
-  {\makesgs{x}{V}}
+%% $\boxed{\makes{\Gamma}{\sigs}{s}{V}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {x:V \in \Gamma}
+%%   {\makesgs{x}{V}}
 
-\inferrule
-  {\cangs{f}{\effbox{\sigs}V(\many{\effbox{\sigs'}V})} \\
-   \has{\Gamma}{\sigs~\sigs'_i}{V_i}{t_i}}
-  {\makesgs{f~\many{t}}{V}}
-\end{mathpar}
+%% \inferrule
+%%   {\cangs{f}{\effbox{\sigs}V(\many{\effbox{\sigs'}V})} \\
+%%    \has{\Gamma}{\sigs~\sigs'_i}{V_i}{t_i}}
+%%   {\makesgs{f~\many{t}}{V}}
+%% \end{mathpar}
 
-$\boxed{\can{\Gamma}{\sigs}{f}{C}}$
+%% $\boxed{\can{\Gamma}{\sigs}{f}{C}}$
 
-\begin{mathpar}
-\inferrule
-  {\dom(\theta) = \set{\varepsilon} \cup \FV(C) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-   \theta(\varepsilon) = \sigs \\
-   \theta(C) = \effbox{\sigs}V(\many{P})}
-  {\can{\Gamma, g:C}{\sigs}{g}{\effbox{\sigs}V(\many{P})}}
+%% \begin{mathpar}
+%% \inferrule
+%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(C) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%    \theta(\varepsilon) = \sigs \\
+%%    \theta(C) = \effbox{\sigs}V(\many{P})}
+%%   {\can{\Gamma, g:C}{\sigs}{g}{\effbox{\sigs}V(\many{P})}}
 
-\inferrule
-  {c : V'(\many{V}) \in \sigs}
-  {\cangs{c}{\effbox{\sigs}V'(\many{\effbox{\varepsilon}V})}}
+%% \inferrule
+%%   {c : V'(\many{V}) \in \sigs}
+%%   {\cangs{c}{\effbox{\sigs}V'(\many{\effbox{\varepsilon}V})}}
 
-\inferrule
-  {\makesgs{s}{\thunk{C}}}
-  {\cangs{\force{s}}{C}}
-\end{mathpar}
+%% \inferrule
+%%   {\makesgs{s}{\thunk{C}}}
+%%   {\cangs{\force{s}}{C}}
+%% \end{mathpar}
 
-$\boxed{\has{\Gamma}{\sigs}{V}{t}}$
+%% $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
 
-\begin{mathpar}
-\inferrule
-  {\makesgs{s}{V}}
-  {\hasgs{V}{s}}
+%% \begin{mathpar}
+%% \inferrule
+%%   {\makesgs{s}{V}}
+%%   {\hasgs{V}{s}}
 
-\inferrule
-  {\hasgs{V_i[\many{U}/\many{X}]}{t_i} \\
-   k~\many{V} \in D~\many{X}}
-  {\hasgs{D~\many{U}}{k~\many{t}}}
+%% \inferrule
+%%   {\hasgs{V_i[\many{U}/\many{X}]}{t_i} \\
+%%    k~\many{V} \in D~\many{X}}
+%%   {\hasgs{D~\many{U}}{k~\many{t}}}
 
-\inferrule
-  {\has{\Gamma, \many{m}:\many{P}}{\sigs'}{V}{t}}
-  {\hasgs{\thunk{\effbox{\sigs'}V(\many{P})}}{\thunk{\many{m} \to t}}}
+%% \inferrule
+%%   {\has{\Gamma, \many{m}:\many{P}}{\sigs'}{V}{t}}
+%%   {\hasgs{\thunk{\effbox{\sigs'}V(\many{P})}}{\thunk{\many{m} \to t}}}
 
-\inferrule
-  {\makesgs{s}{D~\many{U}} \\
-   (\has{\Gamma, \many{x_k}:\many{V}}{\sigs}{V}{t_k})_{k~\many{V} \in D~\many{U}}}
-  {\hasgs{V}{\keyword{case}~ s ~\keyword{of}~
-               \many{(k~\many{x_k} \mapsto t_k)}}}
+%% \inferrule
+%%   {\makesgs{s}{D~\many{U}} \\
+%%    (\has{\Gamma, \many{x_k}:\many{V}}{\sigs}{V}{t_k})_{k~\many{V} \in D~\many{U}}}
+%%   {\hasgs{V}{\keyword{case}~ s ~\keyword{of}~
+%%                \many{(k~\many{x_k} \mapsto t_k)}}}
 
-\inferrule
-  {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs~\sigs'}U(\effbox{\varepsilon}V')}
-       {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \sigs'} \\
-   \has{\Gamma, x:U}{\sigs}{W}{t}}
-  {\has{\Gamma, m:\effbox{\sigs~\sigs'}V}{\sigs}
-     {W}{\keyword{handle}~ m ~\keyword{with}~
-           \many{\handle{c~\many{x_c}}{g} \mapsto t_c} \medvert
-           x \mapsto t}}
-\end{mathpar}
+%% \inferrule
+%%   {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs~\sigs'}U(\effbox{\varepsilon}V')}
+%%        {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \sigs'} \\
+%%    \has{\Gamma, x:U}{\sigs}{W}{t}}
+%%   {\has{\Gamma, m:\effbox{\sigs~\sigs'}V}{\sigs}
+%%      {W}{\keyword{handle}~ m ~\keyword{with}~
+%%            \many{\handle{c~\many{x_c}}{g} \mapsto t_c} \medvert
+%%            x \mapsto t}}
+%% \end{mathpar}
 
-\caption{Core Frank}
-\end{figure*}
+%% \caption{Core Frank}
+%% \end{figure*}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -496,7 +496,7 @@ $\boxed{\doesgs{C}{e}}$
                 x \mapsto e}}
 \end{mathpar}
 
-\caption{Core Frank (another attempt)}
+\caption{Core Frank}
 \end{figure*}
 
 
