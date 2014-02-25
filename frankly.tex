@@ -443,7 +443,7 @@ $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
 %%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
 
 \inferrule
-  {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+  {f:\forall \varepsilon \many{X}.V \in \Phi \\
    \dom(\theta) = \set{\varepsilon, \many{X}} \\
    \theta(\varepsilon) = \sigs}
   {\makesgs{f}{\theta(V)}}
@@ -657,13 +657,15 @@ Call by value embedding of Core Frank into implicit-eff:
 \sem{\force{u}} &=& \key{let}~x=\sem{u} ~\key{in}~\force{x} \\
 \\
 \sem{\lambda x.e} &=& \lambda x.\sem{e} \\
-\sem{\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k}
-  &=& \key{let}~x=\sem{u} ~\key{in} \\
-  &&  \quad \key{case}~x~\key{of}~(k~\many{x_k} \mapsto \sem{e_k})_k \\
-\sem{\key{handle}~d~\key{with}~(\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert x \mapsto e}
-  &=& \key{handle}~\sem{d}~\key{with} \\
-  &&  \quad (\handle{c~\many{x_c}}{g_c} \mapsto \sem{e_c})_c \\
-  &&  \quad x \mapsto \sem{e}\\
+\multicolumn{3}{@{}l}{\sem{\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k} =} \\
+\multicolumn{3}{@{}l}
+  {\qquad \key{let}~x=\sem{u} ~\key{in}~
+    \key{case}~x~\key{of}~(k~\many{x_k} \mapsto \sem{e_k})_k} \\
+\multicolumn{3}{@{}l}{\sem{\key{handle}~d~\key{with}~(\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert x \mapsto e} =} \\
+\multicolumn{3}{@{}l}
+  {\qquad \key{handle}~\sem{d}~\key{with}~ 
+            (\handle{c~\many{x_c}}{g_c} \mapsto \sem{e_c})_c
+            \medvert x \mapsto \sem{e}} \\
 \end{equations}
 
 \begin{figure*}
@@ -715,16 +717,16 @@ $\boxed{\valg{v}{V}}$
   {x:V \in \Gamma}
   {\valg{x}{V}}
 
-\inferrule
-  {f:\forall \varepsilon \many{X}.V \in \Gamma \\
-   \dom(\theta) = \set{\varepsilon, \many{X}} \\
-   \theta(\varepsilon) = \sigs}
-  {\valg{f}{\theta(V)}}
-
 %% \inferrule
 %%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
 %%    \theta(\varepsilon) = \sigs}
 %%   {\val{\Gamma, x:V}{x}{\theta(V)}}
+
+\inferrule
+  {f:\forall \varepsilon \many{X}.V \in \Phi \\
+   \dom(\theta) = \set{\varepsilon, \many{X}} \\
+   \theta(\varepsilon) = \sigs}
+  {\valg{f}{\theta(V)}}
 
 \inferrule
   {\valg{V_i}{v_i} \\
