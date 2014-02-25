@@ -232,7 +232,7 @@ order. Optionally, we can expose non-exhaustive/incomplete pattern
 matching as concrete effects.
 
 Second, we make the distinction between values terms and computations
-explicit, as in CBPV (comp-eff).
+explicit, as in CBPV (implicit-eff).
 
 Finally, we make polymorphism explicit. Our ultimate target is F-eff,
 an effect-polymorphic variant of Kammar et al's CBPV-inspired
@@ -398,12 +398,12 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-s &::=& x \mid d                                  \\ % makes
-t &::=& s \mid k~\many{t}                            % has
+u &::=& x \mid d                                  \\ % makes
+v &::=& u \mid k~\many{v}                            % has
           \mid \thunk{e}  \\[1ex]
-d &::=& c~\many{t} \mid d~t \mid \force{s} \\        % can
-e &::=& t \mid \lambda x.e \\                        % does
-  &\mid& \keyword{case}~s~\keyword{of}~
+d &::=& c~\many{v} \mid d~v \mid \force{u} \\        % can
+e &::=& v \mid \lambda x.e \\                        % does
+  &\mid& \keyword{case}~u~\keyword{of}~
            (k~\many{x_k} \mapsto e_k)_k \\
   &\mid& \keyword{handle} ~d~ \keyword{with}~
            (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
@@ -414,7 +414,7 @@ e &::=& t \mid \lambda x.e \\                        % does
 Typing rules
 \medskip
 
-$\boxed{\makes{\Gamma}{\sigs}{s}{V}}$
+$\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
 \begin{mathpar}
 %% \inferrule
 %%   {x:V \in \Gamma}
@@ -430,7 +430,7 @@ $\boxed{\makes{\Gamma}{\sigs}{s}{V}}$
   {\makesgs{d}{V}}
 \end{mathpar}
 
-$\boxed{\has{\Gamma}{\sigs}{V}{t}}$
+$\boxed{\has{\Gamma}{\sigs}{V}{v}}$
 
 \begin{mathpar}
 \inferrule
@@ -438,9 +438,9 @@ $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
   {\hasgs{V}{s}}
 
 \inferrule
-  {(\hasgs{U_i}{t_i})_i \\
-   k~\many{U} \in D~\many{V}}
-  {\hasgs{D~\many{V}}{k~\many{t}}}
+  {(\hasgs{V_i}{v_i})_i \\
+   k~\many{V} \in D~\many{U}}
+  {\hasgs{D~\many{U}}{k~\many{v}}}
 
 \inferrule
   {\does{\Gamma}{\sigs'}{C}{e}}
@@ -451,42 +451,42 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 
 \begin{mathpar}
 \inferrule
-  {c : V(\many{U}) \in \sigs \\
-   (\hasgs{U_i}{t_i})_i}
-  {\cangs{c~\many{t}}{F~V}}
+  {c : U(\many{V}) \in \sigs \\
+   (\hasgs{V_i}{v_i})_i}
+  {\cangs{c~\many{v}}{F~U}}
 
 \inferrule
   {\cangs{d}{V \to C} \\
-   \has{\Gamma}{\sigs}{V}{t}}
-  {\cangs{d~t}{C}}
+   \has{\Gamma}{\sigs}{V}{v}}
+  {\cangs{d~v}{C}}
 
 \inferrule
-  {\makesgs{s}{\effbox{\sigs}\thunk{C}}}
-  {\cangs{\force{s}}{C}}
+  {\makesgs{u}{\effbox{\sigs}\thunk{C}}}
+  {\cangs{\force{u}}{C}}
 \end{mathpar}
 
 $\boxed{\doesgs{C}{e}}$
 
 \begin{mathpar}
 \inferrule
-  {\hasgs{V}{t}}
-  {\doesgs{F~V}{t}}
+  {\hasgs{V}{v}}
+  {\doesgs{F~V}{v}}
 
 \inferrule
   {\does{\Gamma, x:V}{\sigs}{C}{e}}
   {\doesgs{V \to C}{\lambda x.e}}
 
 \inferrule
-  {\makesgs{s}{D~\many{V}} \\
-   (\does{\Gamma, \many{x_k}:\many{U}}{\sigs}{C}{e_k})_{k~\many{U} \in D~\many{V}}}
-  {\doesgs{C}{\keyword{case}~ s ~\keyword{of}~
+  {\makesgs{u}{D~\many{U}} \\
+   (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
+  {\doesgs{C}{\keyword{case}~ u ~\keyword{of}~
                (k~\many{x_k} \mapsto e_k)_k}}
 
 \inferrule
   {\sigs' \text{ closed} \\
    \can{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
-   (\does{\Gamma, \many{x_c}:\many{U}, g_c:\effbox{\sigs~\sigs'}\thunk{U' \to F~V}}
-         {\sigs}{C}{e_c})_{c : U'(\many{U}) \in \sigs'} \\
+   (\does{\Gamma, \many{x_c}:\many{V}, g_c:\effbox{\sigs~\sigs'}\thunk{U \to F~V}}
+         {\sigs}{C}{e_c})_{c : U(\many{V}) \in \sigs'} \\
    \does{\Gamma, x:V}{\sigs}{C}{e}}
   {\does{\Gamma}{\sigs}
          {C}{\keyword{handle}~ d ~\keyword{with}~
@@ -499,7 +499,127 @@ $\boxed{\doesgs{C}{e}}$
 
 
 
-\section{Towards call-by-push value (comp-eff)}
+%% \section{Towards call-by-push value (comp-eff)}
+
+%% \begin{figure*}
+
+%% Types, signatures, type environments
+
+%% \[
+%% \begin{array}{@{}r@{~}l@{}}
+%% U, V &::= D~\many{V} \mid X \mid \effbox{\sigs}\thunk{C} \mid \forall X.V \\
+%% C    &::= F~V \mid P \to C \\
+%% P    &::= \effbox{\sigs}C \\
+%% \\
+%% \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
+%% \sigs &::=
+%%   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
+%% \varepsilon &::= \alpha \mid \beta \\
+%% \\
+%% \Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, g:P \\
+%% \end{array}
+%% \]
+
+%% Flat signature extension
+%% \[
+%% \begin{array}{@{}r@{~}l@{}}
+%% \sigs~\emptyset &= \emptyset \\
+%% \sigs~\alpha &= \alpha \\
+%% \sigs~\beta &= \sigs \\
+%% \sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
+%% \end{array}
+%% \]
+
+%% Syntax
+
+%% \[
+%% \begin{array}{@{}r@{~}c@{~}l@{}}
+%% u, v &::=& x \mid k~\many{s} \mid \thunk{d} \\  % values
+%% d, e &::=& g \mid c~\many{v}                     % computations
+%%    \mid \lambda g.e \mid d~e \mid \keyword{ret}~v \mid \force{u} \\
+%%   &\mid& \keyword{case}~u~\keyword{of}~
+%%            \many{(k~\many{x} \mapsto e)} \\
+%%   &\mid& \keyword{handle} ~d~ \keyword{with}~
+%%            \many{(\handle{c~\many{x}}{g} \mapsto e)} \medvert
+%%             x        \mapsto e \\
+%% \end{array}
+%% \]
+
+%% Typing rules
+%% \medskip
+
+%% $\boxed{\valg{v}{V}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {x:V \in \Gamma}
+%%   {\valg{x}{V}}
+
+%% \inferrule
+%%   {\valg{V_i[\many{U}/\many{X}]}{v_i} \\
+%%    k~\many{V} \in D~\many{X}}
+%%   {\valg{D~\many{U}}{k~\many{v}}}
+
+%% \inferrule
+%%   {\compgs{e}{C}}
+%%   {\valg{\thunk{e}}{\effbox{\sigs}\thunk{C}}}
+%% \end{mathpar}
+
+%% $\boxed{\compgs{e}{C}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {\dom(\theta) = \FV(P) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%    \theta(\alpha) = \sigs \\
+%%    \theta(\beta) = \beta \\
+%%    \theta(P) = \effbox{\sigs}C}
+%%   {\can{\Gamma, g:P}{\sigs}{g}{C}}
+
+%% \inferrule
+%%   {c : V(\many{V}) \in \sigs \\
+%%    \valg{v_i}{V_i}}
+%%   {\compgs{c~\many{v}}{F~V}}
+
+%% \inferrule
+%%   {\comp{\Gamma, g:P}{\sigs}{d}{C}}
+%%   {\compgs{\lambda g. d}{V \to C}}
+
+%% \inferrule
+%%   {\compgs{d}{\effbox{\sigs'}C' \to C} \\
+%%    \comp{\Gamma}{\sigs~\sigs'}{e}{C'}}
+%%   {\compgs{d~e}{C}}
+
+%% \inferrule
+%%   {\valg{v}{V}}
+%%   {\compgs{\keyword{ret}~v}{F~V}}
+
+%% \inferrule
+%%   {\valg{u}{\effbox{\sigs}\thunk{C}}}
+%%   {\compgs{\force{u}}{C}}
+
+%% \inferrule
+%%   {\valg{u}{D~\many{U}} \\
+%%    (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
+%%   {\compgs{\keyword{case}~ u ~\keyword{of}~
+%%                \many{(k~\many{x_k} \mapsto e_k)}}
+%%           {C}}
+
+%% \inferrule
+%%   {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
+%%    (\comp{\Gamma, \many{x_c}:\many{V},
+%%                   g:\effbox{\sigs~\sigs'}(V' \to F~U)}
+%%        {\sigs}{e_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
+%%    \comp{\Gamma, x:U}{\sigs}{e}{C}}
+%%   {\compgs
+%%      {\keyword{handle}~ d ~\keyword{with}~
+%%            \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
+%%            x \mapsto e}
+%%      {C}}
+%% \end{mathpar}
+
+%% \caption{comp-eff}
+%% \end{figure*}
+
+
+\section{CBPV with Implicit polymorphism}
 
 \begin{figure*}
 
@@ -507,16 +627,17 @@ Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{V} \mid X \mid \effbox{\sigs}\thunk{C} \mid \forall X.V \\
-C    &::= F~V \mid P \to C \\
-P    &::= \effbox{\sigs}C \\
+U, V &::= D~\many{V} \mid X \mid \effbox{\sigs}\thunk{C} \\
+C    &::= F~V \mid V \to C \\
+\\
+Z    &::= X \mid \varepsilon \\
+T    &::= V \mid \sigs \\
 \\
 \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
 \sigs &::=
   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
-\varepsilon &::= \alpha \mid \beta \\
 \\
-\Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, g:P \\
+\Gamma &::= \cdot \mid \Gamma, x:V \\
 \end{array}
 \]
 
@@ -524,8 +645,6 @@ Flat signature extension
 \[
 \begin{array}{@{}r@{~}l@{}}
 \sigs~\emptyset &= \emptyset \\
-\sigs~\alpha &= \alpha \\
-\sigs~\beta &= \sigs \\
 \sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
 \end{array}
 \]
@@ -534,9 +653,9 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-u, v &::=& x \mid k~\many{s} \mid \thunk{d} \\  % values
-d, e &::=& g \mid c~\many{v}                     % computations
-   \mid \lambda g.e \mid d~e \mid \keyword{ret}~v \mid \force{u} \\
+u, v &::=& x \mid k~\many{s} \mid \thunk{d}  \\ % values
+d, e &::=& c~\many{v}                        % computations
+   \mid \lambda x.e \mid d~v \mid \keyword{ret}~v \mid \force{u} \\
   &\mid& \keyword{case}~u~\keyword{of}~
            \many{(k~\many{x} \mapsto e)} \\
   &\mid& \keyword{handle} ~d~ \keyword{with}~
@@ -550,13 +669,18 @@ Typing rules
 
 $\boxed{\valg{v}{V}}$
 \begin{mathpar}
-\inferrule
-  {x:V \in \Gamma}
-  {\valg{x}{V}}
+%% \inferrule
+%%   {x:V \in \Gamma}
+%%   {\valg{x}{V}}
 
 \inferrule
-  {\valg{V_i[\many{U}/\many{X}]}{v_i} \\
-   k~\many{V} \in D~\many{X}}
+  {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+   \theta(\varepsilon) = \sigs}
+  {\val{\Gamma, x:V}{x}{\theta(V)}}
+
+\inferrule
+  {\valg{V_i}{v_i} \\
+   k~\many{V} \in D~\many{U}}
   {\valg{D~\many{U}}{k~\many{v}}}
 
 \inferrule
@@ -567,25 +691,18 @@ $\boxed{\valg{v}{V}}$
 $\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
-  {\dom(\theta) = \FV(P) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-   \theta(\alpha) = \sigs \\
-   \theta(\beta) = \beta \\
-   \theta(P) = \effbox{\sigs}C}
-  {\can{\Gamma, g:P}{\sigs}{g}{C}}
-
-\inferrule
   {c : V(\many{V}) \in \sigs \\
    \valg{v_i}{V_i}}
   {\compgs{c~\many{v}}{F~V}}
 
 \inferrule
-  {\comp{\Gamma, g:P}{\sigs}{d}{C}}
-  {\compgs{\lambda g. d}{V \to C}}
+  {\comp{\Gamma, x:V}{\sigs}{e}{C}}
+  {\compgs{\lambda x.e}{V \to C}}
 
 \inferrule
-  {\compgs{d}{\effbox{\sigs'}C' \to C} \\
-   \comp{\Gamma}{\sigs~\sigs'}{e}{C'}}
-  {\compgs{d~e}{C}}
+  {\compgs{d}{V \to C} \\
+   \valg{v}{V}}
+  {\compgs{d~v}{C}}
 
 \inferrule
   {\valg{v}{V}}
@@ -605,7 +722,7 @@ $\boxed{\compgs{e}{C}}$
 \inferrule
   {\comp{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
    (\comp{\Gamma, \many{x_c}:\many{V},
-                  g:\effbox{\sigs~\sigs'}(V' \to F~U)}
+                  g:\effbox{\sigs~\sigs'}\thunk{V' \to F~U}}
        {\sigs}{e_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
    \comp{\Gamma, x:U}{\sigs}{e}{C}}
   {\compgs
@@ -615,7 +732,7 @@ $\boxed{\compgs{e}{C}}$
      {C}}
 \end{mathpar}
 
-\caption{comp-eff}
+\caption{implicit-eff}
 \end{figure*}
 
 
@@ -677,8 +794,8 @@ $\boxed{\valg{v}{V}}$
   {\valg{x}{V}}
 
 \inferrule
-  {\valg{V_i[\many{U}/\many{X}]}{v_i} \\
-   k~\many{V} \in D~\many{X}}
+  {\valg{V_i}{v_i} \\
+   k~\many{V} \in D~\many{U}}
   {\valg{D~\many{U}}{k~\many{v}}}
 
 \inferrule
