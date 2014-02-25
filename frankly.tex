@@ -398,16 +398,16 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-s &::=& x \mid f                                  \\ % makes
-f &::=& c~\many{t} \mid f~t \mid \force{s} \\ % can
+s &::=& x \mid d                                  \\ % makes
 t &::=& s \mid k~\many{t}                            % has
-          \mid \thunk{h}  \\ 
-h &::=& t \mid \lambda x.h \\                        % does
+          \mid \thunk{e}  \\[1ex]
+d &::=& c~\many{t} \mid d~t \mid \force{s} \\        % can
+e &::=& t \mid \lambda x.e \\                        % does
   &\mid& \keyword{case}~s~\keyword{of}~
-           \many{(k~\many{x} \mapsto h)} \\
-  &\mid& \keyword{handle} ~f~ \keyword{with}~
-           \many{(\handle{c~\many{x}}{g} \mapsto h)} \medvert
-            x        \mapsto h \\
+           \many{(k~\many{x} \mapsto e)} \\
+  &\mid& \keyword{handle} ~d~ \keyword{with}~
+           \many{(\handle{c~\many{x}}{g} \mapsto e)} \medvert
+            x        \mapsto e \\
 \end{array}
 \]
 
@@ -426,26 +426,8 @@ $\boxed{\makes{\Gamma}{\sigs}{s}{V}}$
   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
 
 \inferrule
-  {\cangs{f}{F~V}}
-  {\makesgs{f}{V}}
-\end{mathpar}
-
-$\boxed{\can{\Gamma}{\sigs}{f}{C}}$
-
-\begin{mathpar}
-\inferrule
-  {c : V(\many{U}) \in \sigs \\
-   \hasgs{t_i}{U_i}}
-  {\cangs{c~\many{t}}{F~V}}
-
-\inferrule
-  {\cangs{f}{V \to C} \\
-   \has{\Gamma}{\sigs}{V}{t}}
-  {\cangs{f~t}{C}}
-
-\inferrule
-  {\makesgs{s}{\effbox{\sigs}\thunk{C}}}
-  {\cangs{\force{s}}{C}}
+  {\cangs{d}{F~V}}
+  {\makesgs{d}{V}}
 \end{mathpar}
 
 $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
@@ -461,11 +443,29 @@ $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
   {\hasgs{D~\many{U}}{k~\many{t}}}
 
 \inferrule
-  {\does{\Gamma}{\sigs'}{C}{h}}
-  {\hasgs{\effbox{\sigs'}\thunk{C}}{\thunk{h}}}
+  {\does{\Gamma}{\sigs'}{C}{e}}
+  {\hasgs{\effbox{\sigs'}\thunk{C}}{\thunk{e}}}
 \end{mathpar}
 
-$\boxed{\doesgs{C}{h}}$
+$\boxed{\can{\Gamma}{\sigs}{d}{C}}$
+
+\begin{mathpar}
+\inferrule
+  {c : V(\many{U}) \in \sigs \\
+   \hasgs{t_i}{U_i}}
+  {\cangs{c~\many{t}}{F~V}}
+
+\inferrule
+  {\cangs{d}{V \to C} \\
+   \has{\Gamma}{\sigs}{V}{t}}
+  {\cangs{d~t}{C}}
+
+\inferrule
+  {\makesgs{s}{\effbox{\sigs}\thunk{C}}}
+  {\cangs{\force{s}}{C}}
+\end{mathpar}
+
+$\boxed{\doesgs{C}{e}}$
 
 \begin{mathpar}
 \inferrule
@@ -473,25 +473,25 @@ $\boxed{\doesgs{C}{h}}$
   {\doesgs{F~V}{t}}
 
 \inferrule
-  {\does{\Gamma, x:V}{\sigs}{C}{h}}
-  {\doesgs{V \to C}{\lambda x.h}}
+  {\does{\Gamma, x:V}{\sigs}{C}{e}}
+  {\doesgs{V \to C}{\lambda x.e}}
 
 \inferrule
   {\makesgs{s}{D~\many{U}} \\
-   (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{h_k})_{k~\many{V} \in D~\many{U}}}
+   (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
   {\doesgs{C}{\keyword{case}~ s ~\keyword{of}~
-               \many{(k~\many{x_k} \mapsto h_k)}}}
+               \many{(k~\many{x_k} \mapsto e_k)}}}
 
 \inferrule
   {\sigs' \text{ closed} \\
-   \can{\Gamma}{\sigs~\sigs'}{f}{F~V} \\
+   \can{\Gamma}{\sigs~\sigs'}{d}{F~V} \\
    (\does{\Gamma, \many{x_c}:\many{U}, g:\effbox{\sigs~\sigs'}\thunk{U' \to F~V}}
-         {\sigs}{C}{h_c})_{c : U'(\many{U}) \in \sigs'} \\
-   \does{\Gamma, x:V}{\sigs}{C}{h}}
+         {\sigs}{C}{e_c})_{c : U'(\many{U}) \in \sigs'} \\
+   \does{\Gamma, x:V}{\sigs}{C}{e}}
   {\does{\Gamma}{\sigs}
-         {C}{\keyword{handle}~ f ~\keyword{with}~
-               \many{\handle{c~\many{x_c}}{g} \mapsto h_c} \medvert
-                x \mapsto h}}
+         {C}{\keyword{handle}~ d ~\keyword{with}~
+               \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
+                x \mapsto e}}
 \end{mathpar}
 
 \caption{Core Frank (another attempt)}
