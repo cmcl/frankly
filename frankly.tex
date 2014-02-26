@@ -62,14 +62,9 @@
 \newcommand{\makes}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
 \newcommand{\has}[4] {#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
 \newcommand{\can}[4]{#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
-
-\newcommand{\chas}[3] {#1 \vdash {#2} \judgeword{does} {#3}}
-\newcommand{\chasg}[2]{\chas{\Gamma}{#1}{#2}}
-
 \newcommand{\does}[4]{#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
-\newcommand{\kan}[3] {#1 \vdash {#2} \judgeword{can} {#3}}
 
-\newcommand{\pat}[3]{{#1} \judgeword{lets} {#2} \dashv #3}
+\newcommand{\pat}[3]{{#1} \judgeword{matches} {#2} \dashv #3}
 \newcommand{\patg}[2]{\pat{#1}{#2}{\Gamma}}
 
 
@@ -78,9 +73,7 @@
 \newcommand{\makesgs}{\makes{\Gamma}{\sigs}}
 \newcommand{\hasgs}{\has{\Gamma}{\sigs}}
 \newcommand{\cangs}{\can{\Gamma}{\sigs}}
-
 \newcommand{\doesgs}{\does{\Gamma}{\sigs}}
-\newcommand{\kang}{\kan{\Gamma}}
 
 \newcommand{\sig}{S}
 \newcommand{\sigs}{\Sigma}
@@ -291,7 +284,7 @@ u &::=& x \mid f \mid d                                \\ % makes
 v &::=& u \mid k~\many{v}                                 % has
           \mid \thunk{e}
 \\[1ex]
-d &::=& c~\many{v} \mid d~\many{e} \mid \force{u}      \\ % can
+d &::=& d~\many{e} \mid \force{u} \mid c~\many{v}      \\ % can
 e &::=& v \mid \many{r} \mapsto e \mid e \medvert e       % does
 \\[1ex]
 p &::=& x \mid k~\many{p}                              \\ % pattern 
@@ -345,11 +338,6 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 
 \begin{mathpar}
 \inferrule
-  {c : U(\many{V}) \in \sigs \\
-   (\hasgs{V_i}{v_i})_i}
-  {\cangs{c~\many{v}}{\rt{U}}}
-
-\inferrule
   {\cangs{d}{\many{\effbox{\sigs'}V} \to C} \\
    (\does{\Gamma}{\sigs~\sigs'_i}{\rt{V_i}}{e_i})_i}
   {\can{\Gamma}{\sigs}{d~\many{e}}{C}}
@@ -357,6 +345,11 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 \inferrule
   {\makesgs{u}{\effbox{\sigs}\thunk{C}}}
   {\cangs{\force{u}}{C}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs \\
+   (\hasgs{V_i}{v_i})_i}
+  {\cangs{c~\many{v}}{\rt{U}}}
 \end{mathpar}
 
 $\boxed{\doesgs{C}{e}}$
@@ -419,130 +412,6 @@ $\boxed{\pat{\effbox{\sigs}V}{r}{\Delta}}$
 
 \section{Pattern matching compilation (Core Frank)}
 
-%% \begin{figure*}
-%% Types, signatures, type environments
-
-%% \[
-%% \begin{array}{@{}r@{~}l@{}}
-%% U, V &::= D~\many{V} \mid X \mid  \thunk{C} \\
-%% C    &::= P(\many{P}) \\
-%% P    &::= \effbox{\sigs}V \\
-%% \\
-%% \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
-%% \sigs &::=
-%%   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
-%% \\
-%% \Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, m:P \mid \Gamma, g:C \\
-%% \end{array}
-%% \]
-
-%% Type substitution is lifted homomorphically except on computation types
-%% \[
-%% \begin{array}{@{}r@{~}l@{}}
-%% \theta(P(\many{P})) &= \theta(P)(\theta^\star(\many{P})) \\
-%% \theta^\star(\effbox{\sigs}V) &= \effbox{\theta^\star(\sigs)}\theta(V) \\
-%% \theta^\star(\emptyset) &= \emptyset \\
-%% \theta^\star(\varepsilon) &= \varepsilon \\
-%% \theta^\star(\sigs, \sig~\many{V}) &= \theta^\star(\sigs), \theta(S~\many{V}) \\
-%% \end{array}
-%% \]
-
-%% Flat signature extension
-%% \[
-%% \begin{array}{@{}r@{~}l@{}}
-%% \sigs~\emptyset &= \emptyset \\
-%% \sigs~\varepsilon &= \sigs \\
-%% \sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
-%% \end{array}
-%% \]
-
-%% Syntax
-
-%% \[
-%% \begin{array}{@{}r@{~}c@{~}l@{}}
-%% s &::=& x \mid f~\many{t}       \\ % makes
-%% f &::=& g \mid c \mid \force{s} \\ % can
-%% t &::=& s \mid k~\many{t}          % has
-%%           \mid \thunk{\many{m} \to t}  \\ 
-%%   &\mid& \key{case}~x~\key{of}~
-%%            \many{(k~\many{x} \mapsto t)} \\
-%%   &\mid& \key{handle} ~m~ \key{with}~
-%%            \many{(\handle{c~\many{x}}{g} \mapsto t)} \medvert
-%%             x        \mapsto t \\
-%% \end{array}
-%% \]
-
-%% Typing rules
-%% \medskip
-
-%% $\boxed{\makes{\Gamma}{\sigs}{s}{V}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   {x:V \in \Gamma}
-%%   {\makesgs{x}{V}}
-
-%% \inferrule
-%%   {\cangs{f}{\effbox{\sigs}V(\many{\effbox{\sigs'}V})} \\
-%%    \has{\Gamma}{\sigs~\sigs'_i}{V_i}{t_i}}
-%%   {\makesgs{f~\many{t}}{V}}
-%% \end{mathpar}
-
-%% $\boxed{\can{\Gamma}{\sigs}{f}{C}}$
-
-%% \begin{mathpar}
-%% \inferrule
-%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(C) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-%%    \theta(\varepsilon) = \sigs \\
-%%    \theta(C) = \effbox{\sigs}V(\many{P})}
-%%   {\can{\Gamma, g:C}{\sigs}{g}{\effbox{\sigs}V(\many{P})}}
-
-%% \inferrule
-%%   {c : V'(\many{V}) \in \sigs}
-%%   {\cangs{c}{\effbox{\sigs}V'(\many{\effbox{\varepsilon}V})}}
-
-%% \inferrule
-%%   {\makesgs{s}{\thunk{C}}}
-%%   {\cangs{\force{s}}{C}}
-%% \end{mathpar}
-
-%% $\boxed{\has{\Gamma}{\sigs}{V}{t}}$
-
-%% \begin{mathpar}
-%% \inferrule
-%%   {\makesgs{s}{V}}
-%%   {\hasgs{V}{s}}
-
-%% \inferrule
-%%   {\hasgs{V_i[\many{U}/\many{X}]}{t_i} \\
-%%    k~\many{V} \in D~\many{X}}
-%%   {\hasgs{D~\many{U}}{k~\many{t}}}
-
-%% \inferrule
-%%   {\has{\Gamma, \many{m}:\many{P}}{\sigs'}{V}{t}}
-%%   {\hasgs{\thunk{\effbox{\sigs'}V(\many{P})}}{\thunk{\many{m} \to t}}}
-
-%% \inferrule
-%%   {\makesgs{s}{D~\many{U}} \\
-%%    (\has{\Gamma, \many{x_k}:\many{V}}{\sigs}{V}{t_k})_{k~\many{V} \in D~\many{U}}}
-%%   {\hasgs{V}{\key{case}~ s ~\key{of}~
-%%                \many{(k~\many{x_k} \mapsto t_k)}}}
-
-%% \inferrule
-%%   {(\has{\Gamma, \many{x_c}:\many{V}, g:\effbox{\sigs~\sigs'}U(\effbox{\varepsilon}V')}
-%%        {\sigs}{W}{t_c})_{c : V'(\many{V}) \in \sigs'} \\
-%%    \has{\Gamma, x:U}{\sigs}{W}{t}}
-%%   {\has{\Gamma, m:\effbox{\sigs~\sigs'}V}{\sigs}
-%%      {W}{\key{handle}~ m ~\key{with}~
-%%            \many{\handle{c~\many{x_c}}{g} \mapsto t_c} \medvert
-%%            x \mapsto t}}
-%% \end{mathpar}
-
-%% \caption{Core Frank}
-%% \end{figure*}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \begin{figure*}
 Types, signatures, type environments
 
@@ -574,7 +443,7 @@ Syntax
 u &::=& x \mid f \mid d                           \\ % makes
 v &::=& u \mid k~\many{v}                            % has
           \mid \thunk{e}  \\[1ex]
-d &::=& c~\many{v} \mid d~v \mid \force{u} \\        % can
+d &::=& d~v \mid \force{u} \mid c~\many{v} \\        % can
 e &::=& v \mid \lambda x.e \\                        % does
   &\mid& \key{case}~u~\key{of}~
            (k~\many{x_k} \mapsto e_k)_k \\
@@ -630,11 +499,6 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 
 \begin{mathpar}
 \inferrule
-  {c : U(\many{V}) \in \sigs \\
-   (\hasgs{V_i}{v_i})_i}
-  {\cangs{c~\many{v}}{\rt{U}}}
-
-\inferrule
   {\cangs{d}{V \to C} \\
    \has{\Gamma}{\sigs}{V}{v}}
   {\cangs{d~v}{C}}
@@ -642,6 +506,11 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 \inferrule
   {\makesgs{u}{\effbox{\sigs}\thunk{C}}}
   {\cangs{\force{u}}{C}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs \\
+   (\hasgs{V_i}{v_i})_i}
+  {\cangs{c~\many{v}}{\rt{U}}}
 \end{mathpar}
 
 $\boxed{\doesgs{C}{e}}$
@@ -676,126 +545,6 @@ $\boxed{\doesgs{C}{e}}$
 \caption{Core Frank}
 \end{figure*}
 
-
-
-%% \section{Towards call-by-push value (comp-eff)}
-
-%% \begin{figure*}
-
-%% Types, signatures, type environments
-
-%% \[
-%% \begin{array}{@{}r@{~}l@{}}
-%% U, V &::= D~\many{V} \mid X \mid \effbox{\sigs}\thunk{C} \mid \forall X.V \\
-%% C    &::= \rt{V} \mid P \to C \\
-%% P    &::= \effbox{\sigs}C \\
-%% \\
-%% \sig  &::= \cdot \mid c : V(\many{V}), \sig \\
-%% \sigs &::=
-%%   \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
-%% \varepsilon &::= \alpha \mid \beta \\
-%% \\
-%% \Gamma &::= \cdot \mid \Gamma, x:V \mid \Gamma, g:P \\
-%% \end{array}
-%% \]
-
-%% Flat signature extension
-%% \[
-%% \begin{array}{@{}r@{~}l@{}}
-%% \sigs~\emptyset &= \emptyset \\
-%% \sigs~\alpha &= \alpha \\
-%% \sigs~\beta &= \sigs \\
-%% \sigs~(\sigs', \sig~\many{V}) &= (\sigs~\sigs'), \sig~\many{V} \\
-%% \end{array}
-%% \]
-
-%% Syntax
-
-%% \[
-%% \begin{array}{@{}r@{~}c@{~}l@{}}
-%% u, v &::=& x \mid k~\many{s} \mid \thunk{d} \\  % values
-%% d, e &::=& g \mid c~\many{v}                     % computations
-%%    \mid \lambda g.e \mid d~e \mid \key{ret}~v \mid \force{u} \\
-%%   &\mid& \key{case}~u~\key{of}~
-%%            \many{(k~\many{x} \mapsto e)} \\
-%%   &\mid& \key{handle} ~d~ \key{with}~
-%%            \many{(\handle{c~\many{x}}{g} \mapsto e)} \medvert
-%%             x        \mapsto e \\
-%% \end{array}
-%% \]
-
-%% Typing rules
-%% \medskip
-
-%% $\boxed{\valg{v}{V}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   {x:V \in \Gamma}
-%%   {\valg{x}{V}}
-
-%% \inferrule
-%%   {\valg{V_i[\many{U}/\many{X}]}{v_i} \\
-%%    k~\many{V} \in D~\many{X}}
-%%   {\valg{D~\many{U}}{k~\many{v}}}
-
-%% \inferrule
-%%   {\compgs{e}{C}}
-%%   {\valg{\thunk{e}}{\effbox{\sigs}\thunk{C}}}
-%% \end{mathpar}
-
-%% $\boxed{\compgs{e}{C}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   {\dom(\theta) = \FV(P) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-%%    \theta(\alpha) = \sigs \\
-%%    \theta(\beta) = \beta \\
-%%    \theta(P) = \effbox{\sigs}C}
-%%   {\can{\Gamma, g:P}{\sigs}{g}{C}}
-
-%% \inferrule
-%%   {c : V(\many{V}) \in \sigs \\
-%%    \valg{v_i}{V_i}}
-%%   {\compgs{c~\many{v}}{\rt{V}}}
-
-%% \inferrule
-%%   {\comp{\Gamma, g:P}{\sigs}{d}{C}}
-%%   {\compgs{\lambda g. d}{V \to C}}
-
-%% \inferrule
-%%   {\compgs{d}{\effbox{\sigs'}C' \to C} \\
-%%    \comp{\Gamma}{\sigs~\sigs'}{e}{C'}}
-%%   {\compgs{d~e}{C}}
-
-%% \inferrule
-%%   {\valg{v}{V}}
-%%   {\compgs{\key{ret}~v}{\rt{V}}}
-
-%% \inferrule
-%%   {\valg{u}{\effbox{\sigs}\thunk{C}}}
-%%   {\compgs{\force{u}}{C}}
-
-%% \inferrule
-%%   {\valg{u}{D~\many{U}} \\
-%%    (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
-%%   {\compgs{\key{case}~ u ~\key{of}~
-%%                \many{(k~\many{x_k} \mapsto e_k)}}
-%%           {C}}
-
-%% \inferrule
-%%   {\comp{\Gamma}{\sigs~\sigs'}{d}{\rt{V}} \\
-%%    (\comp{\Gamma, \many{x_c}:\many{V},
-%%                   g:\effbox{\sigs~\sigs'}(V' \to \rt{U})}
-%%        {\sigs}{e_c}{C})_{c : V'(\many{V}) \in \sigs'} \\
-%%    \comp{\Gamma, x:U}{\sigs}{e}{C}}
-%%   {\compgs
-%%      {\key{handle}~ d ~\key{with}~
-%%            \many{\handle{c~\many{x_c}}{g} \mapsto e_c} \medvert
-%%            x \mapsto e}
-%%      {C}}
-%% \end{mathpar}
-
-%% \caption{comp-eff}
-%% \end{figure*}
 
 
 \section{CBPV with Implicit polymorphism}
@@ -853,9 +602,9 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-u, v &::=& x \mid f \mid k~\many{s} \mid \thunk{d}  \\ % values
-d, e &::=& c~\many{v}                                  % computations
-   \mid \lambda x.e \mid d~v \mid \key{ret}~v \mid \force{u} \\
+u, v &::=& x \mid f \mid k~\many{v} \mid \thunk{d}  \\ % values
+d, e &::=& \lambda x.e \mid d~v                        % computations
+    \mid c~\many{v} \mid \key{ret}~v \mid \force{u} \\
   &\mid& \key{case}~u~\key{of}~
            (k~\many{x} \mapsto e)_k \\
   &\mid& \key{handle} ~d~ \key{with}~
@@ -897,11 +646,6 @@ $\boxed{\valg{v}{V}}$
 $\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
-  {c : U(\many{V}) \in \sigs \\
-   \valg{v_i}{V_i}}
-  {\compgs{c~\many{v}}{\rt{U}}}
-
-\inferrule
   {\comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs{\lambda x.e}{V \to C}}
 
@@ -909,6 +653,11 @@ $\boxed{\compgs{e}{C}}$
   {\compgs{d}{V \to C} \\
    \valg{v}{V}}
   {\compgs{d~v}{C}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs \\
+   \valg{v_i}{V_i}}
+  {\compgs{c~\many{v}}{\rt{U}}}
 
 \inferrule
   {\valg{v}{V}}
@@ -997,10 +746,10 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-u, v &::=& x \mid k~\many{s} \mid \thunk{d}  % values
+u, v &::=& x \mid k~\many{v} \mid \thunk{d}  % values
              \mid \Lambda Z.v \mid u~T \\
-d, e &::=& c~\many{v}                        % computations
-   \mid \lambda x.e \mid d~v \mid \key{ret}~v \mid \force{u} \\
+d, e &::=& \lambda x.e \mid d~v                        % computations
+    \mid c~\many{v} \mid \key{ret}~v \mid \force{u} \\
 %%   \mid \Lambda Z.e \mid d~T \\
   &\mid& \key{case}~u~\key{of}~
            (k~\many{x} \mapsto e)_k \\
@@ -1041,11 +790,6 @@ $\boxed{\valg{v}{V}}$
 $\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
-  {c : U(\many{V}) \in \sigs \\
-   \valg{v_i}{V_i}}
-  {\compgs{c~\many{v}}{\rt{U}}}
-
-\inferrule
   {\comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs{\lambda x.e}{V \to C}}
 
@@ -1053,6 +797,11 @@ $\boxed{\compgs{e}{C}}$
   {\compgs{d}{V \to C} \\
    \valg{v}{V}}
   {\compgs{d~v}{C}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs \\
+   \valg{v_i}{V_i}}
+  {\compgs{c~\many{v}}{\rt{U}}}
 
 \inferrule
   {\valg{v}{V}}
@@ -1095,6 +844,37 @@ $\boxed{\compgs{e}{C}}$
 \end{figure*}
 
 \section{Small-step semantics}
+
+\newcommand{\reducesto}{\longrightarrow}
+
+\begin{figure*}
+
+\begin{equations}
+(\Lambda Z.v) T &\reducesto& v[T/Z] \\
+\key{case}~k_j~\many{v}~\key{of}~(k_i~\many{x_i} \mapsto e_i)_i
+  &\reducesto& e[\many{v}/\many{x_j}] \\
+\force{\thunk{e}} &\reducesto& e \\
+\\
+\key{handle}~E[c_j~\many{v}]~\key{with}
+   (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+   x \mapsto e
+  &\reducesto&
+     e_j[\many{v}/\many{x_i}, \thunk{\lambda x.E[x]} / g] \\
+\key{handle}~(\key{ret}~v)~\key{with}
+   (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+   x \mapsto e
+  &\reducesto&
+    e[v/x] \\
+\key{handle}~E[c~\many{v}]~\key{with}
+   (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+   x \mapsto e
+  &\reducesto&
+     \key{let}~x=c~\many{v}~\key{in}~
+       \key{handle}~E[x]~\key{with}
+          (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+          x \mapsto e, \quad c \neq c_i \text{ for any }i \\
+\end{equations}
+\end{figure*}
 
 \section{Related work}
 
