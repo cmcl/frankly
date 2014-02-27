@@ -863,10 +863,10 @@ $\boxed{\compgs{e}{C}}$
   &::=& [~] \mid E~v \mid \key{let}~x=E~\key{in}~e \\
 (\textrm{Computation contexts})\, F
   &::=& [~] \mid F~v \mid \key{let}~x=F~\key{in}~e
-            \mid \key{handle}~F~\key{with}~
-               (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
-                 x \mapsto e \\
-\end{equations}
+            \mid \key{handle}~F~\key{with}~H \\
+               %% (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+               %%   x \mapsto e \\
+\end{equations}%
 
 \begin{equations}
 (\Lambda Z.v) T &\reducesto& v[T/Z]
@@ -878,25 +878,39 @@ $\boxed{\compgs{e}{C}}$
 (\lambda x.e)~v &\reducesto& e[v/x] \\
 \key{let}~x=\key{ret}~v~\key{in}~e &\reducesto& e[v/x]
 \\[1ex]
-\key{handle}~(\key{ret}~v)~\key{with}~
-   (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
-   x \mapsto e
-  &\reducesto&
-    \key{let}~x=\key{ret}~v~\key{in}~e \\
-\key{handle}~E[c_j~\many{v}]~\key{with}~
-   (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
-   x \mapsto e
-  &\reducesto&
-     e_j[\many{v}/\many{x_j}, \thunk{\lambda z.E[\key{ret}~z]} / g] \\
-\key{handle}~E[c~\many{v}]~\key{with}~
-   (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
-   x \mapsto e
-  &\reducesto&
-     \key{let}~z=c~\many{v}~\key{in}~
-       \key{handle}~E[\key{ret}~z]~\key{with}~
-          (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
-          x \mapsto e, \quad c \neq c_i \text{ for any }i \\
-\end{equations}
+\key{handle}~(\key{ret}~v)~\key{with}~H
+  &\reducesto& H(\key{ret}, v) \\
+\key{handle}~E[c~\many{v}]~\key{with}~H
+  &\reducesto& H(c, \many{v}, \thunk{\lambda z.E[\key{ret}~z]}) \\
+%% \key{handle}~(\key{ret}~v)~\key{with}~
+%%    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+%%    x \mapsto e
+%%   &\reducesto&
+%%     \key{let}~x=\key{ret}~v~\key{in}~e \\
+%% \key{handle}~E[c_j~\many{v}]~\key{with}~
+%%    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+%%    x \mapsto e
+%%   &\reducesto&
+%%      e_j[\many{v}/\many{x_j}, \thunk{\lambda z.E[\key{ret}~z]} / g] \\
+%% \key{handle}~E[c~\many{v}]~\key{with}~
+%%    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+%%    x \mapsto e
+%%   &\reducesto&
+%%      \key{let}~z=c~\many{v}~\key{in}~
+%%        \key{handle}~E[\key{ret}~z]~\key{with}~
+%%           (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+%%           x \mapsto e, \quad c \neq c_i \text{ for any }i \\
+\end{equations}%
+where for $H = (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert x
+\mapsto e$:
+\begin{equations}%
+H(\key{ret}, v) &=& e[v/x] \\
+H(\key{c_j}, \many{v}, u) &=& e_j[\many{v}/\many{x}, u/g] \\
+H(\key{c}, \many{v}, u)
+  &=& \key{let}~z=c~\many{v}~\key{in}~
+        \key{handle}~\force{u}~z~\key{with}~H,
+           \quad c \neq c_i\text{ for any }i
+\end{equations}%
 
 \begin{mathpar}
 \inferrule
