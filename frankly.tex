@@ -208,6 +208,12 @@
   
 \section{Examples}
 
+\subsection{Pipes}
+
+\subsection{Modular rollback}
+
+\subsection{Effect polymorphism with an invisible effect variable}
+
 
 \section{The source language (Frank)}
 
@@ -608,7 +614,7 @@ d, e &::=& \key{case}~u~\key{of}~
     &\mid& \lambda x.e \mid d~v
      \mid  \key{ret}~v \mid c~\many{v} \\
     &\mid& \key{handle} ~d~ \key{with}~
-             (\handle{c~\many{x}}{g} \mapsto e)_c \medvert
+             (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
              x        \mapsto e \\
 \end{array}
 \]
@@ -756,7 +762,7 @@ d, e &::=& \key{case}~u~\key{of}~
       \mid c~\many{v} \\
 %%   \mid \Lambda Z.e \mid d~T \\
      &\mid& \key{handle} ~d~ \key{with}~
-               (\handle{c~\many{x}}{g} \mapsto e)_c \medvert
+               (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
                x        \mapsto e \\
 \end{array}
 \]
@@ -929,232 +935,6 @@ H(\key{c}, \many{v}, u)
 
 \section{Conclusion and future work}
 
-%% %%%%%%%%%%%%%%%%%%%%%% Monomorphic Thunk
-
-%% \begin{figure*}
-
-
-%% \[
-%% \begin{array}{@{}r@{~}l@{}}
-%% \Us \to \C &\equiv \U_1 \to \dots \to \U_n \to \C \\
-%% \\
-%% \U, \V &::= \thunk{\C} \mid \D~\Vs \mid \X \\
-%% \C     &::= \ret{\sigs}{\V} \mid \V \to \C \\
-%% \\
-%% \Gamma &::= \cdot \mid \Gamma, x : \V \\
-%% \\
-%% \sig  &::= \cdot \mid \op : \C, \sig \\
-%% \sigs &::= \cdot \mid \sig~\Vs, \sigs \\
-%% \end{array}
-%% \]
-
-%% Convenience:
-%% \begin{mathpar}
-%% \inferrule
-%%   {\doesgs{\force{\tu}~\tm}{\C}}
-%%   {\doesgs{\tu~\tm}{\C}}
-
-%% \inferrule
-%%   {\doesgs{\handle{\force{\h}}{\tm}}{\C}}
-%%   {\doesgs{\handle{\h}{\tm}}{\C}}
-%% \end{mathpar}
-
-
-%% $\boxed{\isgs{\tm}{\V}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   {x:\V \in \Gamma}
-%%   {\is{\Gamma}{\sigs}{x}{\V}}
-
-%% \inferrule
-%%   {\doesgs{\tu}{\ret{\sigs'}{\V}} \\
-%%    \sigs' \leq \sigs}
-%%   {\isgs{\tu}{\V}}
-%% \end{mathpar}
-
-%% $\boxed{\hasgs{\V}{\tm}}$
-%% \begin{mathpar}
-%% \inferrule
-%%    {[\hasgs{\U_i}{\tm_i}]_i \\ \con : \Us \to \D~\Vs}
-%%    {\hasgs{\D~\Vs}{\con~\tms}}
-
-%% \inferrule
-%%   {\kang{\C}{\tm}}
-%%   {\hasgs{\thunk{\C}}{\thunk{\tm}}}
-
-%% \inferrule
-%%   {\isgs{\tu}{\U} \\ \U=\V}
-%%   {\hasgs{\V}{\tu}}
-%% \end{mathpar}
-
-%% $\boxed{\doesgs{\tm}{\C}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   {\op : \C \in \sigs}
-%%   {\doesgs{\op}{\C}}
-
-%% \inferrule
-%%   {\isgs{\tu}{\thunk{\C}}}
-%%   {\doesgs{\force{\tu}}{\C}}
-
-%% \inferrule
-%%   {\doesgs{\tu}{\U \to \C} \\
-%%    \hasgs{\U}{\tm}}
-%%   {\doesgs{\tu ~ \tm}{\C}}
-
-%% \end{mathpar}
-
-%% $\boxed{\kang{\C}{\tm}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   {\hasgs{\V}{\tm}}
-%%   {\kang{\ret{\sigs}{\V}}{\tm}}
-
-%% \inferrule
-%%   {[\pat{\U_i}{\p_i}{\Gamma_i}]_i \\
-%%    \kan{\Gamma, (\Gamma_1 \uplus \cdots \uplus \Gamma_n)}{\C}{\tm}}
-%%   {\kang{\Us \to \C}{\ps \to \tm}}
-
-%% %% \inferrule
-%% %%   {\pat{\U}{\p}{\Gamma'} \\
-%% %%    \kan{\Gamma, \Gamma'}{\C}{\tm}}
-%% %%   {\kang{\U \to \C}{\ps \to \tm}}
-
-%% \inferrule
-%%   {\kang{\C}{\tm} \\ \kang{\C}{\tu}}
-%%   {\kang{\C}{\tm \mid \tu}}
-%% \end{mathpar}
-
-%% $\boxed{\patg{\V}{\p}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   { }
-%%   {\pat{\V}{x}{x : \V}}
-
-%% \inferrule
-%%   {[\pat{\U_i}{\p_i}{\Gamma_i}]_i \\ \con : \Us \to \D~\Vs}
-%%   {\pat{\D~\Vs}{\con~\ps}{\Gamma_1 \uplus \cdots \uplus \Gamma_n}}
-%% \end{mathpar}
-%% \caption{Monomorphic Thunk}
-%% \end{figure*}
-
-%% %%%%%%%%%%%%%%%%%%%%%% Polymorphic Thunk
-
-%% %% \begin{figure*}
-
-%% %% \newcommand{\asigs}{\sigma}
-
-%% %% \[
-%% %% \begin{array}{@{}r@{~}l@{}}
-%% %% \VV &::= \thunk{\CC} \mid \D~\VVs \mid \X \\
-%% %% \CC &::= \ret{\asigs}{\VV} \mid \VV \to \CC \\
-%% %% \\
-%% %% \asigs &::= \cdot \mid \sig~\Vs, \asigs \mid \E \\
-%% %% \\
-%% %% \Gamma &::= \cdot \mid \Gamma, f : \VV \mid \Gamma, x : \V \\
-%% %% \end{array}
-%% %% \]
-
-%% %% \[
-%% %% \begin{array}{@{}r@{~}l@{\quad}l@{}}
-%% %% \oldinstts{\X}          &= \theta(\X) \\
-%% %% \oldinstts{\thunk{\CC}} &= \thunk{\oldinstts{\CC}} \\
-%% %% \oldinstts{\D~\VVs}     &= \D~\oldinstts{\VVs} \\
-%% %% \\
-%% %% \oldinstts{\ret{\asigs}{\VV}} &= \ret{\appsig{\asigs}{\sigs}}{\oldinstts{\VV}} \\
-%% %% \oldinstts{\VV \to \CC}       &= \oldinstts{\VV} \to \oldinstts{\CC} \\
-%% %% \\
-%% %% \appsig{\cdot}{\sigs} &= \cdot \\
-%% %% \appsig{\E}{\sigs} &= \sigs \\
-%% %% \appsig{\sig~\Vs, \asigs}{\sigs} &= \sig~\Vs, (\appsig{\asigs}{\sigs}) \backslash \sig \\
-%% %% \end{array}
-%% %% \]
-%% %% \newcommand{\FV}{\mathit{FV}}
-
-%% %% \begin{mathpar}
-%% %% \inferrule
-%% %%   {f:\VV \in \Gamma \\ \theta \in \FV(\VV) \to \V}
-%% %%   {\is{\Gamma}{\sigs}{f}{\oldinstts{\VV}}}
-%% %% \end{mathpar}
-
-%% %% \caption{Polymorphic Thunk}
-
-%% %% \end{figure*}
-
-%% \begin{figure*}
-
-%% \newcommand{\asigs}{\sigma}
-
-%% \[
-%% \begin{array}{@{}r@{~}l@{}}
-%% \VV &::= \thunk{\CC} \mid \D~\VVs \mid \X \\
-%% \CC &::= \ret{\asigs}{\VV} \mid \VV \to \CC \\
-%% \\
-%% \asigs &::= \cdot \mid \sig~\Vs, \asigs \mid \E \\
-%% \\
-%% \Gamma &::= \cdot \mid \Gamma, f : \VV \mid \Gamma, x : \V \\
-%% \end{array}
-%% \]
-
-%% \[
-%% \begin{array}{@{}r@{~}l@{\quad}l@{}}
-%% \instt{\X}          &= \theta(\X) \\
-%% \instt{\thunk{\CC}} &= \thunk{\instt{\CC}} \\
-%% \instt{\D~\VVs}     &= \D~\instt{\VVs} \\
-%% \\
-%% \instt{\ret{\asigs}{\VV}} &= \ret{\instt{\asigs}}{\instt{\VV}} \\
-%% \instt{\VV \to \CC}       &= \instt{\VV} \to \instt{\CC} \\
-%% \\
-%% \instt{\cdot}            &= \cdot \\
-%% \instt{\E}               &= \theta(\E) \\
-%% \instt{\sig~\Vs, \asigs} &= \sig~\instt{\Vs}, (\instt{\asigs} \backslash \sig) \\
-%% \end{array}
-%% \]
-
-%% \begin{mathpar}
-%% \inferrule
-%%   {f:\VV \in \Gamma \\ \theta : \FV(\VV) \to \V \\ \theta(\E) = \Sigma }
-%%   {\is{\Gamma}{\sigs}{f}{\instt{\VV}}}
-%% \end{mathpar}
-
-%% \caption{Polymorphic Thunk}
-
-%% \end{figure*}
-
-
-%% %%%%%%%%%%%%%%%%%%%%%% Frank = Thunk + handlers
-
-%% \begin{figure*}
-
-
-%% \begin{mathpar}
-%% \inferrule
-%%   {\doesgs{\h}{\handleType{\sigs'}{\sigs''}{\U} \to \C} \\
-%%    \has{\Gamma}{\sigs''}{\U}{\tm} \\
-%%    \sigs' \leq \sigs'' \leq \sigs \oplus \sigs'
-%%   }
-%%   {\doesgs{\handle{\h}{\tm}}{\C}}
-
-%% \\
-
-%% \inferrule
-%%   {\patg{\V}{\p}}
-%%   {\patg{\handleType{\sigs'}{\sigs''}{\V}}{\handleRet{\p}}}
-
-%% \inferrule
-%%   {\template{\op\,\Us}{}{\U} \in \sig' \\
-%%    [\pat{\U_i}{\p_i}{\Gamma_i}] \\
-%%    \pat{\thunk{\U \to \ret{\sigs''}{\V}}}{k}{\Gamma}}
-%%   {\pat{\handleType{\sigs'}{\sigs''}{\V}}
-%%        {\handleOp{\op~\ps}{k}}
-%%        {\Gamma_1 \uplus \dots \uplus \Gamma_n \uplus \Gamma}}
-
-%% \end{mathpar}
-
-
-
-%% \caption{Frank = Thunk + handlers}
-%% \end{figure*}
 
 %% \begin{abstract}
 %% This is the text of the abstract.
@@ -1196,3 +976,36 @@ H(\key{c}, \many{v}, u)
 %% \end{thebibliography}
 
 \end{document}
+
+Rubbish
+-------
+
+
+sig ReadLine
+  = peek : Char
+  | nom  : 0
+
+sig Abort
+  = aborting : 0
+
+if Bool then {X} else {X} -> X
+if tt then t else f = t!
+if ff then t else f = f!
+
+0 >> Y [] Y
+
+
+map {X -> Y} (List X)   []   List Y
+
+
+X == [e]X
+
+map : forall e X Y.[e]{[e]{[e]X -> <Y>} [e](List X) -> <List Y>}
+map :              [e]{[e]{[e]X -> <Y>} [e](List X) -> <List Y>}
+map :                 {   {   X -> <Y>}    (List X) -> <List Y>}
+map :                     {   X -> <Y>}    (List X) -> <List Y>
+map :                     {   X ->  Y }    (List X) ->  List Y
+
+map : {X -> Y} (List X) -> List Y
+map f nil        = nil
+map f (x :: xs)  = f x :: map f xs
