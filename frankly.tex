@@ -857,9 +857,12 @@ $\boxed{\compgs{e}{C}}$
 \begin{figure*}
 
 \begin{equations}
-D &::=& [~] \mid D~T \\
-E &::=& [~] \mid E~v \mid \key{let}~x=E~\key{in}~e \\
-F &::=& E \mid \key{handle}~E~\key{with}~H \\
+(\textrm{Value contexts})\, D
+  &::=& [~] \mid D~T \\
+(\textrm{Delimited computation contexts})\, E
+  &::=& [~] \mid E~v \mid \key{let}~x=E~\key{in}~e \\
+(\textrm{Computation contexts})\, F
+  &::=& [~] \mid F~v \mid \key{let}~x=F~\key{in}~e \mid \key{handle}~F~\key{with}~H \\
 \end{equations}
 
 \begin{equations}
