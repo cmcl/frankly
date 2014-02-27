@@ -257,12 +257,12 @@ Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{U} \mid X \mid  \effbox{\sigs}\thunk{C} \\
+U, V &::= D~\many{U} \mid  \effbox{\sigs}\thunk{C} \mid X \\
 C    &::= \rt{V} \mid \many{\effbox{\sigs}V} \to C \\
 \\
 \sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
-  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
+  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon \\
 \\
 \Gamma &::= \cdot \mid \Gamma, x:V \mid f:\forall \varepsilon \many{X}.V \\
 \end{array}
@@ -417,12 +417,12 @@ Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{U} \mid X \mid  \effbox{\sigs}\thunk{C} \\
+U, V &::= D~\many{U} \mid  \effbox{\sigs}\thunk{C} \mid X \\
 C    &::= \rt{V} \mid V \to C \\
 \\
 \sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
-  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
+  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon \\
 \\
 \Gamma &::= \cdot \mid \Gamma, x:V \mid f:\forall \varepsilon \many{X}.V \\
 \end{array}
@@ -579,12 +579,12 @@ Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{U} \mid X \mid \effbox{\sigs}\thunk{C} \\
+U, V &::= D~\many{U} \mid \effbox{\sigs}\thunk{C} \mid X \\
 C    &::= \rt{V} \mid V \to C \\
 \\
 \sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
-  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
+  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon \\
 \\
 \Gamma &::= \cdot \mid \Gamma, x:V \mid f:\forall \varepsilon \many{X}.V \\
 \end{array}
@@ -602,14 +602,14 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-u, v &::=& x \mid f \mid k~\many{v} \mid \thunk{d}  \\ % values
-d, e &::=& \lambda x.e \mid d~v                        % computations
-    \mid c~\many{v} \mid \key{ret}~v \mid \force{u} \\
-  &\mid& \key{case}~u~\key{of}~
-           (k~\many{x} \mapsto e)_k \\
-  &\mid& \key{handle} ~d~ \key{with}~
-           (\handle{c~\many{x}}{g} \mapsto e)_c \medvert
-           x        \mapsto e \\
+u, v &::=& x \mid f \mid k~\many{v} \mid \thunk{d}  \\
+d, e &::=& \key{case}~u~\key{of}~
+           (k~\many{x_k} \mapsto e_k)_k  \mid \force{u} \\
+    &\mid& \lambda x.e \mid d~v
+     \mid  \key{ret}~v \mid c~\many{v} \\
+    &\mid& \key{handle} ~d~ \key{with}~
+             (\handle{c~\many{x}}{g} \mapsto e)_c \medvert
+             x        \mapsto e \\
 \end{array}
 \]
 
@@ -646,6 +646,17 @@ $\boxed{\valg{v}{V}}$
 $\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
+  {\valg{u}{D~\many{U}} \\
+   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
+  {\compgs{\key{case}~ u ~\key{of}~
+               (k~\many{x_k} \mapsto e_k)_k}
+          {C}}
+
+\inferrule
+  {\valg{u}{\effbox{\sigs}\thunk{C}}}
+  {\compgs{\force{u}}{C}}
+
+\inferrule
   {\comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs{\lambda x.e}{V \to C}}
 
@@ -655,24 +666,13 @@ $\boxed{\compgs{e}{C}}$
   {\compgs{d~v}{C}}
 
 \inferrule
-  {c : U(\many{V}) \in \sigs \\
-   \valg{v_i}{V_i}}
-  {\compgs{c~\many{v}}{\rt{U}}}
-
-\inferrule
   {\valg{v}{V}}
   {\compgs{\key{ret}~v}{\rt{V}}}
 
 \inferrule
-  {\valg{u}{\effbox{\sigs}\thunk{C}}}
-  {\compgs{\force{u}}{C}}
-
-\inferrule
-  {\valg{u}{D~\many{U}} \\
-   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
-  {\compgs{\key{case}~ u ~\key{of}~
-               (k~\many{x_k} \mapsto e_k)_k}
-          {C}}
+  {c : U(\many{V}) \in \sigs \\
+   \valg{v_i}{V_i}}
+  {\compgs{c~\many{v}}{\rt{U}}}
 
 \inferrule
   {\comp{\Gamma}{\sigs~\sigs'}{d}{\rt{V}} \\
@@ -720,7 +720,7 @@ Types, signatures, type environments
 
 \[
 \begin{array}{@{}r@{~}l@{}}
-U, V &::= D~\many{U} \mid X \mid \effbox{\sigs}\thunk{C} \mid \forall X.V \\
+U, V &::= D~\many{U} \mid \effbox{\sigs}\thunk{C} \mid X \mid \forall X.V \\
 C    &::= \rt{V} \mid V \to C \\  % \mid \forall X.C \\
 \\
 Z    &::= X \mid \varepsilon \\
@@ -728,7 +728,7 @@ T    &::= V \mid \sigs \\
 \\
 \sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
-  \emptyset \mid \varepsilon \mid \sigs, \sig~\many{V} \\
+  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon \\
 \\
 \Gamma &::= \cdot \mid \Gamma, x:V \\
 \end{array}
@@ -746,16 +746,18 @@ Syntax
 
 \[
 \begin{array}{@{}r@{~}c@{~}l@{}}
-u, v &::=& x \mid k~\many{v} \mid \thunk{d}  % values
+u, v &::=& x \mid k~\many{v} \mid \thunk{d}
              \mid \Lambda Z.v \mid u~T \\
-d, e &::=& \lambda x.e \mid d~v                        % computations
-    \mid c~\many{v} \mid \key{ret}~v \mid \force{u} \\
+d, e &::=& \key{case}~u~\key{of}~
+             (k~\many{x_k} \mapsto e_k)_k
+     \mid \force{u} \\
+     &\mid& \lambda x.e \mid d~v 
+      \mid \key{ret}~v \mid \key{let}~x=d~\key{in}~e
+      \mid c~\many{v} \\
 %%   \mid \Lambda Z.e \mid d~T \\
-  &\mid& \key{case}~u~\key{of}~
-           (k~\many{x} \mapsto e)_k \\
-  &\mid& \key{handle} ~d~ \key{with}~
-           (\handle{c~\many{x}}{g} \mapsto e)_c \medvert
-           x        \mapsto e \\
+     &\mid& \key{handle} ~d~ \key{with}~
+               (\handle{c~\many{x}}{g} \mapsto e)_c \medvert
+               x        \mapsto e \\
 \end{array}
 \]
 
@@ -790,6 +792,17 @@ $\boxed{\valg{v}{V}}$
 $\boxed{\compgs{e}{C}}$
 \begin{mathpar}
 \inferrule
+  {\valg{u}{D~\many{U}} \\
+   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
+  {\compgs{\key{case}~ u ~\key{of}~
+               (k~\many{x_k} \mapsto e_k)_k}
+          {C}}
+
+\inferrule
+  {\valg{u}{\effbox{\sigs}\thunk{C}}}
+  {\compgs{\force{u}}{C}}
+
+\inferrule
   {\comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs{\lambda x.e}{V \to C}}
 
@@ -799,17 +812,18 @@ $\boxed{\compgs{e}{C}}$
   {\compgs{d~v}{C}}
 
 \inferrule
-  {c : U(\many{V}) \in \sigs \\
-   \valg{v_i}{V_i}}
-  {\compgs{c~\many{v}}{\rt{U}}}
-
-\inferrule
   {\valg{v}{V}}
   {\compgs{\key{ret}~v}{\rt{V}}}
 
 \inferrule
-  {\valg{u}{\effbox{\sigs}\thunk{C}}}
-  {\compgs{\force{u}}{C}}
+  {\compgs{d}{\rt{V}} \\
+   \comp{\Gamma, x:V}{\sigs}{e}{C}}
+  {\compgs{\key{let}~x=d~\key{in}~e}{C}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs \\
+   \valg{v_i}{V_i}}
+  {\compgs{c~\many{v}}{\rt{U}}}
 
 %% \inferrule
 %%   {\compgs{e}{C} \\
@@ -819,13 +833,6 @@ $\boxed{\compgs{e}{C}}$
 %% \inferrule
 %%   {\compgs{d}{\forall Z.C}}
 %%   {\compgs{d~T}{V[T/Z]}}
-
-\inferrule
-  {\valg{u}{D~\many{U}} \\
-   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
-  {\compgs{\key{case}~ u ~\key{of}~
-               (k~\many{x_k} \mapsto e_k)_k}
-          {C}}
 
 \inferrule
   {\comp{\Gamma}{\sigs~\sigs'}{d}{\rt{V}} \\
@@ -850,30 +857,52 @@ $\boxed{\compgs{e}{C}}$
 \begin{figure*}
 
 \begin{equations}
-(\Lambda Z.v) T &\reducesto& v[T/Z] \\
+D &::=& [~] \mid D~T \\
+E &::=& [~] \mid E~v \mid \key{let}~x=E~\key{in}~e \\
+F &::=& E \mid \key{handle}~E~\key{with}~H \\
+\end{equations}
+
+\begin{equations}
+(\Lambda Z.v) T &\reducesto& v[T/Z]
+\\[1ex]
 \key{case}~k_j~\many{v}~\key{of}~(k_i~\many{x_i} \mapsto e_i)_i
-  &\reducesto& e[\many{v}/\many{x_j}] \\
-\force{\thunk{e}} &\reducesto& e \\
-\\
-\key{handle}~E[c_j~\many{v}]~\key{with}
+  &\reducesto& e_j[\many{v}/\many{x_j}] \\
+\force{\thunk{e}} &\reducesto& e
+\\[1ex]
+(\lambda x.e)~v &\reducesto& e[v/x] \\
+\key{let}~x=\key{ret}~v~\key{in}~e &\reducesto& e[v/x]
+\\[1ex]
+\key{handle}~(\key{ret}~v)~\key{with}~
    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
    x \mapsto e
   &\reducesto&
-     e_j[\many{v}/\many{x_i}, \thunk{\lambda x.E[x]} / g] \\
-\key{handle}~(\key{ret}~v)~\key{with}
+    \key{let}~x=\key{ret}~v~\key{in}~e \\
+\key{handle}~E[c_j~\many{v}]~\key{with}~
    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
    x \mapsto e
   &\reducesto&
-    e[v/x] \\
-\key{handle}~E[c~\many{v}]~\key{with}
+     e_j[\many{v}/\many{x_j}, \thunk{\lambda z.E[\key{ret}~z]} / g] \\
+\key{handle}~E[c~\many{v}]~\key{with}~
    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
    x \mapsto e
   &\reducesto&
-     \key{let}~x=c~\many{v}~\key{in}~
-       \key{handle}~E[x]~\key{with}
+     \key{let}~z=c~\many{v}~\key{in}~
+       \key{handle}~E[\key{ret}~z]~\key{with}~
           (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
           x \mapsto e, \quad c \neq c_i \text{ for any }i \\
 \end{equations}
+
+\begin{mathpar}
+\inferrule
+  {u \reducesto v}
+  {D[u] \reducesto D[v]}
+
+\inferrule
+  {d \reducesto e}
+  {F[d] \reducesto F[e]}
+\end{mathpar}
+
+\caption{Small-step operational semantics for F-eff}
 \end{figure*}
 
 \section{Related work}
