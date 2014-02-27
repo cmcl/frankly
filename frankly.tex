@@ -858,11 +858,14 @@ $\boxed{\compgs{e}{C}}$
 
 \begin{equations}
 (\textrm{Value contexts})\, D
-  &::=& [~] \mid D~T \\
+  &::=& [~] \mid \key{case}~D~\key{of}~(k_i~\many{x_i} \mapsto e_i)_i \mid \force{D} \mid D~T \\
 (\textrm{Delimited computation contexts})\, E
   &::=& [~] \mid E~v \mid \key{let}~x=E~\key{in}~e \\
 (\textrm{Computation contexts})\, F
-  &::=& [~] \mid F~v \mid \key{let}~x=F~\key{in}~e \mid \key{handle}~F~\key{with}~H \\
+  &::=& [~] \mid F~v \mid \key{let}~x=F~\key{in}~e
+            \mid \key{handle}~F~\key{with}~
+               (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+                 x \mapsto e \\
 \end{equations}
 
 \begin{equations}
