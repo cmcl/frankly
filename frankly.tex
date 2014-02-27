@@ -997,10 +997,58 @@ if ff then t else f = f!
 
 map {X -> Y} (List X)   []   List Y
 
+top-level functions:
 
-X == [e]X
+  V == forall Z*.V
+  P* -> C == {P* -> C}
 
-map : forall e X Y.[e]{[e]{[e]X -> <Y>} [e](List X) -> <List Y>}
+Anywhere:
+
+    V == <V>
+    V == [e]V
+  {C} == [e]{C}
+   [] == [e]
+
+  P [Sig] V == P -> [Sig]V
+
+
+ d e* == d ! e*
+
+
+Push sigs inside:
+
+  [[ [Sig]{C} ]] = [[C]] Sig
+
+  [[ <V> ]] Sig          = [ [[Sig]] ] [[V]]
+  [[ [Sig']V -> C ]] Sig = [ [[Sig']] ] [[V]] -> [[C]] Sig
+
+Pull sigs outside:
+
+  [[ {C} ]] = [ ((C)) ]{ [[ C ]]}
+
+  [[ [Sig]V -> C )) = [ [[Sig]] ]V -> [[C]]
+  [[ [Sig]V ]]      = < [[V]] >
+
+  (( [Sig]V -> C )) = ((C))
+  (( [Sig]V ))      = [[Sig]]
+
+foo : Int
+foo = 3
+
+map : {X [] Y} (List X) [] List Y
+
+
+map : forall e X Y.{[e]{[e]X -> [e]Y} [e](List X) -> [e](List Y)}
+map :              {[e]{[e]X -> [e]Y} [e](List X) -> [e](List Y)}
+map :              {[ ]{[ ]X -> [ ]Y} [ ](List X) -> [ ](List Y)}
+map :              {   {   X ->    Y}    (List X) ->    (List Y)}
+map :                  {   X ->    Y}    (List X) ->    (List Y)
+
+
+map : forall e X Y.[e]{[e]([e]{[e]X -> <Y>}) [e](List X) -> <List Y>}
+
+
+
 map :              [e]{[e]{[e]X -> <Y>} [e](List X) -> <List Y>}
 map :                 {   {   X -> <Y>}    (List X) -> <List Y>}
 map :                     {   X -> <Y>}    (List X) -> <List Y>
@@ -1009,3 +1057,12 @@ map :                     {   X ->  Y }    (List X) ->  List Y
 map : {X -> Y} (List X) -> List Y
 map f nil        = nil
 map f (x :: xs)  = f x :: map f xs
+
+
+main [Console] List ()
+
+main forall e.[e, Console] {<List ()>}
+main          [e, Console] {<List ()>}
+main          [   Console] {<List ()>}
+main          [   Console]   List ()
+main = map ouch ('h' :: ('e' :: ('l' :: ('l' :: ('o' :: nil)))))
