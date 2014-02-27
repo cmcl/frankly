@@ -351,7 +351,7 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\can{\Gamma}{\sigs}{d~\many{e}}{C}}
 
 \inferrule
-  {\makesgs{u}{\effbox{\sigs}\thunk{C}}}
+  {\makesgs{u}{\thunk{C}} \\ \mathit{effs}(C) = \sigs}
   {\cangs{\force{u}}{C}}
 
 \inferrule
