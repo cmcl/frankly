@@ -681,9 +681,23 @@ as a pattern matching tree constructed from handlers and case
 statements. Standard algorithms for pattern matching compilation
 apply. 
 
-It is instructive to illustrate 
+It may be instructive to observe the representation of the core
+language handler and case constructs in the source language.
 
-
+\[
+\ba{@{}l@{}}
+\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k
+  \equiv
+    \key{let}~h = \thunk{\!\!\mathord{\medvert}_{\!\!k} (k~\many{x_k} \mapsto e_k)}~\key{in}~h~u \\
+\key{handle} ~d~ \key{with}~
+           (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
+            x        \mapsto e
+  \equiv \\
+\qquad
+     \key{let}~h = \thunk{\!\!\medvert_{\!\!c} (\handle{c~\many{x_c}}{g_c} \mapsto e_c) \medvert x \mapsto e}
+     ~\key{in}~h~d
+\ea
+\]
 
 
 
