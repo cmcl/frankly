@@ -217,7 +217,8 @@
 
 This paper explores the design of Frank, a strict functional
 programming language designed from the ground up around a novel
-variant of Plotkin and Pretnar's effect handlers abstraction.
+variant of Plotkin and Pretnar's effect handlers~\cite{PlotkinP09,
+  PlotkinP13} abstraction.
 
 In Frank, effect handlers strictly generalise functions. In the
 general case an effect handler acts as an interpreter for a finite set
@@ -254,31 +255,33 @@ The main contributions of this paper are:
 A number of other languages and libraries are built around effect
 handlers and algebraic effects.
 
-Bauer and Pretnar's Eff. A significant difference between Frank and
-the original version of Eff is that the original version of Eff
-provided no support for effect typing. Recently Bauer and Pretnar have
-designed an effect type system for Eff. Their implementation supports
+Bauer and Pretnar's Eff~\cite{BauerP12}. A significant difference
+between Frank and the original version of Eff~\cite{BauerP12} is that
+the latter provides no support for effect typing. Recently Bauer and
+Pretnar have designed an effect type system for
+Eff~\cite{BauerP13}. Their implementation~\cite{Pretnar13} supports
 Hindley-Milner type inference, and the type system incorporates effect
 sub-typing. In contrast, Frank uses bidirectional type inference, and
 avoids sub-typing altogether.
 
-Handlers in action. In previous work with Kammar and Oury, the first
-author designed and experimented with a number of effect handler
-libraries for languages ranging from Racket, to SML, to Haskell. Apart
-from the Haskell library, our other libraries have no effect typing
-support. The Haskell library takes advantage of type classes to
-simulate an effect type system not entirely dissimilar to that of
-Frank. As Haskell is lazy, the Haskell library cannot be used to write
-direct-style effectful programs - one must instead adopt a monadic
-style. Furthermore, although there are a number of ways of almost
-simulating effect type systems in Haskell, none is without its
-flaws. Kiselyov et al have designed a similar Haskell library for
-effect handlers, making slightly different design choices.
+Handlers in action~\cite{KammarLO13}. In previous work with Kammar and
+Oury~\cite{KammarLO13}, the first author designed and experimented
+with a number of effect handler libraries for languages ranging from
+Racket, to SML, to Haskell. Apart from the Haskell library, our other
+libraries have no effect typing support. The Haskell library takes
+advantage of type classes to simulate an effect type system not
+entirely dissimilar to that of Frank. As Haskell is lazy, the Haskell
+library cannot be used to write direct-style effectful programs - one
+must instead adopt a monadic style. Furthermore, although there are a
+number of ways of almost simulating effect type systems in Haskell,
+none is without its flaws. Kiselyov et al~\cite{KiselyovSS13} have
+designed a similar Haskell library for effect handlers, making
+slightly different design choices.
 
-Brady has designed a library and DSL for programming with effects in
-his dependently typed Idris language. Like the Haskell libraries,
-Brady's library currently requires the programmer to write effectful
-code in a monadic style.
+Brady~\cite{Brady13} has designed a library and DSL for programming
+with effects in his dependently typed Idris language. Like the Haskell
+libraries, Brady's library currently requires the programmer to write
+effectful code in a monadic style.
 
 
 \section{Examples}
@@ -1252,7 +1255,8 @@ H(\key{c}, \many{v}, u)
 
 % We recommend abbrvnat bibliography style.
 
-% \bibliographystyle{abbrvnat}
+\bibliographystyle{abbrvnat}
+\bibliography{frankly}
 
 % The bibliography should be embedded for final submission.
 
