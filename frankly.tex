@@ -188,7 +188,7 @@
 %%   Frank syntax and type system (source language)
 %%     semantics by elaboration into successively simpler languages
 %%   pattern matching compilation
-%%     option to expose non-exhaustive/incomplete pattern matching as
+%%     option to expose incomplete/ambiguous pattern matching as
 %%     concrete effects
 %%   CBPV
 %%   Explicit polymorphism
@@ -209,7 +209,73 @@
 %%     Relationship with type classes/modules
 
 \section{Introduction}
-  
+
+This paper explores the design of Frank, a strict functional
+programming language designed from the ground up around a novel
+variant of Plotkin and Pretnar's effect handlers abstraction.
+
+In Frank, effect handlers strictly generalise functions. In the
+general case an effect handler acts as an interpreter for a finite set
+of commands whose signatures are statically tracked by the type
+system. A function is the special case of an effect handler that
+interprets the empty set of commands.
+
+The main contributions of this paper are:
+\begin{itemize}
+\item The design of Frank, a functional programming language featuring
+  a bidirectional effect type system, effect polymorphism, and effect
+  handlers.
+\item A novel approach to effect polymorphism which avoids all mention
+  of effect variables, crucially relying on the observation that one
+  must always instantiate the effects of a function being applied with
+  the current \emph{ambient} effects.
+\item The combination of pattern matching and effect handlers in such
+  a way that incomplete or ambiguous pattern matching can be realised
+  as concrete effects that can be handled however the programmer
+  chooses using further effect handlers.
+\item A characterisation of effect-handlers as generalised functions.
+\item Multi-handlers for handling multiple computations over different
+  effect sets synchronously.
+\item A type system for Frank.
+\item A series of type preserving translations from Frank into
+  successively more canonical type systems, culminating in F-eff a
+  polymorphic variant of the lambda-eff calculus of Kammar et al,
+  which in turn is an extension of Levy's call-by-push-value calculus.
+\item A straightforward small-step operational semantics for F-eff,
+  yielding, in combination with the translations to F-eff, a type
+  soundness result for Frank.
+\end{itemize}
+
+A number of other languages and libraries are built around effect
+handlers and algebraic effects.
+
+Bauer and Pretnar's Eff. A significant difference between Frank and
+the original version of Eff is that the original version of Eff
+provided no support for effect typing. Recently Bauer and Pretnar have
+designed an effect type system for Eff. Their implementation supports
+Hindley-Milner type inference, and the type system incorporates effect
+sub-typing. In contrast, Frank uses bidirectional type inference, and
+avoids sub-typing altogether.
+
+Handlers in action. In previous work with Kammar and Oury, the first
+author designed and experimented with a number of effect handler
+libraries for languages ranging from Racket, to SML, to Haskell. Apart
+from the Haskell library, our other libraries have no effect typing
+support. The Haskell library takes advantage of type classes to
+simulate an effect type system not entirely dissimilar to that of
+Frank. As Haskell is lazy, the Haskell library cannot be used to write
+direct-style effectful programs - one must instead adopt a monadic
+style. Furthermore, although there are a number of ways of almost
+simulating effect type systems in Haskell, none is without its
+flaws. Kiselyov et al have designed a similar Haskell library for
+effect handlers, making slightly different design choices.
+
+Brady has designed a library and DSL for programming with effects in
+his dependently typed Idris language. Like the Haskell libraries,
+Brady's library currently requires the programmer to write effectful
+code in a monadic style.
+
+
 \section{Examples}
 
 \subsection{Pipes}
