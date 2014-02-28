@@ -65,6 +65,7 @@
 \newcommand{\does}[4]{#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
 \newcommand{\idoes}[3]{#1 \vdash {#2} \judgeword{has} {#3}}
 
+\newcommand{\effs}[2]{{#1} \judgeword{does} {#2}}
 
 \newcommand{\pat}[3]{{#1} \judgeword{matches} {#2} \dashv #3}
 \newcommand{\patg}[2]{\pat{#1}{#2}{\Gamma}}
@@ -266,7 +267,8 @@ Types, signatures, type environments
 \[
 \begin{array}{@{}r@{~}l@{}}
 U, V &::= D~\many{U} \mid \thunk{C} \mid X \\
-C    &::= \effbox{\sigs}V \mid \many{\effbox{\sigs}V} \to C \\
+C    &::= P \mid P \to C \\
+P    &::= \effbox{\sigs}V \\
 \\
 \sig  &::= \cdot \mid c : U(\many{V}), \sig \\
 \sigs &::=
@@ -292,7 +294,7 @@ u &::=& x \mid f \mid d                                \\ % makes
 v &::=& u \mid k~\many{v}                                 % has
           \mid \thunk{e}
 \\[1ex]
-d &::=& d~\many{e} \mid \force{u} \mid c~\many{v}      \\ % can
+d &::=& d~e \mid \force{u} \mid c~\many{v}             \\ % can
 e &::=& v \mid \many{r} \mapsto e \mid e \medvert e       % does
 \\[1ex]
 p &::=& x \mid k~\many{p}                              \\ % pattern 
@@ -302,6 +304,18 @@ r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \thunk{g} \\ % request
 
 Typing rules
 \medskip
+
+$\boxed{\effs{C}{\sigs}}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\effs{\effbox{\sigs}V}{\sigs}}
+
+\inferrule
+  {\effs{C}{\sigs}}
+  {\effs{P \to C}{\sigs}}
+\end{mathpar}
 
 $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
 \begin{mathpar}
@@ -321,7 +335,7 @@ $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
   {\makesgs{f}{\theta(V)}}
 
 \inferrule
-  {\cangs{d}{\rt{V}}}
+  {\cangs{d}{\effbox{\sigs}V}}
   {\makesgs{d}{V}}
 \end{mathpar}
 
@@ -346,18 +360,18 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 
 \begin{mathpar}
 \inferrule
-  {\cangs{d}{\many{\effbox{\sigs'}V} \to C} \\
-   (\idoesg{\effbox{\sigs~\sigs'_i}V_i}{e_i})_i}
-  {\can{\Gamma}{\sigs}{d~\many{e}}{C}}
+  {\cangs{d}{\effbox{\sigs'}V \to C} \\
+   \idoesg{\effbox{\sigs~\sigs'}V}{e}}
+  {\can{\Gamma}{\sigs}{d~e}{C}}
 
 \inferrule
-  {\makesgs{u}{\thunk{C}} \\ \mathit{effs}(C) = \sigs}
+  {\makesgs{u}{\thunk{C}} \\ \effs{C}{\sigs}}
   {\cangs{\force{u}}{C}}
 
 \inferrule
   {c : U(\many{V}) \in \sigs \\
    (\hasgs{V_i}{v_i})_i}
-  {\cangs{c~\many{v}}{\rt{U}}}
+  {\cangs{c~\many{v}}{\effbox{\sigs}U}}
 \end{mathpar}
 
 $\boxed{\idoesg{C}{e}}$
@@ -368,7 +382,7 @@ $\boxed{\idoesg{C}{e}}$
   {\idoesg{\effbox{\sigs}V}{v}}
 
 \inferrule
-  {\sigs' \text{ closed} \\
+  {\many{\sigs'} \text{ closed} \\
    (\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
    \idoes{\Gamma, \many{\Delta}}{C}{e}}
   {\idoesg{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
@@ -391,7 +405,7 @@ $\boxed{\pat{V}{p}{\Delta}}$
   {\pat{D~\many{U}}{k~\many{p}}{\many{\Delta}}}
 \end{mathpar}
 
-$\boxed{\pat{\effbox{\sigs}V}{r}{\Delta}}$
+$\boxed{\pat{P}{r}{\Delta}}$
 
 \begin{mathpar}
 \inferrule
@@ -523,7 +537,7 @@ $\boxed{\doesgs{C}{e}}$
   {\doesgs{\rt{V}}{v}}
 
 \inferrule
-  {\sigs' \text{ closed} \\
+  {\many{\sigs'} \text{ closed} \\
    (\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
    \does{\Gamma, \many{\Delta}}{\sigs}{C}{e}}
   {\doesgs{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
