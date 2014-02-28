@@ -18,9 +18,9 @@
 \usepackage{MnSymbol}
 \usepackage{xspace}
 
-\newcommand{\lameff}{$\lambda_\mathrm{eff}$}
+\newcommand{\lameff}{$\lambda_\mathrm{eff}$\xspace}
 \newcommand{\feff}{$F_\textrm{eff}$\xspace}
-\newcommand{\impeff}{Implicit \lameff\xspace}
+\newcommand{\impeff}{Implicit \lameff}
 
 \newcommand{\set}[1]{\{#1\}}
 \newcommand{\many}{\overline}
@@ -217,8 +217,8 @@
 
 This paper explores the design of Frank, a strict functional
 programming language designed from the ground up around a novel
-variant of Plotkin and Pretnar's effect handlers~\cite{PlotkinP09,
-  PlotkinP13} abstraction.
+variant of Plotkin and Pretnar's \emph{effect
+  handler}~\cite{PlotkinP09, PlotkinP13} abstraction.
 
 In Frank, effect handlers strictly generalise functions. In the
 general case an effect handler acts as an interpreter for a finite set
@@ -228,8 +228,8 @@ interprets the empty set of commands.
 
 The main contributions of this paper are:
 \begin{itemize}
-\item The design of Frank, a functional programming language featuring
-  a bidirectional effect type system, effect polymorphism, and effect
+\item Frank, a functional programming language featuring a
+  bidirectional effect type system, effect polymorphism, and effect
   handlers.
 \item A novel approach to effect polymorphism which avoids all mention
   of effect variables, crucially relying on the observation that one
@@ -283,8 +283,29 @@ with effects in his dependently typed Idris language. Like the Haskell
 libraries, Brady's library currently requires the programmer to write
 effectful code in a monadic style.
 
+The first author has been plotting Frank since
+2007~\cite{McBride07}. He has implemented a prototype of a previous
+version of Frank~\cite{McBride12}. The design described in the current
+paper has much in common with that implementation, but there are some
+syntactic and semantic differences. The most important change in the
+current design is the introduction of multi-handlers as a
+generalisation of both functions and handlers.
+
+The rest of the paper is structured as follows.
+%
+Section~\ref{sec:examples} introduces Frank by
+example. Section~\ref{sec:frank} presents a type system for
+Frank. Sections~\ref{sec:core}, \ref{sec:impeff} and \ref{sec:feff}
+describes a series of program translations targetting successively
+more explicit type systems, culminating in \feff, a variant of Kammar
+et al's \lameff calculus. Section~\ref{sec:semantics} gives a
+semantics for \feff, which when composed with all of the program
+translations, yields a semantics for Frank. Section~\ref{sec:related}
+outlines related work and Section~\ref{sec:conclusion} concludes.
+
 
 \section{Examples}
+\label{sec:examples}
 
 \subsection{Pipes}
 
@@ -294,6 +315,7 @@ effectful code in a monadic style.
 
 
 \section{The source language (Frank)}
+\label{sec:frank}
 
 Frank has a number of distinctive features.
 
@@ -661,6 +683,8 @@ $\boxed{\pat{P}{r}{\Delta}}$
 
 
 \section{Pattern matching compilation (Core Frank)}
+\label{sec:core}
+
 
 Core Frank replaces multi-handlers with a combination of standard
 call-by-value functions, case statements, and unary effect handlers.
@@ -839,7 +863,8 @@ $\boxed{\doesgs{C}{e}}$
 
 
 
-\section{CBPV with Implicit polymorphism}
+\section{\lameff with implicit polymorphism}
+\label{sec:impeff}
 
 Call by value embedding of Core Frank into \impeff:
 
@@ -984,6 +1009,8 @@ $\boxed{\compgs{e}{C}}$
 
 
 \section{Explicit polymorphism (\feff)}
+\label{sec:feff}
+
 
 As we only allow top-level polymorphism, the translation from \impeff
 to \feff is straightforward. Generalisation (type abstraction) only
@@ -1148,6 +1175,7 @@ $\boxed{\compgs{e}{C}}$
 \end{figure*}
 
 \section{Small-step semantics}
+\label{sec:semantics}
 
 \newcommand{\reducesto}{\longrightarrow}
 
@@ -1224,8 +1252,11 @@ H(\key{c}, \many{v}, u)
 \end{figure*}
 
 \section{Related work}
+\label{sec:related}
+
 
 \section{Conclusion and future work}
+\label{sec:conclusion}
 
 
 %% \begin{abstract}
