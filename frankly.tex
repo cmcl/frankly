@@ -16,6 +16,11 @@
 \usepackage{amsfonts}
 \usepackage{stmaryrd}
 \usepackage{MnSymbol}
+\usepackage{xspace}
+
+\newcommand{\lameff}{$\lambda_\mathrm{eff}$}
+\newcommand{\feff}{$F_\textrm{eff}$\xspace}
+\newcommand{\impeff}{Implicit \lameff\xspace}
 
 \newcommand{\set}[1]{\{#1\}}
 \newcommand{\many}{\overline}
@@ -238,11 +243,11 @@ The main contributions of this paper are:
   effect sets synchronously.
 \item A type system for Frank.
 \item A series of type preserving translations from Frank into
-  successively more canonical type systems, culminating in F-eff a
+  successively more canonical type systems, culminating in \feff a
   polymorphic variant of the lambda-eff calculus of Kammar et al,
   which in turn is an extension of Levy's call-by-push-value calculus.
-\item A straightforward small-step operational semantics for F-eff,
-  yielding, in combination with the translations to F-eff, a type
+\item A straightforward small-step operational semantics for \feff,
+  yielding, in combination with the translations to \feff, a type
   soundness result for Frank.
 \end{itemize}
 
@@ -318,11 +323,11 @@ order. Optionally, we can expose non-exhaustive/incomplete pattern
 matching as concrete effects.
 
 Second, we make the distinction between values terms and computations
-explicit, as in CBPV (implicit-eff).
+explicit, as in CBPV (\impeff).
 
-Finally, we make polymorphism explicit. Our ultimate target is F-eff,
+Finally, we make polymorphism explicit. Our ultimate target is \feff,
 an effect-polymorphic variant of Kammar et al's CBPV-inspired
-lambda-eff calculus. The small-step semantics of F-eff is a
+lambda-eff calculus. The small-step semantics of \feff is a
 straightforward variant of that of lambda-eff.
 
 
@@ -654,6 +659,34 @@ $\boxed{\pat{P}{r}{\Delta}}$
 
 \section{Pattern matching compilation (Core Frank)}
 
+Core Frank replaces multi-handlers with a combination of standard
+call-by-value functions, case statements, and unary effect handlers.
+
+A superficial change to the types is that rather than annotating value
+returning computations with effects, we shift such labels to the thunk
+containing the computation. The former design seems more convenient to
+program with, which is why we adopt it in the source language. The
+latter design leads to a slightly more uniform presentation of the
+type rules (the checking judgement for computations now has the same
+shape as the checking judgement for values, and we no longer need the
+$\judgeword{does}$ judgement).
+
+Multi-handlers in Frank become curried function over suspended
+computations.
+
+Shallow pattern matching on a single request becomes unary effect
+handling. Shallow pattern matching on a data type value becomes case
+analysis. Nested pattern matching on multiple computations is realised
+as a pattern matching tree constructed from handlers and case
+statements. Standard algorithms for pattern matching compilation
+apply. 
+
+It is instructive to illustrate 
+
+
+
+
+
 \begin{figure*}
 Types, signatures, type environments
 
@@ -791,7 +824,7 @@ $\boxed{\doesgs{C}{e}}$
 
 \section{CBPV with Implicit polymorphism}
 
-Call by value embedding of Core Frank into implicit-eff:
+Call by value embedding of Core Frank into \impeff:
 
 \begin{equations}
 \sem{x} &=& \key{ret}~x \\
@@ -929,16 +962,16 @@ $\boxed{\compgs{e}{C}}$
      {C}}
 \end{mathpar}
 
-\caption{implicit-eff}
+\caption{\impeff}
 \end{figure*}
 
 
-\section{Explicit polymorphism (F-eff)}
+\section{Explicit polymorphism (\feff)}
 
-As we only allow top-level polymorphism, the translation from
-implicit-eff to explicit-eff is straightforward. Generalisation (type
-abstraction) only occurs on top-level definitions, and instantiation
-(type application) only occurs on top-level variable lookup.
+As we only allow top-level polymorphism, the translation from \impeff
+to \feff is straightforward. Generalisation (type abstraction) only
+occurs on top-level definitions, and instantiation (type application)
+only occurs on top-level variable lookup.
 
 %% \[
 %% \bl
@@ -1094,7 +1127,7 @@ $\boxed{\compgs{e}{C}}$
   {\compgs{\key{rec}~f~x.e}{V \to C}}
 \end{mathpar}
 
-\caption{F-eff}
+\caption{\feff}
 \end{figure*}
 
 \section{Small-step semantics}
@@ -1170,7 +1203,7 @@ H(\key{c}, \many{v}, u)
   {F[d] \reducesto F[e]}
 \end{mathpar}
 
-\caption{Small-step operational semantics for F-eff}
+\caption{Small-step operational semantics for \feff}
 \end{figure*}
 
 \section{Related work}
