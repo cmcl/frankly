@@ -257,7 +257,8 @@ The main contributions of this paper are:
 \item A series of type preserving translations from Frank into
   successively more canonical type systems, culminating in \feff a
   polymorphic variant of the lambda-eff calculus of Kammar et al,
-  which in turn is an extension of Levy's call-by-push-value calculus.
+  which in turn is an extension of Levy's call-by-push-value
+  calculus~\cite{Levy2004}.
 \item A straightforward small-step operational semantics for \feff,
   yielding, in combination with the translations to \feff, a type
   soundness result for Frank.
@@ -328,8 +329,131 @@ outlines related work and Section~\ref{sec:conclusion} concludes.
 \section{The source language (Frank)}
 \label{sec:frank}
 
-The syntax of Frank is types and terms is given in
-Figure~\ref{fig:frank-syntax}.
+The syntax of Frank types and terms is given in
+Figure~\ref{fig:frank-syntax}. The types are divided into value types
+and computation types in a similar fashion to Levy's
+call-by-push-value calculus~\cite{Levy2004}.
+%
+Value types are data types ($D~\many{U}$), suspended $C$ computations
+($\thunk{C}$), otherwise known as \emph{thunk types}, or type
+variables ($X$).
+%
+Computation types are \emph{multi-handler} types. The type
+$\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to \effbox{\sigs}V$,
+%
+is the type of an $n$-handler. Each argument type
+$\effbox{\sigs_i}V_i$ represents a computation returning values of
+types $V_i$ such that the multi-handler must handle effects in
+$\sigs_i$. Such an $n$-handler handles all of its arguments
+together. As a result of handling its arguments it returns a value of
+type $V$ and may perform effects in $\sigs$.
+
+Polytypes are restricted to thunks. Effect polymorphism is restricted
+to a single effect variable $\varepsilon$, which in practice Frank
+programmers will never need to write.
+
+As is commonplace for ML-like languages, data types are parameterised
+and declared at the top-level. Analogously, effect signatures are also
+parameterised and declared at the top-level. An effect signature
+$S~\many{X}$ consists of a collection of command declarations of the
+form $c:U{\many{V}}$ denoting that command $c$ takes arguments of
+types $\many{V}$ and returns a value of type $U$, such that the
+$\many{V}$ and $U$ may all depend on $\many{X}$. Each command can only
+be declared once in a one signature.
+
+A effect set is a sequence of signatures initiated either with the
+empty effect $\emptyset$ (yielding a \emph{closed effect set}) or the only
+effect variable $\varepsilon$ (yielding an \emph{open effect set}). Order
+is important, as repeats are permitted, in which case the right-most
+signature overrides all others with the same name.
+
+Shadowing arises naturally in two ways. First, given an open effect
+set $\sigs$ we may substitute an arbitrary effect set for
+$\varepsilon$. Second, we define a notion of effect extension: $\sigs
+\oplus \sigs'$ is the \emph{extension} of effect set $\sigs$ with
+closed effect set $\sigs'$, formally:
+%
+\[\ba{@{\sigs~\oplus~}l@{~}l@{}}
+\emptyset               &= \sigs \\
+(\sigs', \sig~\many{V}) &= (\sigs \oplus \sigs'), \sig~\many{V} \\
+\ea\]
+
+In type environments, we distinguish monomorphic and polymorphic
+variables.
+
+Just as with the types, Frank terms are separated into value terms and
+computation terms. Furthermore, as Frank has a bidirectional type
+system~\cite{bidirectional-typing}, the terms are further sub-divided
+into those whose type is inferrable, and those which may be checked
+against a type.
+
+Frank is less strict about the separation between value and
+computation terms than call-by-push-value is. For instance, inferred
+computations can sometimes be treated as inferred values. This is a
+deliberate design decision, in order to make Frank convenient to
+program with.
+
+The typing rules for Frank are given in Figure~\ref{fig:frank-typing}.
+%
+The judgement $\makesgs{u}{V}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, and inferrable value term $u$,
+then we can infer that $u$ is of type $V$.
+%
+The judgement $\hasgs{V}{v}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, value type $V$, and checkable
+value term $v$, then we can check that $V$ has $v$ as a valid term.
+%
+The judgement $\cangs{d}{C}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, and inferrable computation term $d$,
+then we can infer that $d$ is of type $C$.
+%
+The judgement $\idoesg{C}{e}$ says that given type environment
+$\Gamma$, computation type $C$, and checkable computation term $e$,
+then we can check that $C$ has $e$ as a valid computation term.
+
+Monomorphic variable ($x$) are simply looked up in the type
+environment. Polymorphic variables ($f$) are looked up and
+instantiated. In practice this means performing unification.
+%
+An inferrable computation ($d$) is also an inferrable value, providing
+it is a returner whose effects agree with the ambient effects.
+
+Any inferrable value ($u$) is also checkable against its inferred
+type. Data type ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
+checkable by checking their components.
+
+A thunk $u$ can by forced ($u!$) if its inferred type agrees with the
+ambient effects. To infer the type of a handler application $d~e$, we
+first infer the type of $d$, and then check that the argument matches
+the inferred argument type. Note that the effect set on an argument
+must be closed, and thus we extend the ambient effect set with the
+argument effect set when checking the argument.
+%
+The type of a command invocation ($c~\many{v}$) is looked up from the
+ambient effects. We also check that the arguments match the argument
+types.
+%
+Let, letrec. ...
+
+Checking computations...
+
+Patterns...
+
+
+
+
+Inferred values consist of variables 
+
+
+
+
+
+
+As is made apparent by the call-by-value translation in
+Section~\ref{sec:impeff}, Frank is morally a call-by-value language
+(though multi-handlers complicate the picture somewhat).
+
+
 
 
 Frank has a number of distinctive features.
@@ -374,25 +498,19 @@ straightforward variant of that of lambda-eff.
 \begin{figure}
 Types
 \begin{syntax}
-\slab{values}       &U, V   &::=& D~\many{U} \mid \thunk{C} \mid X \\
-\slab{computations} &C      &::=& R \mid R \to C \\
-\slab{returners}    &R      &::=& \effbox{\sigs}V
+\slab{values}       &U, V          &::=& D~\many{U} \mid \thunk{C} \mid X \\
+\slab{computations} &C             &::=& R \mid R \to C \\
+\slab{returners}    &R             &::=& \effbox{\sigs}V
 \\[1ex]
-\slab{polytypes}    &P      &::=& \forall \varepsilon \many{X}.Q \\
-\slab{thunks}       &Q      &::=& \thunk{C}
+\slab{polytypes}    &P             &::=& \forall \varepsilon \many{X}.Q \\
+\slab{thunks}       &Q             &::=& \thunk{C}
 \\[1ex]
-\slab{signatures}   &\sig   &::=& \cdot \mid c : U(\many{V}), \sig \\
+\slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
 \slab{effects}      &\sigs  &::=&
   \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
 \\[1ex]
-\slab{contexts}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
+\slab{type environments}     &\Gamma        &::=& \cdot \mid \Gamma, x:V \mid f:P \\
 \end{syntax}
-
-Effect extension
-\begin{equations}
-\sigs \oplus \emptyset               &=& \sigs \\
-\sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
-\end{equations}
 
 Terms
 \begin{syntax}
@@ -402,10 +520,10 @@ Terms
 \slab{inferred computations}&d &::=& \force{u} \mid d~e \mid c~\many{v}
                                \mid  \key{let}~x=d~\key{in}~d' \\
                              &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
-\slab{checked computations}&e  &::=& v \mid \many{r} \mapsto e \mid e \medvert e
+\slab{checked computations} &e &::=& v \mid \many{r} \mapsto e \mid e \medvert e
 \\[1ex]
 \slab{value patterns}&p       &::=& x \mid k~\many{p}                              \\
-\slab{computation patterns}&r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \thunk{g} \\
+\slab{computation patterns}&r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \force{x} \\
 \end{syntax}
 
 \caption{Frank Syntax}
@@ -453,8 +571,8 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
 
 \begin{mathpar}
 \inferrule
-  {\makesgs{s}{V}}
-  {\hasgs{V}{s}}
+  {\makesgs{u}{V}}
+  {\hasgs{V}{u}}
 
 \inferrule
   {(\hasgs{V_i}{v_i})_i \\
@@ -605,14 +723,14 @@ Types
 \slab{effects}      &\sigs  &::=&
   \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
 \\[1ex]
-\slab{contexts}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
+\slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
 \end{syntax}
 
-Effect extension
-\begin{equations}
-\sigs \oplus \emptyset               &=& \sigs \\
-\sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
-\end{equations}
+%% Effect extension
+%% \begin{equations}
+%% \sigs \oplus \emptyset               &=& \sigs \\
+%% \sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
+%% \end{equations}
 
 Terms
 \begin{syntax}
@@ -664,8 +782,8 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
 
 \begin{mathpar}
 \inferrule
-  {\makesgs{s}{V}}
-  {\hasgs{V}{s}}
+  {\makesgs{u}{V}}
+  {\hasgs{V}{u}}
 
 \inferrule
   {(\hasgs{V_i}{v_i})_i \\
@@ -755,14 +873,14 @@ Types
 \slab{effects}      &\sigs  &::=&
   \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
 \\[1ex]
-\slab{contexts}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
+\slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
 \end{syntax}
 
-Effect extension
-\begin{equations}
-\sigs \oplus \emptyset               &=& \sigs \\
-\sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
-\end{equations}
+%% Effect extension
+%% \begin{equations}
+%% \sigs \oplus \emptyset               &=& \sigs \\
+%% \sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
+%% \end{equations}
 
 Terms
 \begin{syntax}
@@ -985,14 +1103,14 @@ Types
 \slab{effects}      &\sigs  &::=&
   \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
 \\[1ex]
-\slab{contexts}     &\Gamma &::=& \cdot \mid \Gamma, x:V \\
+\slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \\
 \end{syntax}
 
-Effect extension
-\begin{equations}
-\sigs \oplus \emptyset               &=& \emptyset \\
-\sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
-\end{equations}
+%% Effect extension
+%% \begin{equations}
+%% \sigs \oplus \emptyset               &=& \emptyset \\
+%% \sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
+%% \end{equations}
 
 Terms
 \begin{syntax}
