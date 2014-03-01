@@ -304,7 +304,7 @@ with effects in his dependently typed Idris language. Like the Haskell
 libraries, Brady's library currently requires the programmer to write
 effectful code in a monadic style.
 
-The first author has been plotting Frank since
+The second author has been plotting Frank since
 2007~\cite{McBride07}. He has implemented a prototype of a previous
 version of Frank~\cite{McBride12}. The design described in the current
 paper has much in common with that implementation, but there are some
@@ -327,8 +327,214 @@ general recursion. Section~\ref{sec:semantics} gives a semantics for
 embedding, yields a semantics for Frank. Section~\ref{sec:related}
 outlines related work and Section~\ref{sec:conclusion} concludes.
 
-\section{Examples}
+\section{Introducing Frank}
 \label{sec:examples}
+
+Frank is a functional programming language with effects and handlers
+in the style of Eff controlled by a type system inspired by Levy's
+call-by-push-value~\cite{Levy2004}.
+%
+Doing and Being are clearly separated, and managed by distinguished
+notions of computation and value types.
+
+Concrete values live in inductive datatypes.
+%
+\begin{verbatim}
+data List X
+   = nil
+   | cons X (List X)
+
+data Zero =
+
+data Unit = unit
+\end{verbatim}
+
+We can write perfectly ordinary functional programs, with (compulsory)
+type signatures.
+%
+\begin{verbatim}
+append : List X -> List X -> List X
+append nil       ys = ys
+append (x :: xs) ys = cons x (append xs ys)
+\end{verbatim}
+
+Higher-order functions are passed suspended computations. Braces are
+"suspenders".
+%
+\begin{verbatim}
+map {X -> Y} -> List X -> List Y
+map f nil         = nil
+map f (cons x xs) = cons (f x) (map f xs)
+\end{verbatim}
+
+A value type \verb!V! is a datatype \verb!D V1 ... Vn!, a suspended
+computation type \verb!{C}!, or a type variable !X!.
+%
+A computation type can be a function type \verb!V -> C! or an
+effect-annotated value type \verb![S1 ... Sn]V!, where an empty
+bracket can be dropped.
+
+Effects are collections of signatures, which describe a choice of
+commands. Here are some simple signatures.
+%
+\begin{verbatim}
+sig Send X
+  = send : Unit(X)
+
+sig Receive X
+  = receive : X
+
+sig Abort
+  = aborting : Zero
+\end{verbatim}
+%
+The \verb!send! command takes an argument of type \verb!X! and returns
+a value of type \verb!Unit!. The \verb!receive! command returns a
+value of type \verb!X!. The abort command returns an element of the
+empty type, \verb!Zero!.
+
+Frank is a call-by-value language, but it naturally distinguishes
+\verb![]V!, the type of suspended pure computations which deliver a
+\verb!V!, from \verb!V! itself. We can thus define a kind of
+"semicolon" just as the function which ignores its first argument.
+%
+\begin{verbatim}
+semi : X Y -> Y
+semi x y = y
+\end{verbatim}
+
+Frank has effect polymorphism, enough to allow higher-order functions
+to pass effect permissions to their parameters. The following uses map
+to send a list of things, one at a time.
+%
+\begin{verbatim}
+sends : List X -> [Send X]Unit
+sends xs = semi (map send xs) unit
+\end{verbatim}
+%
+The reason this type checks at all is because \verb!map! is implicitly
+polymorphic in its effects.
+
+The following does not typecheck, because the \verb!Send! effect is
+not permitted in the return type of \verb!bad!.
+
+\begin{verbatim}
+bad List X -> Unit
+bad xs = semi (map send xs) unit
+\end{verbatim}
+
+Writing control operators is not too tricky.
+\begin{verbatim}
+bind : X -> {X -> Y} -> Y
+bind x f = f x
+\end{verbatim}
+
+We can use \verb!bind! to define a polymorphic \verb!abort! function.
+\begin{verbatim}
+abort : [Abort]X
+abort = bind (aborting!) ()
+\end{verbatim}
+The term \verb!()! denotes an empty set of pattern matching clauses
+covering the \verb!Zero! return type of \verb!aborting!.
+
+Here is a computation which receives and concatenates lists until one
+is empty.
+%
+\begin{verbatim}
+catter : [Receive (List X)]List X
+catter = bind receive!
+           ( nil -> nil
+           | xs  -> append xs catter!
+           )
+\end{verbatim}
+%
+The computation \verb$receive!$ is the command that delivers a list by
+receive; the value \verb$receive$ is the name of the command which
+receives.
+
+Effects are handled by special functions called \emph{effect
+  handlers}. Effect handlers in Frank can take multiple computations
+as arguments, hence we call them \emph{multi-handlers}. In fact
+standard functions like the ones we have seen so far are just special
+cases of multi-handlers in which the arguments all have the empty
+effect.
+
+A multi-handler has type \verb!R1 -> ... -> Rm -> R! where each
+\verb!Ri! and \verb!R! is an effect-annotated value type. For
+instance, we can write a \verb!pipe! multi-handler which handles
+\verb!send!  commands from one computation by matching them with
+corresponding \verb!receive! commands from another.
+%
+\begin{verbatim}
+pipe : [Send X]Unit -> [Receive X]Y -> [Abort]Y
+pipe _            y             = y
+pipe unit         _             = abort! ()
+pipe (send x ? s) (receive ? r) =
+  pipe (s unit) (r x)
+\end{verbatim}
+%
+The type signature says the following. It must handle all
+\verb!Send X! commands in its first argument and all \verb!Receive X!
+  commands in its second argument. The first argument returns values
+  of type \verb!Unit!; the second argument returns values of type
+  \verb!Y!. The handler itself is allowed to perform \verb!Abort!
+  commands and returns a final value of type \verb!Y!.
+
+Here are some things to send.
+\begin{verbatim}
+hello : List Char
+hello =
+  cons 'h' (cons 'e' (cons 'l'
+    (cons 'l' (cons 'o' nil))))
+
+space : List Char
+space = cons ' ' nil
+
+world : List Char
+world =
+  cons 'w' (cons 'o' (cons 'r'
+    (cons 'l' (cons 'd' nil))))
+\end{verbatim}
+%
+Here is a computation which sends them.
+%
+\begin{verbatim}
+sender [Send (List Char)]Unit
+sender =
+  sends (cons (hello!
+           (cons space! (cons world! nil))))
+\end{verbatim}
+
+Here is a main function, which plugs \verb!sender! and \verb!catter!
+together and sends their output to the console.
+%
+\begin{verbatim}
+main : [Abort, Console](List Unit)
+main = map ouch (pipe sender catter)
+\end{verbatim}
+where the \verb!Console! operations are handled specially at the
+top-level.
+\begin{verbatim}
+sig Console
+  = inch : Char(Unit)
+  | ouch : Unit(Char)
+\end{verbatim}
+
+
+The type system does two separate things:
+\begin{itemize}
+\item It ensures that value types coincide.
+\item It ensures that effects required are included in effects
+  enabled.
+\end{itemize}
+
+The fun of Frank is that one can say what it is to \emph{be} a
+computation without saying what it is to \emph{do} it. Doing and being
+are separately negotiable, and readily interleaved in different
+ways. Or as Frank Sinatra put it,
+\begin{quote}
+do be do be do
+\end{quote}
 
 \subsection{Pipes}
 
@@ -341,16 +547,18 @@ function \verb|map|.
 \begin{verbatim}
 data List X = nil | cons X (List X)
 
-letrec
-  map : (X -> Y) -> List X -> List Y
-  map f nil         = nil
-  map f (cons x xs) = cons (f x) (map f xs)
-in
-  e
+map : (X -> Y) -> List X -> List Y
+map f nil         = nil
+map f (cons x xs) = cons (f x) (map f xs)
 \end{verbatim}
 The type we have given to map is the standard one a functional
 programmer might expect to write in a language without support for
 effect typing.
+%
+Though it looks polymorphic
+
+
+
 %
 We automatically translate it into a valid Frank type by applying a
 series of desugaring rules.
@@ -612,7 +820,7 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\cangs{c~\many{v}}{\effbox{\sigs}U}}
 
 \inferrule
-  {\cangs{d}{\rt{V}} \\
+  {\cangs{d}{V} \\
    \can{\Gamma, x:V}{\sigs}{d'}{C}}
   {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
 
