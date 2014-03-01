@@ -90,6 +90,15 @@
 \newcommand{\doesgs}{\does{\Gamma}{\sigs}}
 \newcommand{\idoesg}{\idoes{\Gamma}}
 
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{prop}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
 \newcommand{\sig}{S}
 \newcommand{\sigs}{\Sigma}
 
@@ -307,14 +316,16 @@ The rest of the paper is structured as follows.
 %
 Section~\ref{sec:examples} introduces Frank by
 example. Section~\ref{sec:frank} presents a type system for
-Frank. Sections~\ref{sec:core}, \ref{sec:impeff} and \ref{sec:feff}
-describes a series of program translations targetting successively
-more explicit type systems, culminating in \feff, a variant of Kammar
-et al's \lameff calculus. Section~\ref{sec:semantics} gives a
-semantics for \feff, which when composed with all of the program
-translations, yields a semantics for Frank. Section~\ref{sec:related}
+Frank. Section~\ref{sec:core} describes how to elaborate
+multi-handlers and pattern matching into Core Frank, a language of
+plain call-by-value functions and explicit case analysis and unary
+handler constructs. Section~\ref{sec:feff} gives a call-by-value
+embedding of Core Frank into \feff, a variant of Kammar et al's
+\lameff calculus with shallow handlers, explict polymorphism and
+general recursion. Section~\ref{sec:semantics} gives a semantics for
+\feff, which when composed with pattern matching and the call-by-value
+embedding, yields a semantics for Frank. Section~\ref{sec:related}
 outlines related work and Section~\ref{sec:conclusion} concludes.
-
 
 \section{Examples}
 \label{sec:examples}
@@ -450,7 +461,7 @@ Inferred values consist of variables
 
 
 As is made apparent by the call-by-value translation in
-Section~\ref{sec:impeff}, Frank is morally a call-by-value language
+Section~\ref{sec:feff}, Frank is morally a call-by-value language
 (though multi-handlers complicate the picture somewhat).
 
 
@@ -857,133 +868,142 @@ $\boxed{\doesgs{C}{e}}$
 \end{figure*}
 
 
-\section{\lameff with implicit polymorphism}
-\label{sec:impeff}
+%% \section{\lameff with implicit polymorphism}
+%% \label{sec:impeff}
 
-\begin{figure}[float]
-Types
-\begin{syntax}
-\slab{values}       &U, V   &::=& D~\many{U} \mid \effbox{\sigs}\thunk{C} \mid X \\
-\slab{computations} &C      &::=& \rt{V} \mid V \to C
-\\[1ex]
-\slab{polytypes}    &P      &::=& \forall \varepsilon \many{X}.Q \\
-\slab{thunks}       &Q      &::=& \effbox{\sigs}\thunk{C}
-\\[1ex]
-\slab{signatures}   &\sig   &::=& \cdot \mid c : U(\many{V}), \sig \\
-\slab{effects}      &\sigs  &::=&
-  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
-\\[1ex]
-\slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
-\end{syntax}
+%% \begin{figure}[float]
+%% Types
+%% \begin{syntax}
+%% \slab{values}       &U, V   &::=& D~\many{U} \mid \effbox{\sigs}\thunk{C} \mid X \\
+%% \slab{computations} &C      &::=& \rt{V} \mid V \to C
+%% \\[1ex]
+%% \slab{polytypes}    &P      &::=& \forall \varepsilon \many{X}.Q \\
+%% \slab{thunks}       &Q      &::=& \effbox{\sigs}\thunk{C}
+%% \\[1ex]
+%% \slab{signatures}   &\sig   &::=& \cdot \mid c : U(\many{V}), \sig \\
+%% \slab{effects}      &\sigs  &::=&
+%%   \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
+%% \\[1ex]
+%% \slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
+%% \end{syntax}
 
-%% Effect extension
-%% \begin{equations}
-%% \sigs \oplus \emptyset               &=& \sigs \\
-%% \sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
-%% \end{equations}
+%% %% Effect extension
+%% %% \begin{equations}
+%% %% \sigs \oplus \emptyset               &=& \sigs \\
+%% %% \sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
+%% %% \end{equations}
 
-Terms
-\begin{syntax}
-\slab{values}         &u, v &::=& x \mid f \mid k~\many{v} \mid \thunk{d}  \\
-\slab{computations}   &d, e &::=& \key{case}~u~\key{of}~
-           (k~\many{x_k} \mapsto e_k)_k  \mid \force{u} \\
-    &&\mid& \lambda x.e \mid d~v
-      \mid  \key{ret}~v \mid c~\many{v} \\
-    &&\mid& \key{handle} ~d~ \key{with}~
-              (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
-              x        \mapsto e \\
-    &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
-\end{syntax}
-\caption{\impeff Syntax}
-\label{fig:impeff-syntax}
-\end{figure}
+%% Terms
+%% \begin{syntax}
+%% \slab{values}         &u, v &::=& x \mid f \mid k~\many{v} \mid \thunk{d}  \\
+%% \slab{computations}   &d, e &::=& \key{case}~u~\key{of}~
+%%            (k~\many{x_k} \mapsto e_k)_k  \mid \force{u} \\
+%%     &&\mid& \lambda x.e \mid d~v
+%%       \mid  \key{ret}~v \mid c~\many{v} \\
+%%     &&\mid& \key{handle} ~d~ \key{with}~
+%%               (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
+%%               x        \mapsto e \\
+%%     &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
+%% \end{syntax}
+%% \caption{\impeff Syntax}
+%% \label{fig:impeff-syntax}
+%% \end{figure}
 
-%%%%% Implicit lam-eff
+%% %%%%% Implicit lam-eff
 
-\begin{figure*}[float]
-$\boxed{\valg{v}{V}}$
-\begin{mathpar}
-\inferrule
-  {x:V \in \Gamma}
-  {\valg{x}{V}}
+%% \begin{figure*}[float]
+%% $\boxed{\valg{v}{V}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {x:V \in \Gamma}
+%%   {\valg{x}{V}}
+
+%% %% \inferrule
+%% %%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%% %%    \theta(\varepsilon) = \sigs}
+%% %%   {\val{\Gamma, x:V}{x}{\theta(V)}}
 
 %% \inferrule
-%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%   {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+%%    \dom(\theta) = \set{\varepsilon, \many{X}} \\
 %%    \theta(\varepsilon) = \sigs}
-%%   {\val{\Gamma, x:V}{x}{\theta(V)}}
+%%   {\valg{f}{\theta(V)}}
 
-\inferrule
-  {f:\forall \varepsilon \many{X}.V \in \Gamma \\
-   \dom(\theta) = \set{\varepsilon, \many{X}} \\
-   \theta(\varepsilon) = \sigs}
-  {\valg{f}{\theta(V)}}
+%% \inferrule
+%%   {\valg{V_i}{v_i} \\
+%%    k~\many{V} \in D~\many{U}}
+%%   {\valg{D~\many{U}}{k~\many{v}}}
 
-\inferrule
-  {\valg{V_i}{v_i} \\
-   k~\many{V} \in D~\many{U}}
-  {\valg{D~\many{U}}{k~\many{v}}}
+%% \inferrule
+%%   {\compgs{e}{C}}
+%%   {\valg{\thunk{e}}{\effbox{\sigs}\thunk{C}}}
+%% \end{mathpar}
 
-\inferrule
-  {\compgs{e}{C}}
-  {\valg{\thunk{e}}{\effbox{\sigs}\thunk{C}}}
-\end{mathpar}
+%% $\boxed{\compgs{e}{C}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {\valg{u}{D~\many{U}} \\
+%%    (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
+%%   {\compgs{\key{case}~ u ~\key{of}~
+%%                (k~\many{x_k} \mapsto e_k)_k}
+%%           {C}}
 
-$\boxed{\compgs{e}{C}}$
-\begin{mathpar}
-\inferrule
-  {\valg{u}{D~\many{U}} \\
-   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
-  {\compgs{\key{case}~ u ~\key{of}~
-               (k~\many{x_k} \mapsto e_k)_k}
-          {C}}
+%% \inferrule
+%%   {\valg{u}{\effbox{\sigs}\thunk{C}}}
+%%   {\compgs{\force{u}}{C}}
 
-\inferrule
-  {\valg{u}{\effbox{\sigs}\thunk{C}}}
-  {\compgs{\force{u}}{C}}
+%% \inferrule
+%%   {\comp{\Gamma, x:V}{\sigs}{e}{C}}
+%%   {\compgs{\lambda x.e}{V \to C}}
 
-\inferrule
-  {\comp{\Gamma, x:V}{\sigs}{e}{C}}
-  {\compgs{\lambda x.e}{V \to C}}
+%% \inferrule
+%%   {\compgs{d}{V \to C} \\
+%%    \valg{v}{V}}
+%%   {\compgs{d~v}{C}}
 
-\inferrule
-  {\compgs{d}{V \to C} \\
-   \valg{v}{V}}
-  {\compgs{d~v}{C}}
+%% \inferrule
+%%   {\valg{v}{V}}
+%%   {\compgs{\key{ret}~v}{\rt{V}}}
 
-\inferrule
-  {\valg{v}{V}}
-  {\compgs{\key{ret}~v}{\rt{V}}}
+%% \inferrule
+%%   {c : U(\many{V}) \in \sigs \\
+%%    \valg{v_i}{V_i}}
+%%   {\compgs{c~\many{v}}{\rt{U}}}
 
-\inferrule
-  {c : U(\many{V}) \in \sigs \\
-   \valg{v_i}{V_i}}
-  {\compgs{c~\many{v}}{\rt{U}}}
+%% \inferrule
+%%   {\comp{\Gamma}{\sigs \oplus \sigs'}{d}{\rt{V}} \\
+%%    (\comp{\Gamma, \many{x_c}:\many{V},
+%%                   g:\effbox{\sigs \oplus \sigs'}\thunk{U \to \rt{V}}}
+%%        {\sigs}{e_c}{C})_{c : U(\many{V}) \in \sigs'} \\
+%%    \comp{\Gamma, x:V}{\sigs}{e}{C}}
+%%   {\compgs
+%%      {\key{handle}~ d ~\key{with}~
+%%            (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
+%%            x \mapsto e}
+%%      {C}}
 
-\inferrule
-  {\comp{\Gamma}{\sigs \oplus \sigs'}{d}{\rt{V}} \\
-   (\comp{\Gamma, \many{x_c}:\many{V},
-                  g:\effbox{\sigs \oplus \sigs'}\thunk{U \to \rt{V}}}
-       {\sigs}{e_c}{C})_{c : U(\many{V}) \in \sigs'} \\
-   \comp{\Gamma, x:V}{\sigs}{e}{C}}
-  {\compgs
-     {\key{handle}~ d ~\key{with}~
-           (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
-           x \mapsto e}
-     {C}}
+%% \inferrule
+%%   {(\comp{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{e_i}{Q_i})_i \\
+%%    \comp{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{d}{C}}
+%%   {\compgs{\key{letrec}~\many{f : \forall \varepsilon \many{X}.Q = e}~\key{in}~d}{C}}
+%% \end{mathpar}
 
-\inferrule
-  {(\comp{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{e_i}{Q_i})_i \\
-   \comp{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{d}{C}}
-  {\compgs{\key{letrec}~\many{f : \forall \varepsilon \many{X}.Q = e}~\key{in}~d}{C}}
-\end{mathpar}
+%% \caption{\impeff Typing rules}
+%% \label{fig:impeff-typing}
+%% \end{figure*}
 
-\caption{\impeff Typing rules}
-\label{fig:impeff-typing}
-\end{figure*}
+\section{Explicit polymorphism (\feff)}
+\label{sec:feff}
 
 
-Call by value embedding of Core Frank into \impeff:
+%% As we only allow top-level polymorphism, the translation from \impeff
+%% to \feff is straightforward. Generalisation (type abstraction) only
+%% occurs on top-level definitions, and instantiation (type application)
+%% only occurs on top-level variable lookup.
 
+
+Call by value embedding of Core Frank into \feff:
+%
 \begin{equations}
 \sem{x} &=& \key{ret}~x \\
 \\
@@ -1004,71 +1024,87 @@ Call by value embedding of Core Frank into \impeff:
   {\qquad \key{handle}~\sem{d}~\key{with}~ 
             (\handle{c~\many{x_c}}{g_c} \mapsto \sem{e_c})_c
             \medvert x \mapsto \sem{e}} \\
-\end{equations}
+\end{equations}%
+\[
+\bl
+\seml
+  \inferrule
+    {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+     \dom(\theta) = \set{\varepsilon, \many{X}} \\
+     \theta(\varepsilon) = \sigs}
+    {\makesgs{f}{\theta(V)}}
+\semr \qquad \\[3ex]
+\hfill = \force{(f~\sigs~\many{\theta(X)})} \\
+\el
+\]
 
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
+\begin{proposition}
+~
+\begin{itemize}
+\item If $\makesgs{u}{V}$ then $\compgs{\sem{u}}{\rt{V}}$.
+\item If $\hasgs{V}{v}$   then $\compgs{\sem{v}}{\rt{V}}$.
+\item If $\cangs{d}{C}$   then $\compgs{\sem{d}}{C}$.
+\item If $\doesgs{C}{e}$  then $\compgs{\sem{e}}{C}$.
+\end{itemize}
+\end{proposition}
 
 
 
-\section{Explicit polymorphism (\feff)}
-\label{sec:feff}
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
+~\\
 
 
-As we only allow top-level polymorphism, the translation from \impeff
-to \feff is straightforward. Generalisation (type abstraction) only
-occurs on top-level definitions, and instantiation (type application)
-only occurs on top-level variable lookup.
+
 
 %% \[
 %% \bl
