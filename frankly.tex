@@ -336,6 +336,103 @@ outlines related work and Section~\ref{sec:conclusion} concludes.
 
 \subsection{Effect polymorphism with an invisible effect variable}
 
+Let us consider the canonical example of a polymorphic higher-order
+function \verb|map|.
+\begin{verbatim}
+data List X = nil | cons X (List X)
+
+letrec
+  map : (X -> Y) -> List X -> List Y
+  map f nil         = nil
+  map f (cons x xs) = cons (f x) (map f xs)
+in
+  e
+\end{verbatim}
+The type we have given to map is the standard one a functional
+programmer might expect to write in a language without support for
+effect typing.
+%
+We automatically translate it into a valid Frank type by applying a
+series of desugaring rules.
+
+The valid Frank type we are after is:
+\begin{verbatim}
+forall e X Y.{[0]{[0]X -> [e]Y} -> [0](List X) -> [e](List Y)}
+\end{verbatim}
+
+First, for readability we allow the signature for recursively defined
+functions to be defined on a separate line, as in Haskell.
+%
+Second, we allow the quantifiers to be omitted, just like in Haskell.
+\begin{verbatim}
+{[0]{[0]X -> [e]Y} -> [0](List X) -> [e](List Y)}
+\end{verbatim}
+Third, we allow the outer braces to be omitted, as the type must always be a thunk.
+\begin{verbatim}
+[0]{[0]X -> [e]Y} -> [0](List X) -> [e](List Y)
+\end{verbatim}
+
+%% S~\many{V} == 0, S~\many{V}
+%% S~\many{V} == e, S~\many{V}
+
+Let us distinguish between returners $\effbox{\sigs}V$ in argument
+position, whose effects $\sigs$ must be closed, and those in tail
+position, whose effects need not be closed. We call the former
+\emph{ports}, and the latter \emph{pegs}.
+
+Now we take advantage of some more general desugaring rules.
+\begin{equations}
+                      V &\equiv& \effbox{\varepsilon}V \\
+                V \to C &\equiv& \effbox{\emptyset}V \to C \\
+\effbox{\sigs}(R \to C) &\equiv& \effbox{\sigs}\thunk{R \to C} \\
+\end{equations}
+where the first rule is restricted to pegs (it would be nonsensical
+for ports anyway, as their effects must always be closed).
+
+The first rule is the critical one. It allows us to avoid writing down
+the effect variable. The second rule makes sense as ports being closed
+means that writing down $\emptyset$ is redundant. The third rule is
+superficial.
+
+Applying each rule in turn we obtain:
+\begin{verbatim}
+[0]{[0]X -> [e]Y} -> [0](List X) -> [e](List Y)
+[0]([0]X -> [e]Y) -> [0](List X) -> [e](List Y)
+[0]([0]X ->    Y) -> [0](List X) ->     List Y 
+   (   X ->    Y) ->     List X  ->     List Y 
+\end{verbatim}
+
+In order to account for non-empty effect sets, we also apply the
+following rules:
+\begin{equations}
+S~\many{V} &\equiv& \varepsilon, S~\many{V} \\
+S~\many{V} &\equiv& \emptyset, S~\many{V} \\
+\end{equations}
+where the first only applies to peg effect sets, and the second only
+applies to port effect sets.
+
+\newcommand{\var}{\mathit}
+
+For instance:
+\[
+\bstack
+\thunk{\effbox{\var{Abort}}\var{Int} \to \effbox{\var{State}~\var{Int}}\var{Bool}} \to \var{Int}
+\equiv \\
+  \qquad \thunk{\effbox{\emptyset, \var{Abort}}\var{Int} \to
+       \effbox{\varepsilon, \var{State}~\var{Int}}\var{Bool}} \to \effbox{\varepsilon}\var{Int}
+\estack
+\]
+
+With the syntactic sugar in place, we can now avoid writing the effect
+variable $\varepsilon$ ever. In addition, we need never write
+$\emptyset$ in port effect sets. It is sometimes necessary to
+explicitly write $\emptyset$ in peg effect sets. In particular, a pure
+top-level program returning values of type $V$ has type
+$\effbox{\emptyset}V$.
+
+
+
+
 
 \section{The source language (Frank)}
 \label{sec:frank}
@@ -899,7 +996,8 @@ language handler and case constructs in the source language.
 \[
 \ba{@{}l@{}}
 \key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k
-  \equiv
+  \equiv \\
+\qquad
     \key{let}~h = \thunk{\!\!\mathord{\medvert}_{\!\!k} (k~\many{x_k} \mapsto e_k)}~\key{in}~h~u \\
 \key{handle} ~d~ \key{with}~
            (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
@@ -910,6 +1008,32 @@ language handler and case constructs in the source language.
      ~\key{in}~h~d
 \ea
 \]
+
+The translation on types
+
+  %% drop ([Sig]{C}) = {drop(C) drop(Sig)}
+
+  %% drop ( <V> ) Sig          = [ drop (Sig) ] drop(V)
+  %% drop ( [Sig']V -> C ) Sig = [ drop (Sig') ] drop(V) -> drop(C) drop(Sig)
+
+
+  %% lift({C}) = [ lift(effs(C)) ]{ lift(C) }
+
+  %% lift([Sig]V -> C) = [ lift(Sig) ]lift(V) -> lift(C)
+  %% lift([Sig]V) = < lift(V) >
+  
+  %% effs([Sig]V -> C) = effs(C)
+  %% effs([Sig]V) = Sig
+
+Pattern matching trees:
+\begin{equations}
+M &::= & \many{e} \\
+  &\mid& \key{case}~(x:D~\many{U})~\key{of}~(k~\many{x_k} \mapsto M_k)_{k \in D} \\
+  &\mid& \key{handle}~(\force{x}:\effbox{\sigs}V)~\key{with}~
+          (\handle{c~\many{x_c}}{g_c} \mapsto M_c)_{c \in \sigs} \medvert
+          x        \mapsto M
+\end{equations}
+
 
 
 %% \section{\lameff with implicit polymorphism}
@@ -1512,6 +1636,22 @@ foo = 3
 
 map : {X [] Y} (List X) [] List Y
 
+
+letrec
+  map : forall e X Y.{[0]{[0]X -> [e]Y} [0](List X) -> [e](List Y)}
+  map f nil         = nil
+  map f (cons x xs) = cons (f x) (map f xs)
+in
+  e
+
+letrec
+  map : (X -> Y) -> List X -> List Y
+  map f nil         = nil
+  map f (cons x xs) = cons (f x) (map f xs)
+in
+  e
+
+  
 
 map : forall e X Y.{{[e]X -> <Y>}[e] [e](List X) -> [e](List Y)}[e]
 
