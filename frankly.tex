@@ -340,6 +340,42 @@ outlines related work and Section~\ref{sec:conclusion} concludes.
 \section{The source language (Frank)}
 \label{sec:frank}
 
+
+\begin{figure}
+Types
+\begin{syntax}
+\slab{values}       &U, V          &::=& D~\many{U} \mid \thunk{C} \mid X \\
+\slab{computations} &C             &::=& R \mid R \to C \\
+\slab{returners}    &R             &::=& \effbox{\sigs}V
+\\[1ex]
+\slab{polytypes}    &P             &::=& \forall \varepsilon \many{X}.Q \\
+\slab{thunks}       &Q             &::=& \thunk{C}
+\\[1ex]
+\slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
+\slab{effects}      &\sigs  &::=&
+  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
+\\[1ex]
+\slab{type environments}     &\Gamma        &::=& \cdot \mid \Gamma, x:V \mid f:P \\
+\end{syntax}
+
+Terms
+\begin{syntax}
+\slab{inferable values}&u       &::=& x \mid f \mid d                                \\
+\slab{checkable values}&v        &::=& u \mid k~\many{v} \mid \thunk{e}
+\\[1ex]
+\slab{inferable computations}&d &::=& \force{u} \mid d~e \mid c~\many{v}
+                               \mid  \key{let}~x=d~\key{in}~d' \\
+                             &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
+\slab{checkable computations} &e &::=& v \mid \many{r} \mapsto e \mid e \medvert e
+\\[1ex]
+\slab{value patterns}&p       &::=& x \mid k~\many{p}                              \\
+\slab{computation patterns}&r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \force{x} \\
+\end{syntax}
+
+\caption{Frank Syntax}
+\label{fig:frank-syntax}
+\end{figure}
+
 The syntax of Frank types and terms is given in
 Figure~\ref{fig:frank-syntax}. The types are divided into value types
 and computation types in a similar fashion to Levy's
@@ -349,7 +385,7 @@ Value types are data types ($D~\many{U}$), suspended $C$ computations
 ($\thunk{C}$), otherwise known as \emph{thunk types}, or type
 variables ($X$).
 %
-Computation types are \emph{multi-handler} types. The type
+Computation types represent multi-handlers. The type
 $\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to \effbox{\sigs}V$,
 %
 is the type of an $n$-handler. Each argument type
@@ -358,6 +394,9 @@ types $V_i$ such that the multi-handler must handle effects in
 $\sigs_i$. Such an $n$-handler handles all of its arguments
 together. As a result of handling its arguments it returns a value of
 type $V$ and may perform effects in $\sigs$.
+%
+We often write $\many{\effbox{\sigs}V} \to C$ as an abbreviation for
+$\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to C$.
 
 Polytypes are restricted to thunks. Effect polymorphism is restricted
 to a single effect variable $\varepsilon$, which in practice Frank
@@ -370,7 +409,7 @@ $S~\many{X}$ consists of a collection of command declarations of the
 form $c:U{\many{V}}$ denoting that command $c$ takes arguments of
 types $\many{V}$ and returns a value of type $U$, such that the
 $\many{V}$ and $U$ may all depend on $\many{X}$. Each command can only
-be declared once in a one signature.
+be declared once in one signature.
 
 A effect set is a sequence of signatures initiated either with the
 empty effect $\emptyset$ (yielding a \emph{closed effect set}) or the only
@@ -394,152 +433,15 @@ variables.
 
 Just as with the types, Frank terms are separated into value terms and
 computation terms. Furthermore, as Frank has a bidirectional type
-system~\cite{bidirectional-typing}, the terms are further sub-divided
-into those whose type is inferrable, and those which may be checked
-against a type.
+system~\cite{PierceT00}, the terms are further sub-divided into those
+whose type is inferable, and those which may be checked against a
+type.
 
 Frank is less strict about the separation between value and
-computation terms than call-by-push-value is. For instance, inferred
-computations can sometimes be treated as inferred values. This is a
+computation terms than call-by-push-value is. For instance, inferable
+computations can sometimes be treated as inferable values. This is a
 deliberate design decision, in order to make Frank convenient to
 program with.
-
-The typing rules for Frank are given in Figure~\ref{fig:frank-typing}.
-%
-The judgement $\makesgs{u}{V}$ says that given type environment
-$\Gamma$, ambient effects $\sigs$, and inferrable value term $u$,
-then we can infer that $u$ is of type $V$.
-%
-The judgement $\hasgs{V}{v}$ says that given type environment
-$\Gamma$, ambient effects $\sigs$, value type $V$, and checkable
-value term $v$, then we can check that $V$ has $v$ as a valid term.
-%
-The judgement $\cangs{d}{C}$ says that given type environment
-$\Gamma$, ambient effects $\sigs$, and inferrable computation term $d$,
-then we can infer that $d$ is of type $C$.
-%
-The judgement $\idoesg{C}{e}$ says that given type environment
-$\Gamma$, computation type $C$, and checkable computation term $e$,
-then we can check that $C$ has $e$ as a valid computation term.
-
-Monomorphic variable ($x$) are simply looked up in the type
-environment. Polymorphic variables ($f$) are looked up and
-instantiated. In practice this means performing unification.
-%
-An inferrable computation ($d$) is also an inferrable value, providing
-it is a returner whose effects agree with the ambient effects.
-
-Any inferrable value ($u$) is also checkable against its inferred
-type. Data type ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
-checkable by checking their components.
-
-A thunk $u$ can by forced ($u!$) if its inferred type agrees with the
-ambient effects. To infer the type of a handler application $d~e$, we
-first infer the type of $d$, and then check that the argument matches
-the inferred argument type. Note that the effect set on an argument
-must be closed, and thus we extend the ambient effect set with the
-argument effect set when checking the argument.
-%
-The type of a command invocation ($c~\many{v}$) is looked up from the
-ambient effects. We also check that the arguments match the argument
-types.
-%
-Let, letrec. ...
-
-Checking computations...
-
-Patterns...
-
-
-
-
-Inferred values consist of variables 
-
-
-
-
-
-
-As is made apparent by the call-by-value translation in
-Section~\ref{sec:feff}, Frank is morally a call-by-value language
-(though multi-handlers complicate the picture somewhat).
-
-
-
-
-Frank has a number of distinctive features.
-
-Inspired by Levy's call-by-push-value (CBPV) calculus, Frank makes an
-explicit distinction between computation and value types. However,
-where CBPV also has a clear distinction between value terms and
-computation terms, Frank is less rigid. The motivation for this design
-is to reduce boilerplate in source programs. Frank combines the
-advantages of CBPV, call-by-value (a la ML), and effect typing.
-
-With future extensions for dependent types in mind, Frank adopts a
-bidirectional typing discipline. A side-effect is that one cannot
-write beta-redexes in Frank. We do not view this as a disadvantage.
-
-Inspired by the observation that applying a function to a value is
-equivalent to applying a handler to a pure computation, handlers and
-functions are unified in Frank. Handlers are further generalised to
-multi-handlers, which handle multiple computations simulataneously.
-
-Frank provides a novel form of effect polymorphism, in which it is
-never necessary to mention the names of effect variables.
-
-We explain the semantics of Frank programs through a series of program
-transformations.
-
-First, we take a fairly standard approach to compiling away pattern
-matching (Core Frank). As we may match simultaneously against multiple
-side-effecting computations, we must be careful about
-order. Optionally, we can expose non-exhaustive/incomplete pattern
-matching as concrete effects.
-
-Second, we make the distinction between values terms and computations
-explicit, as in CBPV (\impeff).
-
-Finally, we make polymorphism explicit. Our ultimate target is \feff,
-an effect-polymorphic variant of Kammar et al's CBPV-inspired
-lambda-eff calculus. The small-step semantics of \feff is a
-straightforward variant of that of lambda-eff.
-
-
-\begin{figure}
-Types
-\begin{syntax}
-\slab{values}       &U, V          &::=& D~\many{U} \mid \thunk{C} \mid X \\
-\slab{computations} &C             &::=& R \mid R \to C \\
-\slab{returners}    &R             &::=& \effbox{\sigs}V
-\\[1ex]
-\slab{polytypes}    &P             &::=& \forall \varepsilon \many{X}.Q \\
-\slab{thunks}       &Q             &::=& \thunk{C}
-\\[1ex]
-\slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
-\slab{effects}      &\sigs  &::=&
-  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
-\\[1ex]
-\slab{type environments}     &\Gamma        &::=& \cdot \mid \Gamma, x:V \mid f:P \\
-\end{syntax}
-
-Terms
-\begin{syntax}
-\slab{inferred values}&u       &::=& x \mid f \mid d                                \\
-\slab{checked values}&v        &::=& u \mid k~\many{v} \mid \thunk{e}
-\\[1ex]
-\slab{inferred computations}&d &::=& \force{u} \mid d~e \mid c~\many{v}
-                               \mid  \key{let}~x=d~\key{in}~d' \\
-                             &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
-\slab{checked computations} &e &::=& v \mid \many{r} \mapsto e \mid e \medvert e
-\\[1ex]
-\slab{value patterns}&p       &::=& x \mid k~\many{p}                              \\
-\slab{computation patterns}&r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \force{x} \\
-\end{syntax}
-
-\caption{Frank Syntax}
-\label{fig:frank-syntax}
-\end{figure}
 
 %%%%% Frank
 
@@ -637,8 +539,8 @@ $\boxed{\idoesg{C}{e}}$
   {\idoesg{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
 
 \inferrule
-  {\idoesg{C}{e} \\ \idoesg{C}{e'}}
-  {\idoesg{C}{e \medvert e'}}
+  {\idoesg{R \to C}{e} \\ \idoesg{R \to C}{e'}}
+  {\idoesg{R \to C}{e \medvert e'}}
 \end{mathpar}
 
 $\boxed{\pat{V}{p}{\Delta}}$
@@ -677,49 +579,156 @@ $\boxed{\pat{R}{r}{\Delta}}$
 \label{fig:frank-typing}
 \end{figure*}
 
+The typing rules for Frank are given in Figure~\ref{fig:frank-typing}.
+%
+The judgement $\makesgs{u}{V}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, and inferable value term $u$,
+then we can infer that $u$ is of type $V$.
+%
+The judgement $\hasgs{V}{v}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, value type $V$, and checkable
+value term $v$, then we can check that $V$ has $v$ as a valid term.
+%
+The judgement $\cangs{d}{C}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, and inferable computation term $d$,
+then we can infer that $d$ is of type $C$.
+%
+The judgement $\idoesg{C}{e}$ says that given type environment
+$\Gamma$, computation type $C$, and checkable computation term $e$,
+then we can check that $C$ has $e$ as a valid computation term.
+
+The types of monomorphic variables ($x$) are simply looked up in the
+type environment. The types of polymorphic variables ($f$) are looked
+up and instantiated. In practice this means applying a simple
+unification-based algorithm.
+%
+An inferable computation ($d$) is also an inferable value, providing
+it is a returner whose effects agree with the ambient effects.
+
+Any inferable value ($u$) is also checkable against its inferred
+type. Data type ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
+checkable by checking their components in the obvious way.
+
+A thunk $u$ can by forced ($u!$) if its inferred type agrees with the
+ambient effects. To infer the type of a handler application $d~e$, we
+first infer the type of $d$, and then check that the argument matches
+the inferred argument type. Note that the effect set on an argument
+must be closed, and thus we may extend the ambient effect set with the
+argument effect set when checking the argument.
+%
+The type of a command invocation ($c~\many{v}$) is looked up from the
+ambient effects. We also check that the arguments match the argument
+types.
+%
+The term $\key{let}~x=d~\key{in}~d'$ binds the result of running $d$
+in $d'$.
+%
+The term $\key{letrec}~\many{f : P = e}~\key{in}~d$ binds the mutually
+recursive polymorphic functions $\many{f:P}$ in $d$.
+
+Any term $v$ that type checks with ambient effects $\sigs$ at value
+type $V$ also type checks at computation type $\effbox{\sigs}V$.
+%
+A multi-handler of type $\many{\effbox{\sigs'}V} \to C$ is built by
+composing clauses of the form $\many{r} \mapsto e$, where $\many{r}$
+is a sequence of \emph{computation patterns} whose variables are bound
+in $e$.
+%
+The $e \medvert e'$ construct composes the clauses of $e$ with those
+of $e'$. A multi-handler is defined by a collection of clauses that
+provides complete coverage of the input types.
+
+We preclude composition of non-clauses (i.e. returners) by
+constraining $e \medvert e'$ to have function type.
+%
+It is perfectly legitimate to compose clauses with different numbers
+of arguments.
+%
+As part of pattern matching compilation we $\eta$-expand some clauses
+to ensure that all composed clauses have the same number of arguments.
+%
+For instance $(p~p' \mapsto e) \medvert (p'' \mapsto e')$ is
+$\eta$-equivalent to $(p~p' \mapsto e) \medvert (p''~x \mapsto e'~x)$.
+
+Value patterns are standard, consisting of variable patterns ($x$) and
+data type constructor patterns ($k~\many{p}$).
+
+Computation patterns are more interesting. Any value pattern $p$ is
+also a computation pattern (used to match against the value returned
+by the returner computation).
+%
+A request pattern $\handle{c~\many{p}}{g}$ matches against a
+computation of the form $c~\many{v}$ if the values $v$ match against
+$p$. Furthermore, it also binds $g$ to the continuation of the
+computation delimited by the nearest enclosing multi-handler. This is
+where the real power of multi-handlers arises. A thunk pattern
+$\force{x}$ matches any computation reifying it as a thunk bound to
+$x$.
+
+
+
+
+
+GIBBERISH
+
+
+
+
+
+
+As is made apparent by the call-by-value translation in
+Section~\ref{sec:feff}, Frank is morally a call-by-value language
+(though multi-handlers complicate the picture somewhat).
+
+
+
+
+Frank has a number of distinctive features.
+
+Inspired by Levy's call-by-push-value (CBPV) calculus, Frank makes an
+explicit distinction between computation and value types. However,
+where CBPV also has a clear distinction between value terms and
+computation terms, Frank is less rigid. The motivation for this design
+is to reduce boilerplate in source programs. Frank combines the
+advantages of CBPV, call-by-value (a la ML), and effect typing.
+
+With future extensions for dependent types in mind, Frank adopts a
+bidirectional typing discipline. A side-effect is that one cannot
+write beta-redexes in Frank. We do not view this as a disadvantage.
+
+Inspired by the observation that applying a function to a value is
+equivalent to applying a handler to a pure computation, handlers and
+functions are unified in Frank. Handlers are further generalised to
+multi-handlers, which handle multiple computations simulataneously.
+
+Frank provides a novel form of effect polymorphism, in which it is
+never necessary to mention the names of effect variables.
+
+We explain the semantics of Frank programs through a series of program
+transformations.
+
+First, we take a fairly standard approach to compiling away pattern
+matching (Core Frank). As we may match simultaneously against multiple
+side-effecting computations, we must be careful about
+order. Optionally, we can expose non-exhaustive/incomplete pattern
+matching as concrete effects.
+
+Second, we make the distinction between values terms and computations
+explicit, as in CBPV (\impeff).
+
+Finally, we make polymorphism explicit. Our ultimate target is \feff,
+an effect-polymorphic variant of Kammar et al's CBPV-inspired
+lambda-eff calculus. The small-step semantics of \feff is a
+straightforward variant of that of lambda-eff.
+
+
 \section{Pattern matching compilation (Core Frank)}
 \label{sec:core}
 
 
 Core Frank replaces multi-handlers with a combination of standard
 call-by-value functions, case statements, and unary effect handlers.
-
-A superficial change to the types is that rather than annotating value
-returning computations with effects, we shift such labels to the thunk
-containing the computation. The former design seems more convenient to
-program with, which is why we adopt it in the source language. The
-latter design leads to a slightly more uniform presentation of the
-type rules (the checking judgement for computations now has the same
-shape as the checking judgement for values, and we no longer need the
-$\judgeword{does}$ judgement).
-
-Multi-handlers in Frank become curried function over suspended
-computations.
-
-Shallow pattern matching on a single request becomes unary effect
-handling. Shallow pattern matching on a data type value becomes case
-analysis. Nested pattern matching on multiple computations is realised
-as a pattern matching tree constructed from handlers and case
-statements. Standard algorithms for pattern matching compilation
-apply. 
-
-It may be instructive to observe the representation of the core
-language handler and case constructs in the source language.
-
-\[
-\ba{@{}l@{}}
-\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k
-  \equiv
-    \key{let}~h = \thunk{\!\!\mathord{\medvert}_{\!\!k} (k~\many{x_k} \mapsto e_k)}~\key{in}~h~u \\
-\key{handle} ~d~ \key{with}~
-           (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
-            x        \mapsto e
-  \equiv \\
-\qquad
-     \key{let}~h = \thunk{\!\!\medvert_{\!\!c} (\handle{c~\many{x_c}}{g_c} \mapsto e_c) \medvert x \mapsto e}
-     ~\key{in}~h~d
-\ea
-\]
+The syntax of Core Frank is given in Figure~\ref{fig:core-syntax}.
 
 \begin{figure}
 Types
@@ -730,28 +739,22 @@ Types
 \slab{polytypes}    &P      &::=& \forall \varepsilon \many{X}.Q \\
 \slab{thunks}       &Q      &::=& \effbox{\sigs}\thunk{C}
 \\[1ex]
-\slab{signatures}   &\sig   &::=& \cdot \mid c : U(\many{V}), \sig \\
+\slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
 \slab{effects}      &\sigs  &::=&
   \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
 \\[1ex]
 \slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
 \end{syntax}
 
-%% Effect extension
-%% \begin{equations}
-%% \sigs \oplus \emptyset               &=& \sigs \\
-%% \sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
-%% \end{equations}
-
 Terms
 \begin{syntax}
-\slab{inferred values}       &u  &::= & x \mid f \mid d                           \\
-\slab{checked values}        &v  &::= & u \mid k~\many{v} \mid \thunk{e}
+\slab{inferable values}       &u  &::= & x \mid f \mid d                           \\
+\slab{checkable values}       &v  &::= & u \mid k~\many{v} \mid \thunk{e}
 \\[1ex]
-\slab{inferred computations} &d  &::= & \force{u} \mid d~v \mid c~\many{v}
-                                  \mid  \key{let}~x=d~\key{in}~d' \\
-                             &   &\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
-\slab{checked computations}  &e  &::= & v \mid \lambda x.e \\
+\slab{inferable computations} &d  &::= & \force{u} \mid d~v \mid c~\many{v}
+                                   \mid  \key{let}~x=d~\key{in}~d' \\
+                              &   &\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
+\slab{checkable computations} &e  &::= & v \mid \lambda x.e \\
   &&\mid& \key{case}~u~\key{of}~
             (k~\many{x_k} \mapsto e_k)_k \\
   &&\mid& \key{handle} ~d~ \key{with}
@@ -763,6 +766,19 @@ Terms
 \caption{Core Frank Syntax}
 \label{fig:core-syntax}
 \end{figure}
+
+
+A superficial change to the types is that rather than annotating value
+returning computations with effects, we shift such labels to the thunk
+containing the computation. The former design seems more convenient to
+program with, which is why we adopt it in the source language. The
+latter design leads to a slightly more uniform presentation of the
+type rules (the checking judgement for computations now has the same
+shape as the checking judgement for values, and we no longer need the
+$\judgeword{does}$ judgement).
+%
+The typing rules of Core Frank are given in
+Figure~\ref{fig:core-syntax}.
 
 %%%%% Core Frank
 
@@ -866,6 +882,34 @@ $\boxed{\doesgs{C}{e}}$
 \caption{Core Frank Typing Rules}
 \label{fig:core-typing}
 \end{figure*}
+
+Multi-handlers in Frank become curried functions over suspended
+computations in Core Frank.
+
+Shallow pattern matching on a single request becomes unary effect
+handling. Shallow pattern matching on a data type value becomes case
+analysis. Nested pattern matching on multiple computations is realised
+as a pattern matching tree constructed from handlers and case
+statements. Standard algorithms for pattern matching compilation
+apply. 
+
+It may be instructive to observe the representation of the core
+language handler and case constructs in the source language.
+
+\[
+\ba{@{}l@{}}
+\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k
+  \equiv
+    \key{let}~h = \thunk{\!\!\mathord{\medvert}_{\!\!k} (k~\many{x_k} \mapsto e_k)}~\key{in}~h~u \\
+\key{handle} ~d~ \key{with}~
+           (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
+            x        \mapsto e
+  \equiv \\
+\qquad
+     \key{let}~h = \thunk{\!\!\medvert_{\!\!c} (\handle{c~\many{x_c}}{g_c} \mapsto e_c) \medvert x \mapsto e}
+     ~\key{in}~h~d
+\ea
+\]
 
 
 %% \section{\lameff with implicit polymorphism}
@@ -1343,6 +1387,16 @@ H(\key{c}, \many{v}, u)
 \caption{Small-step operational semantics for \feff}
 \label{fig:semantics}
 \end{figure*}
+
+\begin{proposition}[Type Soundness]
+~
+\begin{itemize}
+\item If $\compgs{d}{C}$ and $d \reducesto e$ then $\compgs{e}{C}$.
+\item If $\comp{\cdot}{\emptyset}{d}{\rt{V}}$ then either there exists $v$
+  such that $d = \key{ret}~v$ or there exists $e$ such that $d \reducesto
+  e$.
+\end{itemize}
+\end{proposition}
 
 \section{Related work}
 \label{sec:related}
