@@ -243,10 +243,10 @@ variant of Plotkin and Pretnar's \emph{effect
 In Frank, effect handlers strictly generalise functions. In the
 general case an effect handler acts as an interpreter for a finite set
 of commands whose signatures are statically tracked by the type
-system. A function is the special case of an effect handler that
-interprets the empty set of commands.
+system. A function is the special case of an effect handler whose
+command set is empty.
 
-The main contributions of this paper are:
+The contributions of this paper are:
 \begin{itemize}
 \item Frank, a functional programming language featuring a
   bidirectional effect type system, effect polymorphism, and effect
@@ -261,15 +261,15 @@ The main contributions of this paper are:
   chooses using further effect handlers.
 \item A characterisation of effect-handlers as generalised functions.
 \item Multi-handlers for handling multiple computations over different
-  effect sets synchronously.
+  effect sets simultaneously.
 \item A type system for Frank.
 \item A series of type preserving translations from Frank into
   successively more canonical type systems, culminating in \feff a
-  polymorphic variant of the lambda-eff calculus of Kammar et al,
-  which in turn is an extension of Levy's call-by-push-value
-  calculus~\cite{Levy2004}.
+  polymorphic variant of the \lameff calculus of Kammar et
+  al~\cite{KammarLO13}, which in turn is an extension of Levy's
+  call-by-push-value calculus~\cite{Levy2004}.
 \item A straightforward small-step operational semantics for \feff,
-  yielding, in combination with the translations to \feff, a type
+  yielding, in combination with the translation to \feff, a type
   soundness result for Frank.
 \end{itemize}
 
@@ -506,8 +506,8 @@ Here is a computation which sends them.
 \begin{verbatim}
 sender [Send (List Char)]Unit
 sender =
-  sends (cons (hello!
-           (cons space! (cons world! nil))))
+  sends (cons (hello
+           (cons space (cons world nil))))
 \end{verbatim}
 
 Here is a \verb!main! function, which plugs \verb!sender! and
@@ -1045,164 +1045,218 @@ straightforward variant of that of lambda-eff.
 
 Core Frank replaces multi-handlers with a combination of standard
 call-by-value functions, case statements, and unary effect handlers.
-The syntax of Core Frank is given in Figure~\ref{fig:core-syntax}.
-
-\begin{figure}
-Types
-\begin{syntax}
-\slab{values}       &U, V   &::=& D~\many{U} \mid  \effbox{\sigs}\thunk{C} \mid X \\
-\slab{computations} &C      &::=& \rt{V} \mid V \to C
-\\[1ex]
-\slab{polytypes}    &P      &::=& \forall \varepsilon \many{X}.Q \\
-\slab{thunks}       &Q      &::=& \effbox{\sigs}\thunk{C}
-\\[1ex]
-\slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
-\slab{effects}      &\sigs  &::=&
-  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
-\\[1ex]
-\slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
-\end{syntax}
-
-Terms
-\begin{syntax}
-\slab{inferable values}       &u  &::= & x \mid f \mid d                           \\
-\slab{checkable values}       &v  &::= & u \mid k~\many{v} \mid \thunk{e}
-\\[1ex]
-\slab{inferable computations} &d  &::= & \force{u} \mid d~v \mid c~\many{v}
-                                   \mid  \key{let}~x=d~\key{in}~d' \\
-                              &   &\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
-\slab{checkable computations} &e  &::= & v \mid \lambda x.e \\
-  &&\mid& \key{case}~u~\key{of}~
-            (k~\many{x_k} \mapsto e_k)_k \\
-  &&\mid& \key{handle} ~d~ \key{with}
-            \bstack
-            ~~(\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \\
-            \medvert~ x        \mapsto e \\
-            \estack \\
-\end{syntax}
-\caption{Core Frank Syntax}
-\label{fig:core-syntax}
-\end{figure}
-
-
-A superficial change to the types is that rather than annotating value
-returning computations with effects, we shift such labels to the thunk
-containing the computation. The former design seems more convenient to
-program with, which is why we adopt it in the source language. The
-latter design leads to a slightly more uniform presentation of the
-type rules (the checking judgement for computations now has the same
-shape as the checking judgement for values, and we no longer need the
-$\judgeword{does}$ judgement).
 %
-The typing rules of Core Frank are given in
-Figure~\ref{fig:core-syntax}.
-
-%%%%% Core Frank
+The differences between Frank and Core Frank are all in the checkable
+computation terms.
+%
+The syntax for Core Frank checkable computations is as follows.
+\begin{syntax}
+&e  &::= & v \mid \lambda x.e \\
+   &&\mid& \key{case}~u~\key{of}~
+             (k~\many{x_k} \mapsto e_k)_k \\
+   &&\mid& \key{handle}~d~\key{with}~
+             (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c 
+             \medvert~ x        \mapsto e \\
+\end{syntax}%
+%
+The Core Frank typing rules for checkable computations are given in
+Figure~\ref{fig:core-typing}.
 
 \begin{figure*}[float]
-$\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
-\begin{mathpar}
-\inferrule
-  {x:V \in \Gamma}
-  {\makesgs{x}{V}}
-
-%% \inferrule
-%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-%%    \theta(\varepsilon) = \sigs}
-%%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
-
-\inferrule
-  {f:\forall \varepsilon \many{X}.V \in \Gamma \\
-   \dom(\theta) = \set{\varepsilon, \many{X}} \\
-   \theta(\varepsilon) = \sigs}
-  {\makesgs{f}{\theta(V)}}
-
-\inferrule
-  {\cangs{d}{\rt{V}}}
-  {\makesgs{d}{V}}
-\end{mathpar}
-
-$\boxed{\has{\Gamma}{\sigs}{V}{v}}$
-
-\begin{mathpar}
-\inferrule
-  {\makesgs{u}{V}}
-  {\hasgs{V}{u}}
-
-\inferrule
-  {(\hasgs{V_i}{v_i})_i \\
-   k~\many{V} \in D~\many{U}}
-  {\hasgs{D~\many{U}}{k~\many{v}}}
-
-\inferrule
-  {\does{\Gamma}{\sigs'}{C}{e}}
-  {\hasgs{\effbox{\sigs'}\thunk{C}}{\thunk{e}}}
-\end{mathpar}
-
-$\boxed{\can{\Gamma}{\sigs}{d}{C}}$
-
-\begin{mathpar}
-\inferrule
-  {\makesgs{u}{\effbox{\sigs}\thunk{C}}}
-  {\cangs{\force{u}}{C}}
-
-\inferrule
-  {\cangs{d}{V \to C} \\
-   \has{\Gamma}{\sigs}{V}{v}}
-  {\cangs{d~v}{C}}
-
-\inferrule
-  {c : U(\many{V}) \in \sigs \\
-   (\hasgs{V_i}{v_i})_i}
-  {\cangs{c~\many{v}}{\rt{U}}}
-
-\inferrule
-  {\cangs{d}{\effbox{\sigs}V} \\
-   \can{\Gamma, x:V}{\sigs}{d'}{C}}
-  {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
-
-\inferrule
-  {(\idoes{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{e_i}{Q_i})_i \\
-   \can{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{d}{C}}
-  {\cangs{\key{letrec}~\many{f : \forall \varepsilon \many{X}.Q = e}~\key{in}~d}{C}}
-\end{mathpar}
-
-$\boxed{\doesgs{C}{e}}$
+$\boxed{\idoesg{C}{e}}$
 
 \begin{mathpar}
 \inferrule
   {\hasgs{V}{v}}
-  {\doesgs{\rt{V}}{v}}
+  {\idoesg{\effbox{\sigs}V}{v}}
 
 \inferrule
-  {\does{\Gamma, x:V}{\sigs}{C}{e}}
-  {\doesgs{V \to C}{\lambda x.e}}
+  {\idoes{\Gamma, x:V}{C}{e}}
+  {\idoesg{V \to C}{\lambda x.e}}
 
 \inferrule
   {\makesgs{u}{D~\many{U}} \\
-   (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
-  {\doesgs{C}{\key{case}~ u ~\key{of}~
+   \\ \effs{C}{\sigs} \\
+   (\idoes{\Gamma, \many{x_k}:\many{V}}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
+  {\idoesg{C}{\key{case}~ u ~\key{of}~
                (k~\many{x_k} \mapsto e_k)_k}}
 
 \inferrule
   {\sigs' \text{ closed} \\
-   \can{\Gamma}{\sigs \oplus \sigs'}{d}{\rt{V}} \\
-   (\does{\Gamma, \many{x_c}:\many{V}, g_c:\effbox{\sigs \oplus \sigs'}\thunk{U \to \rt{V}}}
-         {\sigs}{C}{e_c})_{c : U(\many{V}) \in \sigs'} \\
-   \does{\Gamma, x:V}{\sigs}{C}{e}}
-  {\does{\Gamma}{\sigs}
+   \effs{C}{\sigs} \\
+   \can{\Gamma}{\sigs \oplus \sigs'}{d}{\effbox{\sigs \oplus \sigs'}{V}} \\
+   (\idoes{\Gamma, \many{x_c}:\many{V}, g_c:\thunk{U \to \effbox{\sigs \oplus \sigs'}{V}}}
+         {C}{e_c})_{c : U(\many{V}) \in \sigs'} \\
+   \idoes{\Gamma, x:V}{C}{e}}
+  {\idoes{\Gamma}
          {C}{\key{handle}~ d ~\key{with}~
                (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
                 x \mapsto e}}
 \end{mathpar}
 
-\caption{Core Frank Typing Rules}
+\caption{Core Frank Typing Rules for Checkable Computation Terms}
 \label{fig:core-typing}
 \end{figure*}
 
+
+%% The syntax of Core Frank is given in Figure~\ref{fig:core-syntax}.
+
+%% \begin{figure}
+%% Types
+%% \begin{syntax}
+%% \slab{values}       &U, V   &::=& D~\many{U} \mid  \effbox{\sigs}\thunk{C} \mid X \\
+%% \slab{computations} &C      &::=& \rt{V} \mid V \to C
+%% \\[1ex]
+%% \slab{polytypes}    &P      &::=& \forall \varepsilon \many{X}.Q \\
+%% \slab{thunks}       &Q      &::=& \effbox{\sigs}\thunk{C}
+%% \\[1ex]
+%% \slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
+%% \slab{effects}      &\sigs  &::=&
+%%   \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
+%% \\[1ex]
+%% \slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
+%% \end{syntax}
+
+%% Terms
+%% \begin{syntax}
+%% \slab{inferable values}       &u  &::= & x \mid f \mid d                           \\
+%% \slab{checkable values}       &v  &::= & u \mid k~\many{v} \mid \thunk{e}
+%% \\[1ex]
+%% \slab{inferable computations} &d  &::= & \force{u} \mid d~v \mid c~\many{v}
+%%                                    \mid  \key{let}~x=d~\key{in}~d' \\
+%%                               &   &\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
+%% \slab{checkable computations} &e  &::= & v \mid \lambda x.e \\
+%%   &&\mid& \key{case}~u~\key{of}~
+%%             (k~\many{x_k} \mapsto e_k)_k \\
+%%   &&\mid& \key{handle} ~d~ \key{with}
+%%             \bstack
+%%             ~~(\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \\
+%%             \medvert~ x        \mapsto e \\
+%%             \estack \\
+%% \end{syntax}
+%% \caption{Core Frank Syntax}
+%% \label{fig:core-syntax}
+%% \end{figure}
+
+
+%% A superficial change to the types is that rather than annotating value
+%% returning computations with effects, we shift such labels to the thunk
+%% containing the computation. The former design seems more convenient to
+%% program with, which is why we adopt it in the source language. The
+%% latter design leads to a slightly more uniform presentation of the
+%% type rules (the checking judgement for computations now has the same
+%% shape as the checking judgement for values, and we no longer need the
+%% $\judgeword{does}$ judgement).
+%
+%% The typing rules of Core Frank are given in
+%% Figure~\ref{fig:core-syntax}.
+
+%%%%% Core Frank
+
+%% \begin{figure*}[float]
+%% $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
+%% \begin{mathpar}
+%% \inferrule
+%%   {x:V \in \Gamma}
+%%   {\makesgs{x}{V}}
+
+%% %% \inferrule
+%% %%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%% %%    \theta(\varepsilon) = \sigs}
+%% %%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
+
+%% \inferrule
+%%   {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+%%    \dom(\theta) = \set{\varepsilon, \many{X}} \\
+%%    \theta(\varepsilon) = \sigs}
+%%   {\makesgs{f}{\theta(V)}}
+
+%% \inferrule
+%%   {\cangs{d}{\rt{V}}}
+%%   {\makesgs{d}{V}}
+%% \end{mathpar}
+
+%% $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
+
+%% \begin{mathpar}
+%% \inferrule
+%%   {\makesgs{u}{V}}
+%%   {\hasgs{V}{u}}
+
+%% \inferrule
+%%   {(\hasgs{V_i}{v_i})_i \\
+%%    k~\many{V} \in D~\many{U}}
+%%   {\hasgs{D~\many{U}}{k~\many{v}}}
+
+%% \inferrule
+%%   {\does{\Gamma}{\sigs'}{C}{e}}
+%%   {\hasgs{\effbox{\sigs'}\thunk{C}}{\thunk{e}}}
+%% \end{mathpar}
+
+%% $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
+
+%% \begin{mathpar}
+%% \inferrule
+%%   {\makesgs{u}{\effbox{\sigs}\thunk{C}}}
+%%   {\cangs{\force{u}}{C}}
+
+%% \inferrule
+%%   {\cangs{d}{V \to C} \\
+%%    \has{\Gamma}{\sigs}{V}{v}}
+%%   {\cangs{d~v}{C}}
+
+%% \inferrule
+%%   {c : U(\many{V}) \in \sigs \\
+%%    (\hasgs{V_i}{v_i})_i}
+%%   {\cangs{c~\many{v}}{\rt{U}}}
+
+%% \inferrule
+%%   {\cangs{d}{\effbox{\sigs}V} \\
+%%    \can{\Gamma, x:V}{\sigs}{d'}{C}}
+%%   {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
+
+%% \inferrule
+%%   {(\idoes{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{e_i}{Q_i})_i \\
+%%    \can{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{d}{C}}
+%%   {\cangs{\key{letrec}~\many{f : \forall \varepsilon \many{X}.Q = e}~\key{in}~d}{C}}
+%% \end{mathpar}
+
+%% $\boxed{\doesgs{C}{e}}$
+
+%% \begin{mathpar}
+%% \inferrule
+%%   {\hasgs{V}{v}}
+%%   {\doesgs{\rt{V}}{v}}
+
+%% \inferrule
+%%   {\does{\Gamma, x:V}{\sigs}{C}{e}}
+%%   {\doesgs{V \to C}{\lambda x.e}}
+
+%% \inferrule
+%%   {\makesgs{u}{D~\many{U}} \\
+%%    (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
+%%   {\doesgs{C}{\key{case}~ u ~\key{of}~
+%%                (k~\many{x_k} \mapsto e_k)_k}}
+
+%% \inferrule
+%%   {\sigs' \text{ closed} \\
+%%    \can{\Gamma}{\sigs \oplus \sigs'}{d}{\rt{V}} \\
+%%    (\does{\Gamma, \many{x_c}:\many{V}, g_c:\effbox{\sigs \oplus \sigs'}\thunk{U \to \rt{V}}}
+%%          {\sigs}{C}{e_c})_{c : U(\many{V}) \in \sigs'} \\
+%%    \does{\Gamma, x:V}{\sigs}{C}{e}}
+%%   {\does{\Gamma}{\sigs}
+%%          {C}{\key{handle}~ d ~\key{with}~
+%%                (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
+%%                 x \mapsto e}}
+%% \end{mathpar}
+
+%% \caption{Core Frank Typing Rules}
+%% \label{fig:core-typing}
+%% \end{figure*}
+
 Multi-handlers in Frank become curried functions over suspended
 computations in Core Frank.
-
+%
 Shallow pattern matching on a single request becomes unary effect
 handling. Shallow pattern matching on a data type value becomes case
 analysis. Nested pattern matching on multiple computations is realised
@@ -1210,24 +1264,132 @@ as a pattern matching tree constructed from handlers and case
 statements. Standard algorithms for pattern matching compilation
 apply. 
 
-It may be instructive to observe the representation of the core
-language handler and case constructs in the source language.
+%% It may be instructive to observe the representation of the core
+%% language handler and case constructs in the source language.
+
+%% \[
+%% \ba{@{}l@{}}
+%% \key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k
+%%   \equiv \\
+%% \qquad
+%%     \key{let}~h = \thunk{\!\!\mathord{\medvert}_{\!\!k} (k~\many{x_k} \mapsto e_k)}~\key{in}~h~u \\
+%% \key{handle} ~d~ \key{with}~
+%%            (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
+%%             x        \mapsto e
+%%   \equiv \\
+%% \qquad
+%%      \key{let}~h = \thunk{\!\!\medvert_{\!\!c} (\handle{c~\many{x_c}}{g_c} \mapsto e_c) \medvert x \mapsto e}
+%%      ~\key{in}~h~d
+%% \ea
+%% \]
+
+Given a Frank expression $\thunk{e}$ such that $\idoesg{R_1 \dots R_n
+  \to R}{e}$ we compile it to an equivalent Core Frank expression.
+%
+First we expand all of the clauses in $e$ to yield an $n$ column
+pattern matrix. For instance, suppose the arguments have types
+$\effbox{\var{Send~Char}, \var{Abort}}\var{Unit}$ and
+$\effbox{\var{Receive~Char}}$, and we have the following clauses:
 
 \[
-\ba{@{}l@{}}
-\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k
-  \equiv \\
-\qquad
-    \key{let}~h = \thunk{\!\!\mathord{\medvert}_{\!\!k} (k~\many{x_k} \mapsto e_k)}~\key{in}~h~u \\
-\key{handle} ~d~ \key{with}~
-           (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
-            x        \mapsto e
-  \equiv \\
-\qquad
-     \key{let}~h = \thunk{\!\!\medvert_{\!\!c} (\handle{c~\many{x_c}}{g_c} \mapsto e_c) \medvert x \mapsto e}
-     ~\key{in}~h~d
+\ba{@{}l@{~}l@{~}l@{}}
+  (\handle{\var{send}~x}{s}) & (\handle{\var{receive}}{r}) & \mapsto e_1 \\
+  (\handle{\var{send}~x}{s}) & z & \mapsto e_2 \\
+  (\handle{\var{abort}}{s})  & e_3 \\
+  \var{unit} & e_4 \\
 \ea
 \]
+%
+then this becomes:
+%
+\[
+\ba{@{}l@{\quad}l@{~\mapsto~}l@{}}
+  (\handle{\var{send}~x}{s}) & (\handle{\var{receive}}{r}) & e_1 \\
+  (\handle{\var{send}~x}{s}) & z & e_2 \\
+  (\handle{\var{abort}}{s})  & z & \var{bind}~x~e' \\
+  \var{unit}                 & z & \var{bind}~z~e_4 \\
+\ea
+\]
+%
+Next we generate a vector of fresh variables, one for each argument.
+\[
+\ba{@{}l@{~}l@{}}
+  x_0 & x_1
+\ea
+\]
+The goal of pattern matching compilation is to generate a pattern
+matching tree that matches the variable vector against all of the
+patterns in the pattern matrix in the correct order.
+
+In our scenario, pattern matching trees $M$ are build up from leaves,
+case analysis, and handlers.
+%% \begin{equations}
+%% M &::= & \many{e} \\
+%%   &\mid& \key{case}~(x:D~\many{U})~\key{of}~(k~\many{x_k} \mapsto M_k)_{k \in D} \\
+%%   &\mid& \key{handle}~(\force{x}:\effbox{\sigs}V)~\key{with}~
+%%           (\handle{c~\many{x_c}}{g_c} \mapsto M_c)_{c \in \sigs} \medvert
+%%           x        \mapsto M
+%% \end{equations}%
+\begin{equations}
+M &::= & \many{e} \\
+  &\mid& \key{case}~x~\key{of}~(k~\many{x_k} \mapsto M_k)_{k \in D} \\
+  &\mid& \key{handle}~\force{x}~\key{with}~
+          (\handle{c~\many{x_c}}{g_c} \mapsto M_c)_{c \in \sigs} \medvert
+          x        \mapsto M
+\end{equations}%
+The leaves consist of a sequence of checkable computation
+expressions. Each element corresponds to one way of matching all of
+the patterns. If there exists a leaf with no elements, then the
+pattern matching is incomplete; if there exists a leaf with multiple
+elements, then the pattern matching is ambiguous.
+%
+Our default strategy is to class incomplete pattern matching as a type
+error, and take the first element in the case of ambiguous pattern
+matching.
+%
+Our example generates the following pattern matching tree:
+\[
+M = \bstack
+    \key{handle}~\force{x_0}~\key{with} \\
+    \quad  \handle{\var{send}~x}{s} \mapsto \\
+    \quad\quad \key{handle}~\force{x_1}~\key{with} \\
+    \quad\quad\quad \handle{\var{receive}}{r} \mapsto e \\
+    \quad\quad\quad z \mapsto e2 \\
+    \quad  \handle{abort}{s} \mapsto \\
+    \quad\quad \key{handle}~\force{x_1}~\key{with} \\
+    \quad\quad\quad    \handle{receive}{r} \mapsto \var{bind}~(\force{r}~\force{receive})~e_3 \\
+    \quad\quad\quad    z \mapsto \var{bind}~z~e_3 \\
+    \quad  y \mapsto \\
+    \quad\quad  \key{case}~y~\key{of} \\
+    \quad\quad\quad  \var{unit} \mapsto \key{handle}~\force{x_1}~\key{with} \\
+    \quad\quad\quad\quad    \handle{receive}{r} \mapsto \var{bind}~(\force{r}~\force{receive})~e_4 \\
+    \quad\quad\quad\quad    z \mapsto \var{bind}~z~e_4 \\
+\estack
+\]
+%
+from which we obtain the corresponding Core Frank code by abstracting
+over the fresh variables.
+%
+\[
+\lambda x_0 x_1.M
+\]
+
+Of course, because Core Frank now takes values as arguments whereas
+Frank takes computations, each argument must be wrapped in a thunk
+constructor.
+
+The type translation is straightforward.
+
+...
+
+\section{Explicit polymorphism (\feff)}
+\label{sec:feff}
+
+
+%% As we only allow top-level polymorphism, the translation from \impeff
+%% to \feff is straightforward. Generalisation (type abstraction) only
+%% occurs on top-level definitions, and instantiation (type application)
+%% only occurs on top-level variable lookup.
 
 The translation on types
 
@@ -1245,149 +1407,6 @@ The translation on types
   %% effs([Sig]V -> C) = effs(C)
   %% effs([Sig]V) = Sig
 
-Pattern matching trees:
-\begin{equations}
-M &::= & \many{e} \\
-  &\mid& \key{case}~(x:D~\many{U})~\key{of}~(k~\many{x_k} \mapsto M_k)_{k \in D} \\
-  &\mid& \key{handle}~(\force{x}:\effbox{\sigs}V)~\key{with}~
-          (\handle{c~\many{x_c}}{g_c} \mapsto M_c)_{c \in \sigs} \medvert
-          x        \mapsto M
-\end{equations}
-
-
-
-%% \section{\lameff with implicit polymorphism}
-%% \label{sec:impeff}
-
-%% \begin{figure}[float]
-%% Types
-%% \begin{syntax}
-%% \slab{values}       &U, V   &::=& D~\many{U} \mid \effbox{\sigs}\thunk{C} \mid X \\
-%% \slab{computations} &C      &::=& \rt{V} \mid V \to C
-%% \\[1ex]
-%% \slab{polytypes}    &P      &::=& \forall \varepsilon \many{X}.Q \\
-%% \slab{thunks}       &Q      &::=& \effbox{\sigs}\thunk{C}
-%% \\[1ex]
-%% \slab{signatures}   &\sig   &::=& \cdot \mid c : U(\many{V}), \sig \\
-%% \slab{effects}      &\sigs  &::=&
-%%   \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
-%% \\[1ex]
-%% \slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \mid f:P \\
-%% \end{syntax}
-
-%% %% Effect extension
-%% %% \begin{equations}
-%% %% \sigs \oplus \emptyset               &=& \sigs \\
-%% %% \sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
-%% %% \end{equations}
-
-%% Terms
-%% \begin{syntax}
-%% \slab{values}         &u, v &::=& x \mid f \mid k~\many{v} \mid \thunk{d}  \\
-%% \slab{computations}   &d, e &::=& \key{case}~u~\key{of}~
-%%            (k~\many{x_k} \mapsto e_k)_k  \mid \force{u} \\
-%%     &&\mid& \lambda x.e \mid d~v
-%%       \mid  \key{ret}~v \mid c~\many{v} \\
-%%     &&\mid& \key{handle} ~d~ \key{with}~
-%%               (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
-%%               x        \mapsto e \\
-%%     &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
-%% \end{syntax}
-%% \caption{\impeff Syntax}
-%% \label{fig:impeff-syntax}
-%% \end{figure}
-
-%% %%%%% Implicit lam-eff
-
-%% \begin{figure*}[float]
-%% $\boxed{\valg{v}{V}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   {x:V \in \Gamma}
-%%   {\valg{x}{V}}
-
-%% %% \inferrule
-%% %%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-%% %%    \theta(\varepsilon) = \sigs}
-%% %%   {\val{\Gamma, x:V}{x}{\theta(V)}}
-
-%% \inferrule
-%%   {f:\forall \varepsilon \many{X}.V \in \Gamma \\
-%%    \dom(\theta) = \set{\varepsilon, \many{X}} \\
-%%    \theta(\varepsilon) = \sigs}
-%%   {\valg{f}{\theta(V)}}
-
-%% \inferrule
-%%   {\valg{V_i}{v_i} \\
-%%    k~\many{V} \in D~\many{U}}
-%%   {\valg{D~\many{U}}{k~\many{v}}}
-
-%% \inferrule
-%%   {\compgs{e}{C}}
-%%   {\valg{\thunk{e}}{\effbox{\sigs}\thunk{C}}}
-%% \end{mathpar}
-
-%% $\boxed{\compgs{e}{C}}$
-%% \begin{mathpar}
-%% \inferrule
-%%   {\valg{u}{D~\many{U}} \\
-%%    (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
-%%   {\compgs{\key{case}~ u ~\key{of}~
-%%                (k~\many{x_k} \mapsto e_k)_k}
-%%           {C}}
-
-%% \inferrule
-%%   {\valg{u}{\effbox{\sigs}\thunk{C}}}
-%%   {\compgs{\force{u}}{C}}
-
-%% \inferrule
-%%   {\comp{\Gamma, x:V}{\sigs}{e}{C}}
-%%   {\compgs{\lambda x.e}{V \to C}}
-
-%% \inferrule
-%%   {\compgs{d}{V \to C} \\
-%%    \valg{v}{V}}
-%%   {\compgs{d~v}{C}}
-
-%% \inferrule
-%%   {\valg{v}{V}}
-%%   {\compgs{\key{ret}~v}{\rt{V}}}
-
-%% \inferrule
-%%   {c : U(\many{V}) \in \sigs \\
-%%    \valg{v_i}{V_i}}
-%%   {\compgs{c~\many{v}}{\rt{U}}}
-
-%% \inferrule
-%%   {\comp{\Gamma}{\sigs \oplus \sigs'}{d}{\rt{V}} \\
-%%    (\comp{\Gamma, \many{x_c}:\many{V},
-%%                   g:\effbox{\sigs \oplus \sigs'}\thunk{U \to \rt{V}}}
-%%        {\sigs}{e_c}{C})_{c : U(\many{V}) \in \sigs'} \\
-%%    \comp{\Gamma, x:V}{\sigs}{e}{C}}
-%%   {\compgs
-%%      {\key{handle}~ d ~\key{with}~
-%%            (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
-%%            x \mapsto e}
-%%      {C}}
-
-%% \inferrule
-%%   {(\comp{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{e_i}{Q_i})_i \\
-%%    \comp{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{d}{C}}
-%%   {\compgs{\key{letrec}~\many{f : \forall \varepsilon \many{X}.Q = e}~\key{in}~d}{C}}
-%% \end{mathpar}
-
-%% \caption{\impeff Typing rules}
-%% \label{fig:impeff-typing}
-%% \end{figure*}
-
-\section{Explicit polymorphism (\feff)}
-\label{sec:feff}
-
-
-%% As we only allow top-level polymorphism, the translation from \impeff
-%% to \feff is straightforward. Generalisation (type abstraction) only
-%% occurs on top-level definitions, and instantiation (type application)
-%% only occurs on top-level variable lookup.
 
 
 Call by value embedding of Core Frank into \feff:
