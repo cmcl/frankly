@@ -432,10 +432,11 @@ bind x f = f x
 We can use \verb!bind! to define a polymorphic \verb!abort! function.
 \begin{verbatim}
 abort : [Abort]X
-abort = bind (aborting!) ()
+abort = bind aborting! {}
 \end{verbatim}
-The term \verb!()! denotes an empty set of pattern matching clauses
-covering the \verb!Zero! return type of \verb!aborting!.
+The term \verb!{}! denotes a suspended computation containing an empty
+collection of pattern matching clauses covering the \verb!Zero! return
+type of \verb!aborting!.
 
 Here is a computation which receives and concatenates lists until one
 is empty.
@@ -443,42 +444,46 @@ is empty.
 \begin{verbatim}
 catter : [Receive (List X)]List X
 catter = bind receive!
-           ( nil -> nil
+           { nil -> nil
            | xs  -> append xs catter!
-           )
+           }
 \end{verbatim}
 %
-The computation \verb$receive!$ is the command that delivers a list by
-receive; the value \verb$receive$ is the name of the command which
-receives.
+The command \verb!receive! is a suspended computation of type
+\verb!{[Receive (List X)]List X}! that delivers a list when
+forced. The notation \verb|receive!| forces a thunk.
+
+If \verb!f! is a suspended computation of function type, then
+\verb!f x! is syntactic sugar for \verb|f! x|. Thus we need only
+explicitly force computations that take no arguments.
 
 Effects are handled by special functions called \emph{effect
   handlers}. Effect handlers in Frank can take multiple computations
-as arguments, hence we call them \emph{multi-handlers}. In fact
-standard functions like the ones we have seen so far are just special
-cases of multi-handlers in which the arguments all have the empty
-effect.
+as arguments, hence they are \emph{multi-handlers}. In fact standard
+functions like the ones we have seen so far are just special cases of
+multi-handlers in which the arguments all have the empty effect.
 
 A multi-handler has type \verb!R1 -> ... -> Rm -> R! where each
 \verb!Ri! and \verb!R! is an effect-annotated value type. For
 instance, we can write a \verb!pipe! multi-handler which handles
-\verb!send!  commands from one computation by matching them with
+\verb!send! commands from one computation by matching them against
 corresponding \verb!receive! commands from another.
 %
 \begin{verbatim}
 pipe : [Send X]Unit -> [Receive X]Y -> [Abort]Y
 pipe _            y             = y
-pipe unit         _             = abort! ()
+pipe unit         _             = abort!
 pipe (send x ? s) (receive ? r) =
   pipe (s unit) (r x)
 \end{verbatim}
 %
-The type signature says the following. It must handle all
-\verb!Send X! commands in its first argument and all \verb!Receive X!
-  commands in its second argument. The first argument returns values
-  of type \verb!Unit!; the second argument returns values of type
-  \verb!Y!. The handler itself is allowed to perform \verb!Abort!
-  commands and returns a final value of type \verb!Y!.
+The type signature conveys several different things. The \verb!pipe!
+  handler must handle all \verb!Send X! commands in its first argument
+  and all \verb!Receive X! commands in its second argument. The first
+  argument returns values of type \verb!Unit! and the second argument
+  returns values of type \verb!Y!. The handler itself is allowed to
+  perform \verb!Abort!  commands and returns a final value of type
+  \verb!Y!.
 
 Here are some things to send.
 \begin{verbatim}
@@ -505,21 +510,20 @@ sender =
            (cons space! (cons world! nil))))
 \end{verbatim}
 
-Here is a main function, which plugs \verb!sender! and \verb!catter!
-together and sends their output to the console.
+Here is a \verb!main! function, which plugs \verb!sender! and
+\verb!catter!  together and sends their output to the console.
 %
 \begin{verbatim}
 main : [Abort, Console](List Unit)
 main = map ouch (pipe sender catter)
 \end{verbatim}
 where the \verb!Console! operations are handled specially at the
-top-level.
+top-level according to the following signature.
 \begin{verbatim}
 sig Console
   = inch : Char(Unit)
   | ouch : Unit(Char)
 \end{verbatim}
-
 
 The type system does two separate things:
 \begin{itemize}
@@ -671,7 +675,7 @@ Terms
 \slab{inferable computations}&d &::=& \force{u} \mid d~e \mid c~\many{v}
                                \mid  \key{let}~x=d~\key{in}~d' \\
                              &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
-\slab{checkable computations} &e &::=& v \mid \many{r} \mapsto e \mid e \medvert e
+\slab{checkable computations} &e &::=& v \mid \many{r} \mapsto e \mid () \mid e \medvert e
 \\[1ex]
 \slab{value patterns}&p       &::=& x \mid k~\many{p}                              \\
 \slab{computation patterns}&r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \force{x} \\
@@ -789,7 +793,7 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
 
 \begin{mathpar}
 \inferrule
-  {\makesgs{u}{V}}
+  {\makesgs{u}{U} \\ U = V}
   {\hasgs{V}{u}}
 
 \inferrule
@@ -815,9 +819,13 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\can{\Gamma}{\sigs}{d~e}{C}}
 
 \inferrule
-  {c : U(\many{V}) \in \sigs \\
-   (\hasgs{V_i}{v_i})_i}
-  {\cangs{c~\many{v}}{\effbox{\sigs}U}}
+  {c : U(\many{V}) \in \sigs}
+  {\cangs{c}{\many{\effbox{}V} \to \effbox{\sigs}U}}
+
+%% \inferrule
+%%   {c : U(\many{V}) \in \sigs \\
+%%    (\hasgs{V_i}{v_i})_i}
+%%   {\cangs{c~\many{v}}{\effbox{\sigs}U}}
 
 \inferrule
   {\cangs{d}{V} \\
@@ -842,6 +850,10 @@ $\boxed{\idoesg{C}{e}}$
    (\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
    \idoes{\Gamma, \many{\Delta}}{C}{e}}
   {\idoesg{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
+
+\inferrule
+  {V \text{uninhabited}}
+  {\idoesg{\effbox{\sigs'}V \to C}{()}}
 
 \inferrule
   {\idoesg{R \to C}{e} \\ \idoesg{R \to C}{e'}}
