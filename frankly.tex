@@ -241,6 +241,11 @@ programming language designed from the ground up around a novel
 variant of Plotkin and Pretnar's \emph{effect
   handler}~\cite{PlotkinP09, PlotkinP13} abstraction.
 
+Inspired by Levy's call-by-push-value (CBPV) calculus~\cite{Levy2004},
+Frank makes an explicit distinction between computation and value
+types. Frank combines the advantages of CBPV, call-by-value (a la ML),
+and effect typing.
+
 In Frank, effect handlers strictly generalise functions. In the
 general case an effect handler acts as an interpreter for a finite set
 of commands whose signatures are statically tracked by the type
@@ -654,7 +659,8 @@ $\effbox{\emptyset}V$.
 \section{Type system}
 \label{sec:frank}
 
-
+In this section we give a formal presentation of Frank's type system.
+%
 \begin{figure}
 Types
 \begin{syntax}
@@ -690,7 +696,7 @@ Terms
 \caption{Frank Syntax}
 \label{fig:frank-syntax}
 \end{figure}
-
+%
 The syntax of Frank types and terms is given in
 Figure~\ref{fig:frank-syntax}. The types are divided into value types
 and computation types in a similar fashion to Levy's
@@ -749,9 +755,10 @@ closed effect set $\sigs'$, formally:
 Type environments distinguish monomorphic and polymorphic variables.
 
 Just as with the types, Frank terms are separated into value terms and
-computation terms. Furthermore, as Frank has a bidirectional type
-system~\cite{PierceT00}, the terms are further sub-divided into those
-whose type is inferable, and those which may be checked against a
+computation terms. With future extensions, such as dependent types, in
+mind, Frank adopts a bidirectional typing
+discipline~\cite{PierceT00}. Thus terms are further sub-divided into
+those whose type is inferable, and those that may be checked against a
 type.
 
 Frank is less strict about the separation between value and
@@ -991,63 +998,69 @@ $x$.
 
 
 
-TODO: get rid of GIBBERISH
+%% TODO: get rid of GIBBERISH
 
 
 
 
-As is made apparent by the call-by-value translation in
-Section~\ref{sec:feff}, Frank is morally a call-by-value language
-(though multi-handlers complicate the picture somewhat).
+%% As is made apparent by the call-by-value translation in
+%% Section~\ref{sec:feff}, Frank is morally a call-by-value language
+%% (though multi-handlers complicate the picture somewhat).
 
 
 
 
-Frank has a number of distinctive features.
+%% Frank has a number of distinctive features.
 
-Inspired by Levy's call-by-push-value (CBPV) calculus, Frank makes an
-explicit distinction between computation and value types. However,
-where CBPV also has a clear distinction between value terms and
-computation terms, Frank is less rigid. The motivation for this design
-is to reduce boilerplate in source programs. Frank combines the
-advantages of CBPV, call-by-value (a la ML), and effect typing.
+%% Inspired by Levy's call-by-push-value (CBPV) calculus, Frank makes an
+%% explicit distinction between computation and value types. However,
+%% where CBPV also has a clear distinction between value terms and
+%% computation terms, Frank is less rigid. The motivation for this design
+%% is to reduce boilerplate in source programs. Frank combines the
+%% advantages of CBPV, call-by-value (a la ML), and effect typing.
 
-With future extensions for dependent types in mind, Frank adopts a
-bidirectional typing discipline. A side-effect is that one cannot
-write beta-redexes in Frank. We do not view this as a disadvantage.
+%% With future extensions for dependent types in mind, Frank adopts a
+%% bidirectional typing discipline. A side-effect is that one cannot
+%% write beta-redexes in Frank. We do not view this as a disadvantage.
 
-Inspired by the observation that applying a function to a value is
-equivalent to applying a handler to a pure computation, handlers and
-functions are unified in Frank. Handlers are further generalised to
-multi-handlers, which handle multiple computations simulataneously.
+%% Inspired by the observation that applying a function to a value is
+%% equivalent to applying a handler to a pure computation, handlers and
+%% functions are unified in Frank. Handlers are further generalised to
+%% multi-handlers, which handle multiple computations simulataneously.
 
-Frank provides a novel form of effect polymorphism, in which it is
-never necessary to mention the names of effect variables.
+%% Frank provides a novel form of effect polymorphism, in which it is
+%% never necessary to mention the names of effect variables.
 
-We explain the semantics of Frank programs through a series of program
-transformations.
+%% We explain the semantics of Frank programs through a series of program
+%% transformations.
 
-First, we take a fairly standard approach to compiling away pattern
-matching (Core Frank). As we may match simultaneously against multiple
-side-effecting computations, we must be careful about
-order. Optionally, we can expose non-exhaustive/incomplete pattern
-matching as concrete effects.
+%% First, we take a fairly standard approach to compiling away pattern
+%% matching (Core Frank). As we may match simultaneously against multiple
+%% side-effecting computations, we must be careful about
+%% order. Optionally, we can expose non-exhaustive/incomplete pattern
+%% matching as concrete effects.
 
-Second, we make the distinction between values terms and computations
-explicit, as in CBPV (\impeff).
+%% Second, we make the distinction between values terms and computations
+%% explicit, as in CBPV (\impeff).
 
-Finally, we make polymorphism explicit. Our ultimate target is \feff,
-an effect-polymorphic variant of Kammar et al's CBPV-inspired
-lambda-eff calculus. The small-step semantics of \feff is a
-straightforward variant of that of lambda-eff.
+%% Finally, we make polymorphism explicit. Our ultimate target is \feff,
+%% an effect-polymorphic variant of Kammar et al's CBPV-inspired
+%% lambda-eff calculus. The small-step semantics of \feff is a
+%% straightforward variant of that of lambda-eff.
 
 
 \section{Pattern matching compilation}
 \label{sec:core}
 
+We take a fairly standard approach to compiling away pattern
+matching. As we may match simultaneously against multiple
+side-effecting computations, we must be somewhat careful about
+order. Optionally, we can expose incomplete or ambiguous pattern
+matching as concrete effects.
 
-Core Frank replaces multi-handlers with a combination of standard
-call-by-value functions, case statements, and unary effect handlers.
+The target language of pattern matching compilation, Core Frank,
+replaces multi-handlers with a combination of call-by-value functions,
+case statements, and unary effect handlers.
 
 The syntax of Core Frank is given in Figure~\ref{fig:core-syntax}.
 %
