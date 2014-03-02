@@ -236,33 +236,63 @@
 %%     Relationship with type classes/modules
 
 \begin{abstract}
-TODO
+We explore the design of Frank, a strict functional programming
+language designed from the ground up around a novel variant of Plotkin
+and Pretnar's \emph{effect handler} abstraction.
+%
+Inspired by Levy's call-by-push-value calculus, Frank makes an
+explicit distinction between computation and value types. Frank
+combines the advantages of call-by-push-value, call-by-value, and
+effect typing.
+
+%% Effect handlers in Frank generalise functions. An effect handler acts
+%% as an interpreter for a specified set of commands whose signatures are
+%% statically tracked by the type system. A function is the special case
+%% of an effect handler whose command set is empty.
 \end{abstract}
 
+%% keywords
+%%
+%% algebraic effects
+%% effect handlers
+%% effect polymorphism
+%% call-by-push-value
+%% pattern matching
+%% continuations
 
 \section{Introduction}
 
 % TODO: more background on algebraic effects and handlers?
 
-This paper explores the design of Frank, a strict functional
-programming language designed from the ground up around a novel
-variant of Plotkin and Pretnar's \emph{effect
-  handler}~\cite{PlotkinP09, PlotkinP13} abstraction.
+Plotkin and Power's algebraic effects~\cite{PlotkinP01a, PlotkinP01b,
+  PlotkinP02}, in conjunction with Plotkin and Pretnar's handlers for
+algebraic effects~\cite{PlotkinP09, PlotkinP13}, provide a compelling
+foundation for effectful programming.
+%
+By separating effect signatures from their implementation, algebraic
+effects provide a high degree of modularity, allowing programmers to
+express effectful programs independently of the concrete
+interpretation of their effects. A handler is an interpretation of the
+effects of an algebraic computation.
 
-Inspired by Levy's call-by-push-value (CBPV) calculus~\cite{Levy2004},
-Frank makes an explicit distinction between computation and value
-types. Frank combines the advantages of CBPV, call-by-value (a la ML),
-and effect typing.
+%% This paper explores the design of Frank, a strict functional
+%% programming language designed from the ground up around a novel
+%% variant of Plotkin and Pretnar's \emph{effect
+%%   handler}~\cite{PlotkinP09, PlotkinP13} abstraction.
 
-In Frank, effect handlers strictly generalise functions. In the
-general case an effect handler acts as an interpreter for a finite set
-of commands whose signatures are statically tracked by the type
-system. A function is the special case of an effect handler whose
-command set is empty.
+%% Inspired by Levy's call-by-push-value calculus~\cite{Levy2004}, Frank
+%% makes an explicit distinction between computation and value
+%% types. Frank combines the advantages of call-by-push-value,
+%% call-by-value, and effect typing.
+
+Effect handlers in Frank generalise functions. An effect handler acts
+as an interpreter for a specified set of commands whose signatures are
+statically tracked by the type system. A function is the special case
+of an effect handler whose command set is empty.
 
 The contributions of this paper are:
 \begin{itemize}
-\item Frank, a functional programming language featuring a
+\item Frank, a strict functional programming language featuring a
   bidirectional effect type system, effect polymorphism, and effect
   handlers.
 \item A novel approach to effect polymorphism which avoids all mention
@@ -276,9 +306,9 @@ The contributions of this paper are:
 \item Multi-handlers as both an abstraction for handling multiple
   computations over different effect sets simultaneously and a
   characterisation of effect-handlers as generalised functions.
-\item A description of pattern matching compilation for Frank into a
-  core language Core Frank.
-\item A translation from Core Frank into \feff a polymorphic variant
+\item A description of pattern matching compilation from Frank into a
+  core language, \emph{Core Frank}.
+\item A translation from Core Frank into \feff, a polymorphic variant
   of the \lameff calculus of Kammar et al~\cite{KammarLO13}, which in
   turn extends Levy's call-by-push-value calculus~\cite{Levy2004}.
 \item A straightforward small-step operational semantics for \feff,
@@ -301,21 +331,26 @@ avoids sub-typing altogether.
 Handlers in action~\cite{KammarLO13}. In previous work with Kammar and
 Oury~\cite{KammarLO13}, the first author designed and experimented
 with a number of effect handler libraries for languages ranging from
-Racket, to SML, to Haskell. Apart from the Haskell library, our other
-libraries have no effect typing support. The Haskell library takes
-advantage of type classes to simulate an effect type system not
+Racket, to SML, to Haskell. Apart from the Haskell library, these
+other libraries have no effect typing support. The Haskell library
+takes advantage of type classes to simulate an effect type system not
 entirely dissimilar to that of Frank. As Haskell is lazy, the Haskell
 library cannot be used to write direct-style effectful programs - one
 must instead adopt a monadic style. Furthermore, although there are a
 number of ways of almost simulating effect type systems in Haskell,
 none is without its flaws. Kiselyov et al~\cite{KiselyovSS13} have
-designed a similar Haskell library for effect handlers, making
-slightly different design choices.
+designed another Haskell library for effect handlers, making a
+different collection of design choices.
 
 Brady~\cite{Brady13} has designed a library and DSL for programming
 with effects in his dependently typed Idris language. Like the Haskell
 libraries, Brady's library currently requires the programmer to write
 effectful code in a monadic style.
+
+In Plotkin and Power’s setting, one defines algebraic effects with
+respect to an equational theory. In all of the above implementations,
+and in Frank, the equational theory is taken to be the free theory, in
+which there are no equations.
 
 The second author has been plotting Frank since
 2007~\cite{McBride07}. He has implemented a prototype of a previous
@@ -517,7 +552,7 @@ world =
 Here is a computation which sends them.
 %
 \begin{verbatim}
-sender [Send (List Char)]Unit
+sender : [Send (List Char)]Unit
 sender =
   sends (cons (hello
            (cons space (cons world nil))))
@@ -549,9 +584,9 @@ The fun of Frank is that one can say what it is to \emph{be} a
 computation without saying what it is to \emph{do} it. Doing and being
 are separately negotiable, and readily interleaved in different
 ways. Or as Frank Sinatra put it,
-\begin{quote}
+\begin{center}
 do be do be do
-\end{quote}
+\end{center}
 
 %% TODO: some illustration of forwarding?
 
@@ -708,7 +743,7 @@ Figure~\ref{fig:frank-syntax}. The types are divided into value types
 and computation types in a similar fashion to Levy's
 call-by-push-value calculus~\cite{Levy2004}.
 %
-Value types are data types ($D~\many{U}$), suspended $C$ computations
+Value types are datatypes ($D~\many{U}$), suspended $C$ computations
 ($\thunk{C}$), otherwise known as \emph{thunks}, or type variables
 ($X$).
 
@@ -733,7 +768,7 @@ Polytypes are restricted to thunks. Effect polymorphism is restricted
 to a single effect variable $\varepsilon$, which in practice Frank
 programmers need never write.
 
-Data types and effect signatures are declared at the top-level. An
+Datatypes and effect signatures are declared at the top-level. An
 effect signature $S~\many{X}$ consists of a collection of command
 declarations of the form $c:U(\many{V})$, denoting that command $c$
 takes arguments of types $\many{V}$ and returns a value of type
@@ -944,7 +979,7 @@ An inferable computation ($d$) is also an inferable value, providing
 it is a returner whose effects agree with the ambient effects.
 
 Any inferable value ($u$) is also checkable against its inferred
-type. Data type ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
+type. Datatype ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
 checkable by checking their components. The side condition on the
 thunk introduction rule requires that the pattern matching clauses of
 $e$ be complete with respect to the type $C$ of $e$.
@@ -988,7 +1023,7 @@ compilation, we first transform the program to ensure that all
 composed clauses do have the same number of arguments.
 
 Value patterns are standard, consisting of variable patterns ($x$) and
-data type constructor patterns ($k~\many{p}$).
+datatype constructor patterns ($k~\many{p}$).
 
 Computation patterns are more interesting. Any value pattern $p$ is
 also a computation pattern (used to match against the value returned
@@ -1054,8 +1089,10 @@ necessary to explicitly write $\emptyset$ in peg effect sets. In
 particular, a pure top-level program returning values of type $V$ has
 type $\effbox{\emptyset}V$.
 
-Another useful piece of syntactic sugar is for function
-application. We often write $u~e$ for $\force{u}~e$.
+%% [already mentioned in the example section]
+%%
+%% Another useful piece of syntactic sugar is for function
+%% application. We often write $u~e$ for $\force{u}~e$.
 
 %% TODO: get rid of GIBBERISH
 
@@ -1444,7 +1481,7 @@ Multi-handlers in Frank become curried functions over suspended
 computations in Core Frank.
 %
 Shallow pattern matching on a single request becomes unary effect
-handling. Shallow pattern matching on a data type value becomes case
+handling. Shallow pattern matching on a datatype value becomes case
 analysis. Nested pattern matching on multiple computations is realised
 as a pattern matching tree constructed from handlers and case
 statements. 
