@@ -376,7 +376,8 @@ embedding of Core Frank into \feff, a variant of Kammar et al's
 general recursion. Section~\ref{sec:semantics} gives a semantics for
 \feff, which when composed with pattern matching and the call-by-value
 embedding, yields a semantics for Frank. Section~\ref{sec:related}
-outlines related work and Section~\ref{sec:conclusion} concludes.
+outlines related work and Section~\ref{sec:future} discusses future
+work.
 
 \section{Introducing Frank}
 \label{sec:examples}
@@ -2058,10 +2059,38 @@ direct-style effectful programming in a strict language. Unlike Frank,
 their system is based on monad transformers rather than effect
 handlers.
 
-\section{Conclusion and Future Work}
-\label{sec:conclusion}
 
-TODO: write this section
+\section{Future Work}
+\label{sec:future}
+
+Our first priority is to implement a prototype for the current Frank
+design. Having done that, there is much scope for exploring different
+implementations of handlers, both for performance and for exploring
+new abstractions.
+%
+We would like to combine effect handlers with richer type systems,
+following the work of McBride~\cite{McBride11} and
+Brady~\cite{Brady13}.
+%
+Handlers provide some of the same functionality as modules and type
+classes. We would like to formally relate all three abstractions.
+%
+We are exploring algebraic effects and effect handlers for
+idiom~\cite{McbrideP08} and arrow~\cite{Hughes04} computations.
+
+%%   Future work
+%%     Efficient implementation
+%%     Dependent types/session types/indexing
+%%     Seemless syntactic support for the data type view of
+%%     computations
+%%     Handlers for arrows and idioms
+%%     Relationship with type classes/modules
+
+
+%% \section{Conclusion and Future Work}
+%% \label{sec:conclusion}
+
+%% TODO: write this section?
 
 
 %% \begin{abstract}
