@@ -30,6 +30,8 @@
 \newcommand{\seml}{\left\llbracket}
 \newcommand{\semr}{\right\rrbracket}
 
+\newcommand{\pc}[1]{\llparenthesis{#1}\rrparenthesis}
+
 \newcommand{\FV}{\mathit{FV}}
 \newcommand{\dom}{\mathit{dom}}
 
@@ -368,11 +370,11 @@ map f (cons x xs) = cons (f x) (map f xs)
 \end{verbatim}
 
 A value type \verb!V! is a datatype \verb!D V1 ... Vn!, a suspended
-computation type \verb!{C}!, or a type variable !X!.
+computation type \verb!{C}!, or a type variable \verb!X!.
 %
 A computation type can be a function type \verb!V -> C! or an
 effect-annotated value type \verb![S1 ... Sn]V!, where an empty
-bracket can be dropped.
+bracket may be omitted.
 
 Effects are collections of signatures, which describe a choice of
 commands. Here are some simple signatures.
@@ -461,7 +463,7 @@ Effects are handled by special functions called \emph{effect
   handlers}. Effect handlers in Frank can take multiple computations
 as arguments, hence they are \emph{multi-handlers}. In fact standard
 functions like the ones we have seen so far are just special cases of
-multi-handlers in which the arguments all have the empty effect.
+multi-handlers in which the all the arguments are pure.
 
 A multi-handler has type \verb!R1 -> ... -> Rm -> R! where each
 \verb!Ri! and \verb!R! is an effect-annotated value type. For
@@ -646,7 +648,7 @@ $\effbox{\emptyset}V$.
 
 
 
-\section{The source language (Frank)}
+\section{Type system}
 \label{sec:frank}
 
 
@@ -657,7 +659,8 @@ Types
 \slab{computations} &C             &::=& R \mid R \to C \\
 \slab{returners}    &R             &::=& \effbox{\sigs}V
 \\[1ex]
-\slab{polytypes}    &P             &::=& \forall \varepsilon \many{X}.Q \\
+\slab{quantifiers}  &Z             &::=& X \mid \varepsilon \\
+\slab{polytypes}    &P             &::=& \forall \many{Z}.Q \\
 \slab{thunks}       &Q             &::=& \thunk{C}
 \\[1ex]
 \slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
@@ -691,40 +694,43 @@ and computation types in a similar fashion to Levy's
 call-by-push-value calculus~\cite{Levy2004}.
 %
 Value types are data types ($D~\many{U}$), suspended $C$ computations
-($\thunk{C}$), otherwise known as \emph{thunk types}, or type
-variables ($X$).
+($\thunk{C}$), otherwise known as \emph{thunks}, or type variables
+($X$).
+
+Computation types are constructed from \emph{returners}.  A returner
+$(\effbox{\sigs}V)$ represents the type of a computation that returns
+values of type $V$ while performing effects in $\sigs$.
 %
-Computation types represent multi-handlers. The type
-$\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to \effbox{\sigs}V$,
+In general, computation types represent multi-handlers. The type
+$\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to
+\effbox{\sigs}V$,
 %
-is the type of an $n$-handler. Each argument type
-$\effbox{\sigs_i}V_i$ represents a computation returning values of
-types $V_i$ such that the multi-handler must handle effects in
-$\sigs_i$. Such an $n$-handler handles all of its arguments
-together. As a result of handling its arguments it returns a value of
-type $V$ and may perform effects in $\sigs$.
+is the type of an $n$-handler. For each argument type
+$\effbox{\sigs_i}V_i$ the multi-handler must handle effects in
+$\sigs_i$ on that argument. Such an $n$-handler handles all of its
+arguments simultanesouly. As a result of handling its arguments it
+returns a value of type $V$ and may perform effects in $\sigs$.
 %
 We often write $\many{\effbox{\sigs}V} \to C$ as an abbreviation for
 $\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to C$.
 
 Polytypes are restricted to thunks. Effect polymorphism is restricted
 to a single effect variable $\varepsilon$, which in practice Frank
-programmers will never need to write.
+programmers need never write.
 
-As is commonplace for ML-like languages, data types are parameterised
-and declared at the top-level. Analogously, effect signatures are also
-parameterised and declared at the top-level. An effect signature
-$S~\many{X}$ consists of a collection of command declarations of the
-form $c:U{\many{V}}$ denoting that command $c$ takes arguments of
-types $\many{V}$ and returns a value of type $U$, such that the
-$\many{V}$ and $U$ may all depend on $\many{X}$. Each command can only
-be declared once in one signature.
+Data types and effect signatures are declared at the top-level. An
+effect signature $S~\many{X}$ consists of a collection of command
+declarations of the form $c:U(\many{V})$, denoting that command $c$
+takes arguments of types $\many{V}$ and returns a value of type
+$U$. The types $\many{V}$ and $U$ may all depend on $\many{X}$. Each
+command many appear only once in a signature, and each command may
+appear in only one signature.
 
-A effect set is a sequence of signatures initiated either with the
-empty effect $\emptyset$ (yielding a \emph{closed effect set}) or the only
-effect variable $\varepsilon$ (yielding an \emph{open effect set}). Order
-is important, as repeats are permitted, in which case the right-most
-signature overrides all others with the same name.
+An effect set is a sequence of signatures initiated either with the
+empty effect $\emptyset$ (yielding a \emph{closed effect set}) or the
+only effect variable $\varepsilon$ (yielding an \emph{open effect
+  set}). Order is important, as repeats are permitted, in which case
+the right-most signature overrides all others with the same name.
 
 Shadowing arises naturally in two ways. First, given an open effect
 set $\sigs$ we may substitute an arbitrary effect set for
@@ -737,8 +743,7 @@ closed effect set $\sigs'$, formally:
 (\sigs', \sig~\many{V}) &= (\sigs \oplus \sigs'), \sig~\many{V} \\
 \ea\]
 
-In type environments, we distinguish monomorphic and polymorphic
-variables.
+Type environments distinguish monomorphic and polymorphic variables.
 
 Just as with the types, Frank terms are separated into value terms and
 computation terms. Furthermore, as Frank has a bidirectional type
@@ -749,7 +754,7 @@ type.
 Frank is less strict about the separation between value and
 computation terms than call-by-push-value is. For instance, inferable
 computations can sometimes be treated as inferable values. This is a
-deliberate design decision, in order to make Frank convenient to
+deliberate design decision, with the aim of making Frank convenient to
 program with.
 
 %%%%% Frank
@@ -779,10 +784,10 @@ $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
 %%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
 
 \inferrule
-  {f:\forall \varepsilon \many{X}.\thunk{C} \in \Gamma \\
-   \dom(\theta) = \set{\varepsilon, \many{X}} \\
-   \theta(\varepsilon) = \sigs}
-  {\makesgs{f}{\theta(\thunk{C})}}
+  {f:\forall \many{Z}.Q \in \Gamma \\
+   \dom(\theta) = \set{\many{Z}} \\
+   \varepsilon \in \dom(\theta) \implies \theta(\varepsilon) = \sigs}
+  {\makesgs{f}{\theta(Q)}}
 
 \inferrule
   {\cangs{d}{\effbox{\sigs}V}}
@@ -833,9 +838,9 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
 
 \inferrule
-  {(\idoes{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{e_i}{Q_i})_i \\
-   \can{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{d}{C}}
-  {\cangs{\key{letrec}~\many{f : \forall \varepsilon \many{X}.Q = e}~\key{in}~d}{C}}
+  {(\idoes{\Gamma, \many{f : \forall \many{Z}.Q}}{e_i}{Q_i})_i \\
+   \can{\Gamma, \many{f : \forall \many{Z}.Q}}{\sigs}{d}{C}}
+  {\cangs{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d}{C}}
 \end{mathpar}
 
 $\boxed{\idoesg{C}{e}}$
@@ -899,20 +904,20 @@ $\boxed{\pat{R}{r}{\Delta}}$
 The typing rules for Frank are given in Figure~\ref{fig:frank-typing}.
 %
 The judgement $\makesgs{u}{V}$ says that given type environment
-$\Gamma$, ambient effects $\sigs$, and inferable value term $u$,
-then we can infer that $u$ is of type $V$.
+$\Gamma$, ambient effects $\sigs$, and inferable value term $u$, then
+we can infer that $u$ \emph{is} of type $V$.
 %
 The judgement $\hasgs{V}{v}$ says that given type environment
 $\Gamma$, ambient effects $\sigs$, value type $V$, and checkable
-value term $v$, then we can check that $V$ has $v$ as a valid term.
+value term $v$, then we can check that $V$ \emph{has} $v$ as a valid term.
 %
 The judgement $\cangs{d}{C}$ says that given type environment
 $\Gamma$, ambient effects $\sigs$, and inferable computation term $d$,
-then we can infer that $d$ is of type $C$.
+then we can infer that $d$ \emph{is} of type $C$.
 %
 The judgement $\idoesg{C}{e}$ says that given type environment
 $\Gamma$, computation type $C$, and checkable computation term $e$,
-then we can check that $C$ has $e$ as a valid computation term.
+then we can check that $C$ \emph{has} $e$ as a valid computation term.
 
 The types of monomorphic variables ($x$) are simply looked up in the
 type environment. The types of polymorphic variables ($f$) are looked
@@ -924,7 +929,7 @@ it is a returner whose effects agree with the ambient effects.
 
 Any inferable value ($u$) is also checkable against its inferred
 type. Data type ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
-checkable by checking their components in the obvious way.
+checkable by checking their components.
 
 A thunk $u$ can by forced ($u!$) if its inferred type agrees with the
 ambient effects. To infer the type of a handler application $d~e$, we
@@ -933,9 +938,7 @@ the inferred argument type. Note that the effect set on an argument
 must be closed, and thus we may extend the ambient effect set with the
 argument effect set when checking the argument.
 %
-The type of a command invocation ($c~\many{v}$) is looked up from the
-ambient effects. We also check that the arguments match the argument
-types.
+The type of a command ($c$) is looked up from the ambient effects.
 %
 The term $\key{let}~x=d~\key{in}~d'$ binds the result of running $d$
 in $d'$.
@@ -954,18 +957,17 @@ in $e$.
 The $e \medvert e'$ construct composes the clauses of $e$ with those
 of $e'$. A multi-handler is defined by a collection of clauses that
 provides complete coverage of the input types.
+%
+The $()$ construct allows empty sets of clauses to be constructed in
+the event that the value type of a function argument is uninhabited.
 
 We preclude composition of non-clauses (i.e. returners) by
 constraining $e \medvert e'$ to have function type.
 %
 It is perfectly legitimate to compose clauses with different numbers
-of arguments.
-%
-As part of pattern matching compilation we $\eta$-expand some clauses
-to ensure that all composed clauses have the same number of arguments.
-%
-For instance $(p~p' \mapsto e) \medvert (p'' \mapsto e')$ is
-$\eta$-equivalent to $(p~p' \mapsto e) \medvert (p''~x \mapsto e'~x)$.
+of arguments, though as a preliminary part of pattern matching
+compilation, we first transform the program to ensure that all
+composed clauses do have the same number of arguments.
 
 Value patterns are standard, consisting of variable patterns ($x$) and
 data type constructor patterns ($k~\many{p}$).
@@ -975,8 +977,8 @@ also a computation pattern (used to match against the value returned
 by the returner computation).
 %
 A request pattern $\handle{c~\many{p}}{g}$ matches against a
-computation of the form $c~\many{v}$ if the values $v$ match against
-$p$. Furthermore, it also binds $g$ to the continuation of the
+computation of the form $\force{c}~\many{v}$ if the values $v$ match
+against $p$. Furthermore, it also binds $g$ to the continuation of the
 computation delimited by the nearest enclosing multi-handler. This is
 where the real power of multi-handlers arises. A thunk pattern
 $\force{x}$ matches any computation reifying it as a thunk bound to
@@ -1039,33 +1041,141 @@ lambda-eff calculus. The small-step semantics of \feff is a
 straightforward variant of that of lambda-eff.
 
 
-\section{Pattern matching compilation (Core Frank)}
+\section{Pattern matching compilation}
 \label{sec:core}
 
 
 Core Frank replaces multi-handlers with a combination of standard
 call-by-value functions, case statements, and unary effect handlers.
-%
-The differences between Frank and Core Frank are all in the checkable
-computation terms.
 
-NONSENSE. Need to restore the full syntax and type rules for Core
-Frank.
+The syntax of Core Frank is given in Figure~\ref{fig:core-syntax}.
 %
-The syntax for Core Frank checkable computations is as follows.
+\begin{figure}
+Types
 \begin{syntax}
-&e  &::= & v \mid \lambda x.e \\
+\slab{values}       &U, V          &::=& D~\many{U} \mid \thunk{C} \mid X \\
+\slab{computations} &C             &::=& R \mid V \to C \\
+\slab{returners}    &R             &::=& \effbox{\sigs}V
+\\[1ex]
+\slab{quantifiers}  &Z             &::=& X \mid \varepsilon \\
+\slab{polytypes}    &P             &::=& \forall \many{Z}.Q \\
+\slab{thunks}       &Q             &::=& \thunk{C}
+\\[1ex]
+\slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
+\slab{effects}      &\sigs         &::=&
+  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
+\\[1ex]
+\slab{type environments}
+                    &\Gamma        &::=& \cdot \mid \Gamma, x:V \mid f:P \\
+\end{syntax}
+
+Terms
+\begin{syntax}
+\slab{inferable values}&u       &::=& x \mid f \mid d                                \\
+\slab{checkable values}&v       &::=& u \mid k~\many{v} \mid \thunk{e}
+\\[1ex]
+\slab{inferable computations}&d &::=& \force{u} \mid d~v \mid c~\many{v}
+                               \mid  \key{let}~x=d~\key{in}~d' \\
+                             &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
+\slab{checkable computations} &e  &::= & v \mid \lambda x.e \\
    &&\mid& \key{case}~u~\key{of}~
              (k~\many{x_k} \mapsto e_k)_k \\
    &&\mid& \key{handle}~d~\key{with}~
-             (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c 
+             \bstack
+             (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \\
              \medvert~ x        \mapsto e \\
-\end{syntax}%
+             \estack \\
+\end{syntax}
+\caption{Core Frank Syntax}
+\label{fig:core-syntax}
+\end{figure}
 %
-The Core Frank typing rules for checkable computations are given in
-Figure~\ref{fig:core-typing}.
-
+The Core Frank typing rules are given in Figure~\ref{fig:core-typing}.
+%
 \begin{figure*}[float]
+$\boxed{\effs{C}{\sigs}}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\effs{\effbox{\sigs}V}{\sigs}}
+
+\inferrule
+  {\effs{C}{\sigs}}
+  {\effs{V \to C}{\sigs}}
+\end{mathpar}
+
+$\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
+\begin{mathpar}
+\inferrule
+  {x:V \in \Gamma}
+  {\makesgs{x}{V}}
+
+%% \inferrule
+%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%    \theta(\varepsilon) = \sigs}
+%%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
+
+\inferrule
+  {f:\forall \many{Z}.Q \in \Gamma \\
+   \dom(\theta) = \set{\many{Z}} \\
+   \varepsilon \in \dom(\theta) \implies \theta(\varepsilon) = \sigs}
+  {\makesgs{f}{\theta(Q)}}
+
+\inferrule
+  {\cangs{d}{\effbox{\sigs}V}}
+  {\makesgs{d}{V}}
+\end{mathpar}
+
+$\boxed{\has{\Gamma}{\sigs}{V}{v}}$
+
+\begin{mathpar}
+\inferrule
+  {\makesgs{u}{U} \\ U = V}
+  {\hasgs{V}{u}}
+
+\inferrule
+  {(\hasgs{V_i}{v_i})_i \\
+   k~\many{V} \in D~\many{U}}
+  {\hasgs{D~\many{U}}{k~\many{v}}}
+
+\inferrule
+  {\idoes{\Gamma}{C}{e}}
+  {\hasgs{\thunk{C}}{\thunk{e}}}
+\end{mathpar}
+
+$\boxed{\can{\Gamma}{\sigs}{d}{C}}$
+
+\begin{mathpar}
+\inferrule
+  {\makesgs{u}{\thunk{C}} \\ \effs{C}{\sigs}}
+  {\cangs{\force{u}}{C}}
+
+\inferrule
+  {\cangs{d}{\effbox{\sigs'}V \to C} \\
+   \has{\Gamma}{\sigs \oplus \sigs'}{V}{v}}
+  {\can{\Gamma}{\sigs}{d~v}{C}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs}
+  {\cangs{c}{\many{V} \to \effbox{\sigs}U}}
+
+%% \inferrule
+%%   {c : U(\many{V}) \in \sigs \\
+%%    (\hasgs{V_i}{v_i})_i}
+%%   {\cangs{c~\many{v}}{\effbox{\sigs}U}}
+
+\inferrule
+  {\cangs{d}{V} \\
+   \can{\Gamma, x:V}{\sigs}{d'}{C}}
+  {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
+
+\inferrule
+  {(\idoes{\Gamma, \many{f : \forall \many{Z}.Q}}{e_i}{Q_i})_i \\
+   \can{\Gamma, \many{f : \forall \many{Z}.Q}}{\sigs}{d}{C}}
+  {\cangs{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d}{C}}
+\end{mathpar}
+
 $\boxed{\idoesg{C}{e}}$
 
 \begin{mathpar}
@@ -1097,7 +1207,7 @@ $\boxed{\idoesg{C}{e}}$
                 x \mapsto e}}
 \end{mathpar}
 
-\caption{Core Frank Typing Rules for Checkable Computation Terms}
+\caption{Core Frank Typing Rules}
 \label{fig:core-typing}
 \end{figure*}
 
@@ -1324,7 +1434,7 @@ The goal of pattern matching compilation is to generate a pattern
 matching tree that matches the variable vector against all of the
 patterns in the pattern matrix in the correct order.
 
-In our scenario, pattern matching trees $M$ are build up from leaves,
+In our setting, pattern matching trees $M$ are build up from leaves,
 case analysis, and handlers.
 %% \begin{equations}
 %% M &::= & \many{e} \\
@@ -1381,41 +1491,75 @@ Of course, because Core Frank now takes values as arguments whereas
 Frank takes computations, each argument must be wrapped in a thunk
 constructor.
 
-The type translation is straightforward.
+The type translation is given simply by the homorphic extension of the
+following equation on function types:
+\begin{equations}
+\pc{\effbox{\sigs}V} \to \pc{C} &=& \thunk{\effbox{\pc{\sigs}}\pc{V}} \to \pc{C} \\
+\end{equations}
 
-...
+\begin{proposition}
+~
+\begin{itemize}
+\item If $\makesgs{u}{V}$ then $\makes{\pc{\Gamma}}{\pc{\sigs}}{\pc{u}}{\pc{V}}$.
+\item If $\hasgs{V}{v}$   then $\has{\pc{\Gamma}}{\pc{\sigs}}{\pc{V}}{\pc{v}}$.
+\item If $\cangs{d}{C}$   then $\can{\pc{\Gamma}}{\pc{\sigs}}{\pc{d}}{\pc{C}}$.
+\item If $\idoesg{C}{e}$  then $\idoes{\pc{\Gamma}}{\pc{C}}{\pc{e}}$.
+\end{itemize}
+\end{proposition}
 
-\section{Explicit polymorphism (\feff)}
+%% \begin{equations}
+%% \pc{D~\many{U}) &=& D~\pc{\many{U}} \\
+%% \pc{\thunk{C}}  &=& \thunk{\pc{C}} \\
+%% \pc{X} &=& X
+%% \\[1ex]
+%% \pc{\effbox{\sigs}V} &=& \effbox{\pc{\sigs}}\pc{V} \\
+%% \pc{\effbox{\sigs}V} \to \pc{C} &=& \thunk{\effbox{\pc{\sigs}}\pc{V}} \to \pc{C} \\
+%% \\[1ex]
+%% \pc{\emptyset} &=& \emptyset \\
+%% \pc{\sigs, S~\many{V}} &=& \pc{\sigs}, S~\pc{\many{V} \\
+%% \pc{\varepsilon} &=& \varepsilon \\
+%% \\[1ex]
+%% \pc{\cdot} &=& \cdot \\
+%% \pc{c:U(\many{V}), S~\many{X}} &=& 
+%% \end{equations}
+
+
+\section{Explicit Control flow and Polymorphism}
 \label{sec:feff}
 
+
+A superficial change to the types is that rather than annotating value
+returning computations with effects, we shift such labels to the thunk
+containing the computation. The former design seems more convenient to
+program with, which is why we adopt it in the source language. The
+latter design leads to a slightly more uniform presentation of the
+type rules (the checking judgement for computations now has the same
+shape as the checking judgement for values, and we no longer need the
+$\judgeword{does}$ judgement).
 
 %% As we only allow top-level polymorphism, the translation from \impeff
 %% to \feff is straightforward. Generalisation (type abstraction) only
 %% occurs on top-level definitions, and instantiation (type application)
 %% only occurs on top-level variable lookup.
 
-The translation on types
+The translation on types is given by the homomorphic extension of the
+following equations:
+\begin{equations}
+\sem{\thunk{C}} &=& \effbox{\sem{\sigs}}\thunk{\sem{C}}, \quad \text{where }\effs{C}{\sigs} \\
+\sem{\effbox{\sigs}V \to C} &=& \effbox{\sem{\sigs}}\sem{V} \to \sem{C} \\
+\sem{\effbox{\sigs}V} &=& \rt{\sem{V}}\\
+\end{equations}
 
   %% drop ([Sig]{C}) = {drop(C) drop(Sig)}
 
   %% drop ( <V> ) Sig          = [ drop (Sig) ] drop(V)
   %% drop ( [Sig']V -> C ) Sig = [ drop (Sig') ] drop(V) -> drop(C) drop(Sig)
 
-
-  %% lift({C}) = [ lift(effs(C)) ]{ lift(C) }
-
-  %% lift([Sig]V -> C) = [ lift(Sig) ]lift(V) -> lift(C)
-  %% lift([Sig]V) = < lift(V) >
-  
-  %% effs([Sig]V -> C) = effs(C)
-  %% effs([Sig]V) = Sig
-
-
-
 Call by value embedding of Core Frank into \feff:
 %
 \begin{equations}
 \sem{x} &=& \key{ret}~x \\
+\sem{f^{\sigs, \many{T}}} &=& f~\sem{\sigs}~\sem{\many{T}} \\
 \\
 \sem{k~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~\key{ret}~(k~\many{x}) \\
 \sem{\thunk{e}} &=& \key{ret}~\thunk{\sem{e}} \\
@@ -1435,26 +1579,27 @@ Call by value embedding of Core Frank into \feff:
             (\handle{c~\many{x_c}}{g_c} \mapsto \sem{e_c})_c
             \medvert x \mapsto \sem{e}} \\
 \end{equations}%
-\[
-\bl
-\seml
-  \inferrule
-    {f:\forall \varepsilon \many{X}.V \in \Gamma \\
-     \dom(\theta) = \set{\varepsilon, \many{X}} \\
-     \theta(\varepsilon) = \sigs}
-    {\makesgs{f}{\theta(V)}}
-\semr \qquad \\[3ex]
-\hfill = \force{(f~\sigs~\many{\theta(X)})} \\
-\el
-\]
+%% \[
+%% \bl
+%% \seml
+%%   \inferrule
+%%     {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+%%      \dom(\theta) = \set{\varepsilon, \many{X}} \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\makesgs{f}{\theta(V)}}
+%% \semr \qquad \\[3ex]
+%% \hfill = \force{(f~\sigs~\many{\theta(X)})} \\
+%% \el
+%% \]
 
 \begin{proposition}
 ~
 \begin{itemize}
-\item If $\makesgs{u}{V}$ then $\compgs{\sem{u}}{\rt{V}}$.
-\item If $\hasgs{V}{v}$   then $\compgs{\sem{v}}{\rt{V}}$.
-\item If $\cangs{d}{C}$   then $\compgs{\sem{d}}{C}$.
-\item If $\doesgs{C}{e}$  then $\compgs{\sem{e}}{C}$.
+\item If $\makesgs{u}{V}$ then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{u}}{\rt{\sem{V}}}$.
+\item If $\hasgs{V}{v}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{v}}{\rt{\sem{V}}}$.
+\item If $\cangs{d}{C}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{d}}{\sem{C}}$.
+\item If $\idoesg{C}{e}$ and $\effs{C}{\sigs}$ then
+  $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{e}}{\sem{C}}$.
 \end{itemize}
 \end{proposition}
 
@@ -1679,11 +1824,11 @@ $\boxed{\compgs{e}{C}}$
 \begin{equations}
 %% (\textrm{Value contexts})\, D
 %%   &::=& [~] \mid \key{case}~D~\key{of}~(k_i~\many{x_i} \mapsto e_i)_i \mid \force{D} \mid D~T \\
-(\textrm{Delimited computation contexts})\, E
-  &::=& [~] \mid E~v \mid \key{let}~x=E~\key{in}~e \\
-(\textrm{Computation contexts})\, F
-  &::=& [~] \mid F~v \mid \key{let}~x=F~\key{in}~e
-            \mid \key{handle}~F~\key{with}~H \\
+(\textrm{Delimited computation contexts})\, D
+  &::=& [~] \mid D~v \mid \key{let}~x=D~\key{in}~e \\
+(\textrm{Computation contexts})\, E
+  &::=& [~] \mid E~v \mid \key{let}~x=E~\key{in}~e
+            \mid \key{handle}~E~\key{with}~H \\
                %% (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
                %%   x \mapsto e \\
 \end{equations}%
@@ -1708,8 +1853,8 @@ $\boxed{\compgs{e}{C}}$
 \\[1ex]
 \key{handle}~(\key{ret}~v)~\key{with}~H
   &\reducesto& H(\key{ret}, v) \\
-\key{handle}~E[c~\many{v}]~\key{with}~H
-  &\reducesto& H(c, \many{v}, \thunk{\lambda z.E[\key{ret}~z]}) \\
+\key{handle}~D[c~\many{v}]~\key{with}~H
+  &\reducesto& H(c, \many{v}, \thunk{\lambda z.D[\key{ret}~z]}) \\
 %% \key{handle}~(\key{ret}~v)~\key{with}~
 %%    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
 %%    x \mapsto e
@@ -1747,7 +1892,7 @@ H(\key{c}, \many{v}, u)
 
 \inferrule
   {d \reducesto e}
-  {F[d] \reducesto F[e]}
+  {E[d] \reducesto E[e]}
 \end{mathpar}
 
 \caption{Small-step operational semantics for \feff}
