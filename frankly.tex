@@ -35,6 +35,7 @@
 \newcommand{\FV}{\mathit{FV}}
 \newcommand{\dom}{\mathit{dom}}
 
+\newcommand{\reducesto}{\longrightarrow}
 
 \newcommand\ba{\begin{array}}
 \newcommand\ea{\end{array}}
@@ -70,7 +71,8 @@
 \newcommand{\valg}{\val{\Gamma}}
 \newcommand{\compgs}{\comp{\Gamma}{\sigs}}
 
-\newcommand{\is}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
+%% \newcommand{\is}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
+%% \newcommand{\isgs}{\is{\Gamma}{\sigs}}
 
 \newcommand{\makes}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
 \newcommand{\has}[4] {#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
@@ -82,9 +84,6 @@
 
 \newcommand{\pat}[3]{{#1} \judgeword{matches} {#2} \dashv #3}
 \newcommand{\patg}[2]{\pat{#1}{#2}{\Gamma}}
-
-
-\newcommand{\isgs}{\is{\Gamma}{\sigs}}
 
 \newcommand{\makesgs}{\makes{\Gamma}{\sigs}}
 \newcommand{\hasgs}{\has{\Gamma}{\sigs}}
@@ -108,68 +107,68 @@
 %% \newcommand{\sigs}{E}
 
 
-\newcommand{\X}{X}  % a type variable
+%% \newcommand{\X}{X}  % a type variable
 
-\newcommand{\E}{E}  % the effect variable
+%% \newcommand{\E}{E}  % the effect variable
 
-\newcommand{\U}{U}
-\newcommand{\V}{V}
-\newcommand{\Us}{\many{\U}}
-\newcommand{\Vs}{\many{\V}}
+%% \newcommand{\U}{U}
+%% \newcommand{\V}{V}
+%% \newcommand{\Us}{\many{\U}}
+%% \newcommand{\Vs}{\many{\V}}
 
-\newcommand{\C}{C}
+%% \newcommand{\C}{C}
 
-\newcommand{\tm}{t}
-\newcommand{\tu}{u}
-\newcommand{\tms}{\many{\tm}}
-\newcommand{\tus}{\many{\tu}}
+%% \newcommand{\tm}{t}
+%% \newcommand{\tu}{u}
+%% \newcommand{\tms}{\many{\tm}}
+%% \newcommand{\tus}{\many{\tu}}
 
-\newcommand{\p}{p}
-\newcommand{\ps}{\many{\p}}
+%% \newcommand{\p}{p}
+%% \newcommand{\ps}{\many{\p}}
 
-\newcommand{\h}{h}
+%% \newcommand{\h}{h}
 
-\newcommand{\op}{\mathit{op}}
+%% \newcommand{\op}{\mathit{op}}
 
 \newcommand{\effbox}[1]{[#1]}
-\newcommand{\ret}[2]{\effbox{#1}{#2}}
-\newcommand{\template}[3]{{#1} \mathbin{\effbox{#2}} {#3}}
+%% \newcommand{\ret}[2]{\effbox{#1}{#2}}
+%% \newcommand{\template}[3]{{#1} \mathbin{\effbox{#2}} {#3}}
 
 \newcommand{\key}[1]{\mathsf{#1}}
 
 \newcommand{\handleSymbol}{\mathbin{?}}
-\newcommand{\yieldSymbol}{\mathbin{\prec}}
-\newcommand{\continueSymbol}{\mathbin{\triangleleft}}
-\newcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol \ret{#2}{#3}}}
-\newcommand{\handleTypePoly}[2]{\effbox{{#1} \yieldSymbol #2}}
-\newcommand{\handleRet}[1]{\effbox{#1}}
-\newcommand{\handleOp}[2]{\effbox{{#1} \continueSymbol {#2}}}
+%% \newcommand{\yieldSymbol}{\mathbin{\prec}}
+%% \newcommand{\continueSymbol}{\mathbin{\triangleleft}}
+%% \newcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol \ret{#2}{#3}}}
+%% \newcommand{\handleTypePoly}[2]{\effbox{{#1} \yieldSymbol #2}}
+%% \newcommand{\handleRet}[1]{\effbox{#1}}
+%% \newcommand{\handleOp}[2]{\effbox{{#1} \continueSymbol {#2}}}
 \newcommand{\handle}[2]{{#1} \handleSymbol {#2}}
 
-\newcommand{\handleGen}[2]{\key{handle}~{#1}~\key{with}~{#2}}
+%% \newcommand{\handleGen}[2]{\key{handle}~{#1}~\key{with}~{#2}}
 
 \newcommand{\thunk}[1]{\{{#1}\}}
 %\newcommand{\athunk}[2]{\thunk{#1}_{#2}}
-\newcommand{\athunk}[2]{[#2]\thunk{#1}}
+%% \newcommand{\athunk}[2]{[#2]\thunk{#1}}
 
 \newcommand{\force}[1]{{#1}!}
-\newcommand{\app}{\mathbin{\text{@}}}
+%% \newcommand{\app}{\mathbin{\text{@}}}
 
-\newcommand{\con}{K}
-\newcommand{\D}{D}
+%% \newcommand{\con}{K}
+%% \newcommand{\D}{D}
 
-\newcommand{\args}{\mathit{args}}
+%% \newcommand{\args}{\mathit{args}}
 
-\newcommand{\rplus}{\mathbin{\mathord{+}\!\!\!\!\mathord{\shortrightarrow}}}
-\newcommand{\lplus}{\mathbin{\mathord{+}\!\!\!\!\!\mathord{\shortleftarrow}}}
+%% \newcommand{\rplus}{\mathbin{\mathord{+}\!\!\!\!\mathord{\shortrightarrow}}}
+%% \newcommand{\lplus}{\mathbin{\mathord{+}\!\!\!\!\!\mathord{\shortleftarrow}}}
 
 
-\newcommand{\VV}{\mathbb{V}}
-\newcommand{\VVs}{\many{\VV}}
-\newcommand{\CC}{\mathbb{C}}
+%% \newcommand{\VV}{\mathbb{V}}
+%% \newcommand{\VVs}{\many{\VV}}
+%% \newcommand{\CC}{\mathbb{C}}
 
-\newcommand{\inst}[2]{\mathit{inst}({#1}, {#2})}
-\newcommand{\instt}[1]{\inst{\theta}{#1}}
+%% \newcommand{\inst}[2]{\mathit{inst}({#1}, {#2})}
+%% \newcommand{\instt}[1]{\inst{\theta}{#1}}
 
 %% \newcommand{\oldinst}[3]{\mathit{inst}({#1},{#2},{#3})}
 %% \newcommand{\oldinstts}[1]{\oldinst{\theta}{\sigs}{#1}}
@@ -1783,8 +1782,6 @@ $\boxed{\compgs{e}{C}}$
 
 \section{Small-step semantics}
 \label{sec:semantics}
-
-\newcommand{\reducesto}{\longrightarrow}
 
 \begin{figure*}
 
