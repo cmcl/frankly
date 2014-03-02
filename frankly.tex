@@ -540,11 +540,16 @@ ways. Or as Frank Sinatra put it,
 do be do be do
 \end{quote}
 
-\subsection{Pipes}
+TODO: some illustration of forwarding?
 
 \subsection{Modular rollback}
 
+TODO: probably scrap this section
+
 \subsection{Effect polymorphism with an invisible effect variable}
+
+TODO: move this discussion after the type system for Frank has been
+introduced
 
 Let us consider the canonical example of a polymorphic higher-order
 function \verb|map|.
@@ -986,11 +991,7 @@ $x$.
 
 
 
-
-
-GIBBERISH
-
-
+TODO: get rid of GIBBERISH
 
 
 
@@ -1473,7 +1474,7 @@ from which we obtain the corresponding Core Frank code by abstracting
 over the fresh variables.
 %
 \[
-\lambda x_0 x_1.M
+\lambda x_0~x_1.M
 \]
 Some pattern matching operations reorder columns as an
 optimisation. Column reordering is not in general a valid optimisation
@@ -1534,116 +1535,16 @@ an operational semantics, we translate Core Frank into a
 call-by-push-value calculus \feff based on Kammar et al's
 \lameff~\cite{KammarLO13}.
 
-At the same time, we make polymorphism explicit. Broadly, \feff types
-are similar to Frank types, with an explicit division between value
-type and computation types. A superficial difference is that rather
-than annotating value returning computations with effects, we shift
-such labels to the thunk containing the computation. The former design
+At the same time, we make polymorphism explicit. The syntax of \feff
+is given in Figure~\ref{fig:feff-syntax}. Broadly, \feff types are
+similar to Frank types, with an explicit division between value type
+and computation types. A superficial difference is that rather than
+annotating value returning computations with effects, we shift such
+labels to the thunk containing the computation. The former design
 seems more convenient to program with, which is why we adopt it in the
 source language. The latter design leads to a more uniform
 presentation of the typing rules, and matches the design of \lameff.
-
-Typing in \feff is unidirectional.
 %
-The syntax of \feff is given in Figure~\ref{fig:feff-syntax}. The
-typing rules for \feff are given in Figure~\ref{fig:feff-typing}.
-
-Call-by-push-value calculi such as \lameff and \feff make a strict
-separation between values and computations, not dissimilar from CPS or
-A-normal form representations, in which all reduction takes place at
-the level of computations. In such a setting it would seem most
-natural to add type abstractions to computations rather than
-values. However, this does not give us what we need in the presence of
-effects, as we need to be able to quantify over effects. Our solution
-is to build the universal quantifier into the thunk type (the
-introduction rule for thunks is the place where ambient effects are
-reifed in a type) and build type application into forcing.
-
-%% As we only allow top-level polymorphism, the translation from \impeff
-%% to \feff is straightforward. Generalisation (type abstraction) only
-%% occurs on top-level definitions, and instantiation (type application)
-%% only occurs on top-level variable lookup.
-
-The type translation from Core Frank to \feff is given by the
-homomorphic extension of the following equations:
-\begin{equations}
-\sem{\thunk{C}} &=& \effbox{\sem{\sigs}}\thunk{\sem{C}}, \quad \text{where }\effs{C}{\sigs} \\
-\sem{\effbox{\sigs}V \to C} &=& \effbox{\sem{\sigs}}\sem{V} \to \sem{C} \\
-\sem{\effbox{\sigs}V} &=& \rt{\sem{V}}\\
-\end{equations}
-%
-  %% drop ([Sig]{C}) = {drop(C) drop(Sig)}
-  %%
-  %% drop ( <V> ) Sig          = [ drop (Sig) ] drop(V)
-  %% drop ( [Sig']V -> C ) Sig = [ drop (Sig') ] drop(V) -> drop(C) drop(Sig)
-%
-The term translation is a call by value embedding of Core Frank into
-\feff:
-%
-\begin{equations}
-\sem{x} &=& \key{ret}~x \\
-\sem{f^{\sigs, \many{T}}} &=& f~\sem{\sigs}~\sem{\many{T}} \\
-\\
-\sem{k~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~\key{ret}~(k~\many{x}) \\
-\sem{\thunk{e}} &=& \key{ret}~\thunk{\sem{e}} \\
-\\
-\sem{c~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~c~\many{x} \\
-\sem{d~v} &=& \key{let}~x=\sem{v} ~\key{in}~d~x \\
-\sem{\force{u}} &=& \key{let}~x=\sem{u} ~\key{in}~\force{x} \\
-\\
-\sem{\lambda x.e} &=& \lambda x.\sem{e} \\
-\multicolumn{3}{@{}l}{\sem{\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k} =} \\
-\multicolumn{3}{@{}l}
-  {\qquad \key{let}~x=\sem{u} ~\key{in}~
-    \key{case}~x~\key{of}~(k~\many{x_k} \mapsto \sem{e_k})_k} \\
-\multicolumn{3}{@{}l}{\sem{\key{handle}~d~\key{with}~(\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert x \mapsto e} =} \\
-\multicolumn{3}{@{}l}
-  {\qquad \key{handle}~\sem{d}~\key{with}~ 
-            (\handle{c~\many{x_c}}{g_c} \mapsto \sem{e_c})_c
-            \medvert x \mapsto \sem{e}} \\
-\end{equations}%
-%% \[
-%% \bl
-%% \seml
-%%   \inferrule
-%%     {f:\forall \varepsilon \many{X}.V \in \Gamma \\
-%%      \dom(\theta) = \set{\varepsilon, \many{X}} \\
-%%      \theta(\varepsilon) = \sigs}
-%%     {\makesgs{f}{\theta(V)}}
-%% \semr \qquad \\[3ex]
-%% \hfill = \force{(f~\sigs~\many{\theta(X)})} \\
-%% \el
-%% \]
-
-\begin{proposition}
-The translation $\sem{-}$ from Core Frank to \feff is type preserving.
-\begin{itemize}
-\item If $\makesgs{u}{V}$ then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{u}}{\rt{\sem{V}}}$.
-\item If $\hasgs{V}{v}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{v}}{\rt{\sem{V}}}$.
-\item If $\cangs{d}{C}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{d}}{\sem{C}}$.
-\item If $\idoesg{C}{e}$ and $\effs{C}{\sigs}$ then
-  $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{e}}{\sem{C}}$.
-\end{itemize}
-\end{proposition}
-
-
-%% \[
-%% \bl
-%% \seml
-%%   \inferrule
-%%     {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-%%      \theta(\varepsilon) = \sigs}
-%%     {\val{\Gamma, x:V}{x}{\theta(V)}}
-%% \semr
-%% = \\
-%%   \inferrule
-%%     {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
-%%      \theta(\varepsilon) = \sigs}
-%%     {\val{\Gamma, x:\forall \many{Z}.V}{x~\theta(\many{Z})}{\theta{V}}} \\
-%% \el
-%% \]
-
-
 \begin{figure}
 Types
 \begin{syntax}
@@ -1688,6 +1589,8 @@ Terms
 \caption{\feff Syntax}
 \label{fig:feff-syntax}
 \end{figure}
+
+
 
 \begin{figure*}
 $\boxed{\valg{v}{V}}$
@@ -1779,9 +1682,120 @@ $\boxed{\compgs{e}{C}}$
 \caption{\feff Typing rules}
 \label{fig:feff-typing}
 \end{figure*}
+%
+The typing rules for \feff are given in
+Figure~\ref{fig:feff-typing}. Typing in \feff is unidirectional.
+
+Call-by-push-value calculi such as \lameff and \feff make a strict
+separation between values and computations, not dissimilar from CPS or
+A-normal form representations, in which all reduction takes place at
+the level of computations. In such a setting it would seem most
+natural to add type abstractions to computations rather than
+values. However, this does not give us what we need in the presence of
+effects, as we need to be able to quantify over effects. Our solution
+is to build the universal quantifier into the thunk type (the
+introduction rule for thunks is the place where ambient effects are
+reifed in a type) and build type application into forcing.
+
+The type translation from Core Frank to \feff is given by the
+homomorphic extension of the following equations:
+\begin{equations}
+\sem{\thunk{C}} &=& \effbox{\sem{\sigs}}\thunk{\sem{C}}, \quad \text{where }\effs{C}{\sigs} \\
+\sem{\effbox{\sigs}V \to C} &=& \effbox{\sem{\sigs}}\sem{V} \to \sem{C} \\
+\sem{\effbox{\sigs}V} &=& \rt{\sem{V}}\\
+\end{equations}%
+%
+  %% drop ([Sig]{C}) = {drop(C) drop(Sig)}
+  %%
+  %% drop ( <V> ) Sig          = [ drop (Sig) ] drop(V)
+  %% drop ( [Sig']V -> C ) Sig = [ drop (Sig') ] drop(V) -> drop(C) drop(Sig)
+%
+The term translation is a call by value embedding of Core Frank into
+\feff:
+%
+\begin{equations}
+\sem{x} &=& \key{ret}~x \\
+\sem{f^{\sigs, \many{T}}} &=& f~\sem{\sigs}~\sem{\many{T}} \\
+\\
+\sem{k~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~\key{ret}~(k~\many{x}) \\
+\sem{\thunk{e}} &=& \key{ret}~\thunk{\sem{e}} \\
+\\
+\sem{c~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~c~\many{x} \\
+\sem{d~v} &=& \key{let}~x=\sem{v} ~\key{in}~d~x \\
+\sem{\force{u}} &=& \key{let}~x=\sem{u} ~\key{in}~\force{x} \\
+\\
+\sem{\lambda x.e} &=& \lambda x.\sem{e} \\
+\multicolumn{3}{@{}l}{\sem{\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k} =} \\
+\multicolumn{3}{@{}l}
+  {\qquad \key{let}~x=\sem{u} ~\key{in}~
+    \key{case}~x~\key{of}~(k~\many{x_k} \mapsto \sem{e_k})_k} \\
+\multicolumn{3}{@{}l}{\sem{\key{handle}~d~\key{with}~(\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert x \mapsto e} =} \\
+\multicolumn{3}{@{}l}
+  {\qquad \key{handle}~\sem{d}~\key{with}~ 
+            (\handle{c~\many{x_c}}{g_c} \mapsto \sem{e_c})_c
+            \medvert x \mapsto \sem{e}} \\
+\end{equations}%
+%% \[
+%% \bl
+%% \seml
+%%   \inferrule
+%%     {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+%%      \dom(\theta) = \set{\varepsilon, \many{X}} \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\makesgs{f}{\theta(V)}}
+%% \semr \qquad \\[3ex]
+%% \hfill = \force{(f~\sigs~\many{\theta(X)})} \\
+%% \el
+%% \]
+
+\begin{proposition}
+The translation $\sem{-}$ from Core Frank to \feff is type preserving.
+\begin{itemize}
+\item If $\makesgs{u}{V}$ then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{u}}{\rt{\sem{V}}}$.
+\item If $\hasgs{V}{v}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{v}}{\rt{\sem{V}}}$.
+\item If $\cangs{d}{C}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{d}}{\sem{C}}$.
+\item If $\idoesg{C}{e}$ and $\effs{C}{\sigs}$ then
+  $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{e}}{\sem{C}}$.
+\end{itemize}
+\end{proposition}
+
+Kammar et al~\cite{KammarLO13} classify a number of different
+varieties of handler.
+%
+The handlers in \feff (and indeed Frank) are \emph{shallow} in that,
+unlike Plotkin and Pretnar's original deep handlers, the handler is
+not automatically rewrapped around the continuation when handling a
+command. Roughly, deep handlers perform a fold over computations,
+whereas shallow handles perform a case split. Deep handlers are
+denotationally better behaved than shallow handlers, but shallow
+handlers sometimes appear more convenient to program with.
+%
+The handlers in \feff (and indeed Frank) are polymorphic forwarding
+handlers. The form of polymorphism amounts to a kind of row
+polymorphism with shadowing, unlike the more conventional kind of row
+polymorphism suggested by Kammar et al.
+
+%% \[
+%% \bl
+%% \seml
+%%   \inferrule
+%%     {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\val{\Gamma, x:V}{x}{\theta(V)}}
+%% \semr
+%% = \\
+%%   \inferrule
+%%     {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\val{\Gamma, x:\forall \many{Z}.V}{x~\theta(\many{Z})}{\theta{V}}} \\
+%% \el
+%% \]
+
 
 \section{Small-step semantics}
 \label{sec:semantics}
+
+TODO: write this section
 
 \begin{figure*}
 
@@ -1876,9 +1890,13 @@ H(\key{c}, \many{v}, u)
 \section{Related work}
 \label{sec:related}
 
+TODO: write this section
+
 
 \section{Conclusion and future work}
 \label{sec:conclusion}
+
+TODO: write this section
 
 
 %% \begin{abstract}
