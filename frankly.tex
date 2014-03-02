@@ -261,15 +261,14 @@ The contributions of this paper are:
   a way that incomplete or ambiguous pattern matching can be realised
   as concrete effects that can be handled however the programmer
   chooses using further effect handlers.
-\item A characterisation of effect-handlers as generalised functions.
-\item Multi-handlers for handling multiple computations over different
-  effect sets simultaneously.
-\item A type system for Frank.
-\item A series of type preserving translations from Frank into
-  successively more canonical type systems, culminating in \feff a
-  polymorphic variant of the \lameff calculus of Kammar et
-  al~\cite{KammarLO13}, which in turn is an extension of Levy's
-  call-by-push-value calculus~\cite{Levy2004}.
+\item Multi-handlers as both an abstraction for handling multiple
+  computations over different effect sets simultaneously and a
+  characterisation of effect-handlers as generalised functions.
+\item A prescription for perform pattern matching compilation for
+  Frank into a core language Core Frank.
+\item A translation from Core Frank into \feff a polymorphic variant
+  of the \lameff calculus of Kammar et al~\cite{KammarLO13}, which in
+  turn extends Levy's call-by-push-value calculus~\cite{Levy2004}.
 \item A straightforward small-step operational semantics for \feff,
   yielding, in combination with the translation to \feff, a type
   soundness result for Frank.
@@ -320,7 +319,7 @@ Section~\ref{sec:examples} introduces Frank by
 example. Section~\ref{sec:frank} presents a type system for
 Frank. Section~\ref{sec:core} describes how to elaborate
 multi-handlers and pattern matching into Core Frank, a language of
-plain call-by-value functions and explicit case analysis and unary
+plain call-by-value functions, explicit case analysis and unary
 handler constructs. Section~\ref{sec:feff} gives a call-by-value
 embedding of Core Frank into \feff, a variant of Kammar et al's
 \lameff calculus with shallow handlers, explict polymorphism and
@@ -807,7 +806,7 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
   {\hasgs{D~\many{U}}{k~\many{v}}}
 
 \inferrule
-  {\idoes{\Gamma}{C}{e}}
+  {\idoes{\Gamma}{C}{e} \\ e \text{ is complete for } C}
   {\hasgs{\thunk{C}}{\thunk{e}}}
 \end{mathpar}
 
@@ -929,7 +928,9 @@ it is a returner whose effects agree with the ambient effects.
 
 Any inferable value ($u$) is also checkable against its inferred
 type. Data type ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
-checkable by checking their components.
+checkable by checking their components. The side condition on the
+thunk introduction rule requires that the pattern matching clauses of
+$e$ be complete with respect to the type $C$ of $e$.
 
 A thunk $u$ can by forced ($u!$) if its inferred type agrees with the
 ambient effects. To infer the type of a handler application $d~e$, we
@@ -1374,36 +1375,25 @@ Shallow pattern matching on a single request becomes unary effect
 handling. Shallow pattern matching on a data type value becomes case
 analysis. Nested pattern matching on multiple computations is realised
 as a pattern matching tree constructed from handlers and case
-statements. Standard algorithms for pattern matching compilation
-apply. 
+statements. 
 
-%% It may be instructive to observe the representation of the core
-%% language handler and case constructs in the source language.
+We may adapt standard algorithms for pattern matching compilation
+apply~(e.g. \cite{Augustsson85} or \cite{Maranget08}). Rather than
+comitting to a particular one, we outline how a pattern matching
+compiler fits into our setting, what input it takes, and what kind of
+output it must produce.
 
-%% \[
-%% \ba{@{}l@{}}
-%% \key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k
-%%   \equiv \\
-%% \qquad
-%%     \key{let}~h = \thunk{\!\!\mathord{\medvert}_{\!\!k} (k~\many{x_k} \mapsto e_k)}~\key{in}~h~u \\
-%% \key{handle} ~d~ \key{with}~
-%%            (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
-%%             x        \mapsto e
-%%   \equiv \\
-%% \qquad
-%%      \key{let}~h = \thunk{\!\!\medvert_{\!\!c} (\handle{c~\many{x_c}}{g_c} \mapsto e_c) \medvert x \mapsto e}
-%%      ~\key{in}~h~d
-%% \ea
-%% \]
-
+\begin{sloppypar}
 Given a Frank expression $\thunk{e}$ such that $\idoesg{R_1 \dots R_n
-  \to R}{e}$ we compile it to an equivalent Core Frank expression.
+  \to R}{e}$
+%
+we compile it to an equivalent Core Frank expression $\thunk{\pc{e}}$.
 %
 First we expand all of the clauses in $e$ to yield an $n$ column
 pattern matrix. For instance, suppose the arguments have types
 $\effbox{\var{Send~Char}, \var{Abort}}\var{Unit}$ and
 $\effbox{\var{Receive~Char}}$, and we have the following clauses:
-
+\end{sloppypar}
 \[
 \ba{@{}l@{~}l@{~}l@{}}
   (\handle{\var{send}~x}{s}) & (\handle{\var{receive}}{r}) & \mapsto e_1 \\
@@ -1434,8 +1424,8 @@ The goal of pattern matching compilation is to generate a pattern
 matching tree that matches the variable vector against all of the
 patterns in the pattern matrix in the correct order.
 
-In our setting, pattern matching trees $M$ are build up from leaves,
-case analysis, and handlers.
+In Frank, pattern matching trees $M$ are built up from leaves, case
+analysis, and handlers.
 %% \begin{equations}
 %% M &::= & \many{e} \\
 %%   &\mid& \key{case}~(x:D~\many{U})~\key{of}~(k~\many{x_k} \mapsto M_k)_{k \in D} \\
@@ -1456,9 +1446,9 @@ the patterns. If there exists a leaf with no elements, then the
 pattern matching is incomplete; if there exists a leaf with multiple
 elements, then the pattern matching is ambiguous.
 %
-Our default strategy is to class incomplete pattern matching as a type
-error, and take the first element in the case of ambiguous pattern
-matching.
+Our default strategy (as indicated by the thunk introduction rule) is
+to class incomplete pattern matching as a type error, and to keep only
+the first element in the case of ambiguous pattern matching.
 %
 Our example generates the following pattern matching tree:
 \[
@@ -1486,26 +1476,39 @@ over the fresh variables.
 \[
 \lambda x_0 x_1.M
 \]
+Some pattern matching operations reorder columns as an
+optimisation. Column reordering is not in general a valid optimisation
+in Frank. This is because commands in the ambient effects, but not in
+the argument effects, are implicitly forwarded, and the order in which
+they are forwarded is left-to-right. (The forwarding behaviour is made
+precise in the Section~\ref{sec:semantics}.)
 
-Of course, because Core Frank now takes values as arguments whereas
-Frank takes computations, each argument must be wrapped in a thunk
+Of course, because Core Frank takes values as arguments whereas Frank
+takes computations, each argument must be wrapped in a thunk
 constructor.
-
+%
 The type translation is given simply by the homorphic extension of the
 following equation on function types:
 \begin{equations}
 \pc{\effbox{\sigs}V} \to \pc{C} &=& \thunk{\effbox{\pc{\sigs}}\pc{V}} \to \pc{C} \\
 \end{equations}
 
-\begin{proposition}
-~
+A correct pattern matching translation $\pc{-}$ from Frank to Core
+Frank should be type preserving.
 \begin{itemize}
 \item If $\makesgs{u}{V}$ then $\makes{\pc{\Gamma}}{\pc{\sigs}}{\pc{u}}{\pc{V}}$.
 \item If $\hasgs{V}{v}$   then $\has{\pc{\Gamma}}{\pc{\sigs}}{\pc{V}}{\pc{v}}$.
 \item If $\cangs{d}{C}$   then $\can{\pc{\Gamma}}{\pc{\sigs}}{\pc{d}}{\pc{C}}$.
-\item If $\idoesg{C}{e}$  then $\idoes{\pc{\Gamma}}{\pc{C}}{\pc{e}}$.
+%%\item If $\idoesg{C}{e}$  then $\idoes{\pc{\Gamma}}{\pc{C}}{\pc{e}}$.
 \end{itemize}
-\end{proposition}
+
+As an extension to Frank, we might allow incomplete and ambiguous
+pattern matching. The former may be permitted if the ambient effects
+contain the $\var{Abort}$ signature, in which case incomplete patterns
+are translated into the $\var{abort}:\var{Zero}$ command, which can
+then be handled however the programmer wishes. Simiarly, we can define
+a $\var{choice}:X(X, X)$ command, in order to allow ambiguous pattern
+matches to be handled by the programmer.
 
 %% \begin{equations}
 %% \pc{D~\many{U}) &=& D~\pc{\many{U}} \\
@@ -1527,35 +1530,56 @@ following equation on function types:
 \section{Explicit Control flow and Polymorphism}
 \label{sec:feff}
 
+In order to make control flow explicit, and to ease the definition of
+an operational semantics, we translate Core Frank into a
+call-by-push-value calculus \feff based on Kammar et al's
+\lameff~\cite{KammarLO13}.
 
-A superficial change to the types is that rather than annotating value
-returning computations with effects, we shift such labels to the thunk
-containing the computation. The former design seems more convenient to
-program with, which is why we adopt it in the source language. The
-latter design leads to a slightly more uniform presentation of the
-type rules (the checking judgement for computations now has the same
-shape as the checking judgement for values, and we no longer need the
-$\judgeword{does}$ judgement).
+At the same time, we make polymorphism explicit. Broadly, \feff types
+are similar to Frank types, with an explicit division between value
+type and computation types. A superficial difference is that rather
+than annotating value returning computations with effects, we shift
+such labels to the thunk containing the computation. The former design
+seems more convenient to program with, which is why we adopt it in the
+source language. The latter design leads to a more uniform
+presentation of the typing rules, and matches the design of \lameff.
+
+Typing in \feff is unidirectional.
+%
+The syntax of \feff is given in Figure~\ref{fig:feff-syntax}. The
+typing rules for \feff are given in Figure~\ref{fig:feff-typing}.
+
+Call-by-push-value calculi such as \lameff and \feff make a strict
+separation between values and computations, not dissimilar from CPS or
+A-normal form representations, in which all reduction takes place at
+the level of computations. In such a setting it would seem most
+natural to add type abstractions to computations rather than
+values. However, this does not give us what we need in the presence of
+effects, as we need to be able to quantify over effects. Our solution
+is to build the universal quantifier into the thunk type (the
+introduction rule for thunks is the place where ambient effects are
+reifed in a type) and build type application into forcing.
 
 %% As we only allow top-level polymorphism, the translation from \impeff
 %% to \feff is straightforward. Generalisation (type abstraction) only
 %% occurs on top-level definitions, and instantiation (type application)
 %% only occurs on top-level variable lookup.
 
-The translation on types is given by the homomorphic extension of the
-following equations:
+The type translation from Core Frank to \feff is given by the
+homomorphic extension of the following equations:
 \begin{equations}
 \sem{\thunk{C}} &=& \effbox{\sem{\sigs}}\thunk{\sem{C}}, \quad \text{where }\effs{C}{\sigs} \\
 \sem{\effbox{\sigs}V \to C} &=& \effbox{\sem{\sigs}}\sem{V} \to \sem{C} \\
 \sem{\effbox{\sigs}V} &=& \rt{\sem{V}}\\
 \end{equations}
-
+%
   %% drop ([Sig]{C}) = {drop(C) drop(Sig)}
-
+  %%
   %% drop ( <V> ) Sig          = [ drop (Sig) ] drop(V)
   %% drop ( [Sig']V -> C ) Sig = [ drop (Sig') ] drop(V) -> drop(C) drop(Sig)
-
-Call by value embedding of Core Frank into \feff:
+%
+The term translation is a call by value embedding of Core Frank into
+\feff:
 %
 \begin{equations}
 \sem{x} &=& \key{ret}~x \\
@@ -1593,7 +1617,7 @@ Call by value embedding of Core Frank into \feff:
 %% \]
 
 \begin{proposition}
-~
+The translation $\sem{-}$ from Core Frank to \feff is type preserving.
 \begin{itemize}
 \item If $\makesgs{u}{V}$ then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{u}}{\rt{\sem{V}}}$.
 \item If $\hasgs{V}{v}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{v}}{\rt{\sem{V}}}$.
@@ -1602,63 +1626,6 @@ Call by value embedding of Core Frank into \feff:
   $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{e}}{\sem{C}}$.
 \end{itemize}
 \end{proposition}
-
-
-
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-~\\
-
-
 
 
 %% \[
@@ -1681,7 +1648,7 @@ Call by value embedding of Core Frank into \feff:
 \begin{figure}
 Types
 \begin{syntax}
-\slab{values}       &U, V   &::=& D~\many{U} \mid \forall \many{X}.\effbox{\sigs}\thunk{C} \mid X \\ % \mid \forall X.V \\
+\slab{values}       &U, V   &::=& D~\many{U} \mid \forall \many{Z}.\effbox{\sigs}\thunk{C} \mid X \\ % \mid \forall X.V \\
 \slab{computations} &C      &::=& \rt{V} \mid V \to C  % \mid \forall X.C \\
 \\[1ex]
 \slab{quantifiers}  &Z      &::=& X \mid \varepsilon \\
