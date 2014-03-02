@@ -1780,12 +1780,16 @@ homomorphic extension of the following equations:
   %% drop ( <V> ) Sig          = [ drop (Sig) ] drop(V)
   %% drop ( [Sig']V -> C ) Sig = [ drop (Sig') ] drop(V) -> drop(C) drop(Sig)
 %
+In order to simplify the definition of the term translation, we
+annotate instances of polymorphic variables $f$ with the type
+arguments they are instantiated with as a pre-processing step.
+%
 The term translation is a call by value embedding of Core Frank into
 \feff:
 %
 \begin{equations}
 \sem{x} &=& \key{ret}~x \\
-\sem{f^{\sigs, \many{T}}} &=& f~\sem{\sigs}~\sem{\many{T}} \\
+\sem{f^{\many{T}}} &=& f~\sem{\many{T}} \\
 \\
 \sem{k~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~\key{ret}~(k~\many{x}) \\
 \sem{\thunk{e}} &=& \key{ret}~\thunk{\sem{e}} \\
@@ -1817,6 +1821,8 @@ The term translation is a call by value embedding of Core Frank into
 %% \hfill = \force{(f~\sigs~\many{\theta(X)})} \\
 %% \el
 %% \]
+%
+
 
 \begin{proposition}
 The translation $\sem{-}$ from Core Frank to \feff is type preserving.
@@ -1865,7 +1871,26 @@ polymorphism suggested by Kammar et al.
 \section{Small-step semantics}
 \label{sec:semantics}
 
-TODO: write this section
+We give a small step operation semantics for \feff inspired by Kammar
+et al's semantics for \lameff~\cite{KammarLO13}.
+%
+All of the rules except the ones for handlers are pretty standard
+$\beta$-reductions.
+%
+The rules for forcing are slightly unusual due to the hard-wiring of
+polymorphism into thunks.
+
+Returns $\key{ret}~v$ are handled by substituting the value into the
+handler's return clause. Commands are handled by capturing the
+continuation up to the current handler and dispatching to the
+appropriate clause for the command. If a clause is defined in the
+handler, then that clause is selected. If not, then the command is
+forwarded to be handled by an outer handler, but its continuation is
+handled by the current handler.
+
+Delimited computation contexts $D$ are used to characterise the
+continuation up to the current handler. Computation contexts $E$
+amount to evaluation contexts for a call-by-push-value setting.
 
 \begin{figure*}
 
