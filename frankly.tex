@@ -47,7 +47,7 @@
 \newcommand{\estack}{\end{array}}
 
 \newenvironment{equations}{\[\ba{@{}r@{~}c@{~}l@{}}}{\ea\]}
-\newenvironment{eqs}{\ba{@{}r@{~}c@{~}l@{}}}{\ea}
+%% \newenvironment{eqs}{\ba{@{}r@{~}c@{~}l@{}}}{\ea}
 
 \newenvironment{syntax}{\[\ba{@{}l@{~}r@{~}c@{~}l@{}}}{\ea\]}
 
@@ -58,9 +58,7 @@
 %\renewcommand{\sigs}{\Sigma s}
 \newcommand{\sigentails}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\text{-\!-}}\,}
 
-\newcommand{\sigmodels}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\mathord{=}}\,}
-
-
+%% \newcommand{\sigmodels}[1]{\mathbin{[{\text{\scriptsize ${#1}$}}]\!\mathord{=}}\,}
 % \newcommand{\sigentails}[1]{\vdash_{#1}}
 
 \newcommand{\val}[3]  {#1 \vdash {#2} : {#3}}
@@ -74,11 +72,14 @@
 %% \newcommand{\is}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
 %% \newcommand{\isgs}{\is{\Gamma}{\sigs}}
 
+%% \newcommand{\cdoes}[4]{#1 \sigentails{#2} {#3} \judgeword{has} {#4}
+%% \newcommand{\cdoesgs}{\cdoes{\Gamma}{\sigs}}
+
+
 \newcommand{\makes}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
 \newcommand{\has}[4] {#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
 \newcommand{\can}[4]{#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
-\newcommand{\does}[4]{#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
-\newcommand{\idoes}[3]{#1 \vdash {#2} \judgeword{has} {#3}}
+\newcommand{\does}[3]{#1 \vdash {#2} \judgeword{has} {#3}}
 
 \newcommand{\effs}[2]{{#1} \judgeword{does} {#2}}
 
@@ -88,8 +89,7 @@
 \newcommand{\makesgs}{\makes{\Gamma}{\sigs}}
 \newcommand{\hasgs}{\has{\Gamma}{\sigs}}
 \newcommand{\cangs}{\can{\Gamma}{\sigs}}
-\newcommand{\doesgs}{\does{\Gamma}{\sigs}}
-\newcommand{\idoesg}{\idoes{\Gamma}}
+\newcommand{\doesg}{\does{\Gamma}}
 
 
 % Theorem environments
@@ -821,7 +821,7 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
   {\hasgs{D~\many{U}}{k~\many{v}}}
 
 \inferrule
-  {\idoes{\Gamma}{C}{e} \\ e \text{ is complete for } C}
+  {\does{\Gamma}{C}{e} \\ e \text{ is complete for } C}
   {\hasgs{\thunk{C}}{\thunk{e}}}
 \end{mathpar}
 
@@ -834,7 +834,7 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 
 \inferrule
   {\cangs{d}{\effbox{\sigs'}V \to C} \\
-   \idoesg{\effbox{\sigs \oplus \sigs'}V}{e}}
+   \doesg{\effbox{\sigs \oplus \sigs'}V}{e}}
   {\can{\Gamma}{\sigs}{d~e}{C}}
 
 \inferrule
@@ -852,31 +852,31 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
 
 \inferrule
-  {(\idoes{\Gamma, \many{f : \forall \many{Z}.Q}}{e_i}{Q_i})_i \\
+  {(\does{\Gamma, \many{f : \forall \many{Z}.Q}}{e_i}{Q_i})_i \\
    \can{\Gamma, \many{f : \forall \many{Z}.Q}}{\sigs}{d}{C}}
   {\cangs{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d}{C}}
 \end{mathpar}
 
-$\boxed{\idoesg{C}{e}}$
+$\boxed{\doesg{C}{e}}$
 
 \begin{mathpar}
 \inferrule
   {\hasgs{V}{v}}
-  {\idoesg{\effbox{\sigs}V}{v}}
+  {\doesg{\effbox{\sigs}V}{v}}
 
 \inferrule
   {\many{\sigs'} \text{ closed} \\
    (\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
-   \idoes{\Gamma, \many{\Delta}}{C}{e}}
-  {\idoesg{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
+   \does{\Gamma, \many{\Delta}}{C}{e}}
+  {\doesg{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
 
 \inferrule
   {V \text{uninhabited}}
-  {\idoesg{\effbox{\sigs'}V \to C}{()}}
+  {\doesg{\effbox{\sigs'}V \to C}{()}}
 
 \inferrule
-  {\idoesg{R \to C}{e} \\ \idoesg{R \to C}{e'}}
-  {\idoesg{R \to C}{e \medvert e'}}
+  {\doesg{R \to C}{e} \\ \doesg{R \to C}{e'}}
+  {\doesg{R \to C}{e \medvert e'}}
 \end{mathpar}
 
 $\boxed{\pat{V}{p}{\Delta}}$
@@ -929,7 +929,7 @@ The judgement $\cangs{d}{C}$ says that given type environment
 $\Gamma$, ambient effects $\sigs$, and inferable computation term $d$,
 then we can infer that $d$ \emph{is} of type $C$.
 %
-The judgement $\idoesg{C}{e}$ says that given type environment
+The judgement $\doesg{C}{e}$ says that given type environment
 $\Gamma$, computation type $C$, and checkable computation term $e$,
 then we can check that $C$ \emph{has} $e$ as a valid computation term.
 
@@ -1211,7 +1211,7 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
   {\hasgs{D~\many{U}}{k~\many{v}}}
 
 \inferrule
-  {\idoes{\Gamma}{C}{e}}
+  {\does{\Gamma}{C}{e}}
   {\hasgs{\thunk{C}}{\thunk{e}}}
 \end{mathpar}
 
@@ -1242,37 +1242,37 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
 
 \inferrule
-  {(\idoes{\Gamma, \many{f : \forall \many{Z}.Q}}{e_i}{Q_i})_i \\
+  {(\does{\Gamma, \many{f : \forall \many{Z}.Q}}{e_i}{Q_i})_i \\
    \can{\Gamma, \many{f : \forall \many{Z}.Q}}{\sigs}{d}{C}}
   {\cangs{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d}{C}}
 \end{mathpar}
 
-$\boxed{\idoesg{C}{e}}$
+$\boxed{\doesg{C}{e}}$
 
 \begin{mathpar}
 \inferrule
   {\hasgs{V}{v}}
-  {\idoesg{\effbox{\sigs}V}{v}}
+  {\doesg{\effbox{\sigs}V}{v}}
 
 \inferrule
-  {\idoes{\Gamma, x:V}{C}{e}}
-  {\idoesg{V \to C}{\lambda x.e}}
+  {\does{\Gamma, x:V}{C}{e}}
+  {\doesg{V \to C}{\lambda x.e}}
 
 \inferrule
   {\makesgs{u}{D~\many{U}} \\
    \\ \effs{C}{\sigs} \\
-   (\idoes{\Gamma, \many{x_k}:\many{V}}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
-  {\idoesg{C}{\key{case}~ u ~\key{of}~
+   (\does{\Gamma, \many{x_k}:\many{V}}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
+  {\doesg{C}{\key{case}~ u ~\key{of}~
                (k~\many{x_k} \mapsto e_k)_k}}
 
 \inferrule
   {\sigs' \text{ closed} \\
    \effs{C}{\sigs} \\
    \can{\Gamma}{\sigs \oplus \sigs'}{d}{\effbox{\sigs \oplus \sigs'}{V}} \\
-   (\idoes{\Gamma, \many{x_c}:\many{V}, g_c:\thunk{U \to \effbox{\sigs \oplus \sigs'}{V}}}
+   (\does{\Gamma, \many{x_c}:\many{V}, g_c:\thunk{U \to \effbox{\sigs \oplus \sigs'}{V}}}
          {C}{e_c})_{c : U(\many{V}) \in \sigs'} \\
-   \idoes{\Gamma, x:V}{C}{e}}
-  {\idoes{\Gamma}
+   \does{\Gamma, x:V}{C}{e}}
+  {\does{\Gamma}
          {C}{\key{handle}~ d ~\key{with}~
                (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
                 x \mapsto e}}
@@ -1373,7 +1373,7 @@ $\boxed{\idoesg{C}{e}}$
 %%   {\hasgs{D~\many{U}}{k~\many{v}}}
 
 %% \inferrule
-%%   {\does{\Gamma}{\sigs'}{C}{e}}
+%%   {\cdoes{\Gamma}{\sigs'}{C}{e}}
 %%   {\hasgs{\effbox{\sigs'}\thunk{C}}{\thunk{e}}}
 %% \end{mathpar}
 
@@ -1400,35 +1400,35 @@ $\boxed{\idoesg{C}{e}}$
 %%   {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
 
 %% \inferrule
-%%   {(\idoes{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{e_i}{Q_i})_i \\
+%%   {(\does{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{e_i}{Q_i})_i \\
 %%    \can{\Gamma, \many{f : \forall \varepsilon \many{X}.Q}}{\sigs}{d}{C}}
 %%   {\cangs{\key{letrec}~\many{f : \forall \varepsilon \many{X}.Q = e}~\key{in}~d}{C}}
 %% \end{mathpar}
 
-%% $\boxed{\doesgs{C}{e}}$
+%% $\boxed{\cdoesgs{C}{e}}$
 
 %% \begin{mathpar}
 %% \inferrule
 %%   {\hasgs{V}{v}}
-%%   {\doesgs{\rt{V}}{v}}
+%%   {\cdoesgs{\rt{V}}{v}}
 
 %% \inferrule
-%%   {\does{\Gamma, x:V}{\sigs}{C}{e}}
-%%   {\doesgs{V \to C}{\lambda x.e}}
+%%   {\cdoes{\Gamma, x:V}{\sigs}{C}{e}}
+%%   {\cdoesgs{V \to C}{\lambda x.e}}
 
 %% \inferrule
 %%   {\makesgs{u}{D~\many{U}} \\
-%%    (\does{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
-%%   {\doesgs{C}{\key{case}~ u ~\key{of}~
+%%    (\cdoes{\Gamma, \many{x_k}:\many{V}}{\sigs}{C}{e_k})_{k~\many{V} \in D~\many{U}}}
+%%   {\cdoesgs{C}{\key{case}~ u ~\key{of}~
 %%                (k~\many{x_k} \mapsto e_k)_k}}
 
 %% \inferrule
 %%   {\sigs' \text{ closed} \\
 %%    \can{\Gamma}{\sigs \oplus \sigs'}{d}{\rt{V}} \\
-%%    (\does{\Gamma, \many{x_c}:\many{V}, g_c:\effbox{\sigs \oplus \sigs'}\thunk{U \to \rt{V}}}
+%%    (\cdoes{\Gamma, \many{x_c}:\many{V}, g_c:\effbox{\sigs \oplus \sigs'}\thunk{U \to \rt{V}}}
 %%          {\sigs}{C}{e_c})_{c : U(\many{V}) \in \sigs'} \\
-%%    \does{\Gamma, x:V}{\sigs}{C}{e}}
-%%   {\does{\Gamma}{\sigs}
+%%    \cdoes{\Gamma, x:V}{\sigs}{C}{e}}
+%%   {\cdoes{\Gamma}{\sigs}
 %%          {C}{\key{handle}~ d ~\key{with}~
 %%                (\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert
 %%                 x \mapsto e}}
@@ -1454,7 +1454,7 @@ compiler fits into our setting, what input it takes, and what kind of
 output it must produce.
 
 \begin{sloppypar}
-Given a Frank expression $\thunk{e}$ such that $\idoesg{R_1 \dots R_n
+Given a Frank expression $\thunk{e}$ such that $\doesg{R_1 \dots R_n
   \to R}{e}$
 %
 we compile it to an equivalent Core Frank expression $\thunk{\pc{e}}$.
@@ -1569,7 +1569,7 @@ Frank should be type preserving.
 \item If $\makesgs{u}{V}$ then $\makes{\pc{\Gamma}}{\pc{\sigs}}{\pc{u}}{\pc{V}}$.
 \item If $\hasgs{V}{v}$   then $\has{\pc{\Gamma}}{\pc{\sigs}}{\pc{V}}{\pc{v}}$.
 \item If $\cangs{d}{C}$   then $\can{\pc{\Gamma}}{\pc{\sigs}}{\pc{d}}{\pc{C}}$.
-%%\item If $\idoesg{C}{e}$  then $\idoes{\pc{\Gamma}}{\pc{C}}{\pc{e}}$.
+%%\item If $\doesg{C}{e}$  then $\does{\pc{\Gamma}}{\pc{C}}{\pc{e}}$.
 \end{itemize}
 
 As an extension to Frank, we might allow incomplete and ambiguous
@@ -1830,7 +1830,7 @@ The translation $\sem{-}$ from Core Frank to \feff is type preserving.
 \item If $\makesgs{u}{V}$ then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{u}}{\rt{\sem{V}}}$.
 \item If $\hasgs{V}{v}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{v}}{\rt{\sem{V}}}$.
 \item If $\cangs{d}{C}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{d}}{\sem{C}}$.
-\item If $\idoesg{C}{e}$ and $\effs{C}{\sigs}$ then
+\item If $\doesg{C}{e}$ and $\effs{C}{\sigs}$ then
   $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{e}}{\sem{C}}$.
 \end{itemize}
 \end{proposition}
