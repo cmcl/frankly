@@ -235,6 +235,11 @@
 %%     Handlers for arrows and idioms
 %%     Relationship with type classes/modules
 
+\begin{abstract}
+TODO
+\end{abstract}
+
+
 \section{Introduction}
 
 This paper explores the design of Frank, a strict functional
@@ -1637,7 +1642,7 @@ Types
 
 Terms
 \begin{syntax}
-\slab{values}       &u, v &::=& x \mid k~\many{v} \mid \thunk{d} \\
+\slab{values}       &u, v &::=& x \mid k~\many{v} \mid \Lambda \many{Z}.\thunk{d} \\
 %%             \mid \Lambda Z.v \mid u~T \\
 \slab{computations} &d, e &::=& \key{case}~u~\key{of}~
                                    (k~\many{x_k} \mapsto e_k)_k
@@ -1671,7 +1676,7 @@ $\boxed{\valg{v}{V}}$
 
 \inferrule
   {\compgs{e}{C}}
-  {\valg{\thunk{e}}{\effbox{\sigs}\thunk{C}}}
+  {\valg{\Lambda \many{Z}.\thunk{e}}{\forall \many{Z}.\effbox{\sigs}\thunk{C}}}
 %% \inferrule
 %%   {\valg{v}{V} \\
 %%    Z \notin \FV(\Gamma)}
@@ -1881,7 +1886,7 @@ TODO: write this section
 %% \\[1ex]
 \key{case}~k_j~\many{v}~\key{of}~(k_i~\many{x_i} \mapsto e_i)_i
   &\reducesto& e_j[\many{v}/\many{x_j}] \\
-\force{\thunk{e}} &\reducesto& e
+\force{((\Lambda \many{Z}.\thunk{e})~\many{T})} &\reducesto& e[\many{T}/\many{Z}]
 \\[1ex]
 (\lambda x.e)~v &\reducesto& e[v/x] \\
 %% (\key{rec}~f~x.e)~v &\reducesto& e[\thunk{\key{rec}~f~x.e}/f, v/x] \\
