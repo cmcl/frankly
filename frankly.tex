@@ -354,6 +354,7 @@ In Plotkin and Power’s setting, one defines algebraic effects with
 respect to an equational theory. In all of the above implementations,
 and in Frank, the equational theory is taken to be the free theory, in
 which there are no equations.
+%
 
 The second author has been plotting Frank since
 2007~\cite{McBride07}. He has implemented a prototype of a previous
@@ -1616,6 +1617,8 @@ Frank should be type preserving.
 \item If $\cangs{d}{C}$   then $\can{\pc{\Gamma}}{\pc{\sigs}}{\pc{d}}{\pc{C}}$.
 %%\item If $\doesg{C}{e}$  then $\does{\pc{\Gamma}}{\pc{C}}{\pc{e}}$.
 \end{itemize}
+
+\subsection{Incomplete and Ambiguous Pattern Matching as Effects}
 
 As an extension to Frank, we might allow incomplete and ambiguous
 pattern matching. The former may be permitted if the ambient effects
