@@ -15,8 +15,11 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{stmaryrd}
-\usepackage{MnSymbol}
 \usepackage{xspace}
+\usepackage{hyperref}
+\usepackage{url}
+
+\usepackage{MnSymbol}
 
 \newcommand{\lameff}{$\lambda_\mathrm{eff}$\xspace}
 \newcommand{\feff}{$F_\textrm{eff}$\xspace}
@@ -265,9 +268,9 @@ effect typing.
 % TODO: more background on algebraic effects and handlers?
 
 Plotkin and Power's algebraic effects~\cite{PlotkinP01a, PlotkinP01b,
-  PlotkinP02}, in conjunction with Plotkin and Pretnar's handlers for
-algebraic effects~\cite{PlotkinP09, PlotkinP13}, provide a compelling
-foundation for effectful programming.
+  PlotkinP02, PlotkinP03}, in conjunction with Plotkin and Pretnar's
+handlers for algebraic effects~\cite{PlotkinP09, PlotkinP13}, provide
+a compelling foundation for effectful programming.
 %
 By separating effect signatures from their implementation, algebraic
 effects provide a high degree of modularity, allowing programmers to
