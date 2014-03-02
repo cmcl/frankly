@@ -700,7 +700,7 @@ do be do be do
 
 
 
-\section{Type system}
+\section{Type System}
 \label{sec:frank}
 
 In this section we give a formal presentation of Frank's type system.
@@ -1148,7 +1148,7 @@ type $\effbox{\emptyset}V$.
 %% straightforward variant of that of lambda-eff.
 
 
-\section{Pattern matching compilation}
+\section{Pattern Matching Compilation}
 \label{sec:core}
 
 We take a fairly standard approach to compiling away pattern
@@ -1641,7 +1641,7 @@ matches to be handled by the programmer.
 %% \end{equations}
 
 
-\section{Explicit Control flow and Polymorphism}
+\section{Explicit Control Flow and Polymorphism}
 \label{sec:feff}
 
 In order to make control flow explicit, and to ease the definition of
@@ -2026,13 +2026,39 @@ H(\key{c}, \many{v}, u)
 \end{itemize}
 \end{proposition}
 
-\section{Related work}
+\section{Related Work}
 \label{sec:related}
 
-TODO: write this section
+We have discussed much of the related work throughout the paper. Here
+we briefly mention some other related work.
 
+A natural implementation for handlers is to use \emph{free
+  monads}~\cite{KammarLO13}. Swierstra~\cite{Swierstra08} illustrates
+how to write effectful programs with free monads in Haskell, taking
+advantage of type-classes to provide a certain amount of modularity.
 
-\section{Conclusion and future work}
+Inspired by Bauer and Pretnar's Eff, Visscher has implemented the
+\texttt{effects} library~\cite{Visscher12}. The key idea is to layer
+continuation monads in the style of Filinski~\cite{Filinski99}, using
+Haskell type classes to automatically infer lifting between layers.
+
+Filinski's work on monadic reflection and layerd monads is closely
+related to effect handlers~\cite{Filinski10}. Monadic reflection
+supports a similar style of composing effects. The key difference is
+that monadic reflection interprets monadic computations in terms of
+other monadic computations, rather than abstracting over and
+interpreting operations
+
+Languages other than Frank that attempt to elide some effect variables
+from source code include Links~\cite{LindleyC12} and Daan Leijen's
+Koka~\cite{Leijen13}. Neither eliminates effect variables altogether.
+
+Swamy et al~\cite{SwamyGLH11} add support for monads in ML, supporting
+direct-style effectful programming in a strict language. Unlike Frank,
+their system is based on monad transformers rather than effect
+handlers.
+
+\section{Conclusion and Future Work}
 \label{sec:conclusion}
 
 TODO: write this section
