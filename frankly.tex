@@ -727,10 +727,10 @@ Types
 
 Terms
 \begin{syntax}
-\slab{inferable values}&u       &::=& x \mid f \mid d                                \\
-\slab{checkable values}&v        &::=& u \mid k~\many{v} \mid \thunk{e}
+\slab{inferable values}&u       &::=& x \mid f \mid c \mid d \\
+\slab{checkable values}&v       &::=& u \mid k~\many{v} \mid \thunk{e}
 \\[1ex]
-\slab{inferable computations}&d &::=& \force{u} \mid d~e \mid c
+\slab{inferable computations}&d &::=& \force{u} \mid d~e
                                \mid  \key{let}~x=d~\key{in}~d' \\
                              &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
 \slab{checkable computations} &e &::=& v \mid \many{r} \mapsto e \mid () \mid e \medvert e
@@ -834,6 +834,10 @@ $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
   {\makesgs{f}{\theta(Q)}}
 
 \inferrule
+  {c : U(\many{V}) \in \sigs}
+  {\makesgs{c}{\thunk{\many{\effbox{}V} \to \effbox{\sigs}U}}}
+
+\inferrule
   {\cangs{d}{\effbox{\sigs}V}}
   {\makesgs{d}{V}}
 \end{mathpar}
@@ -866,10 +870,6 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\cangs{d}{\effbox{\sigs'}V \to C} \\
    \doesg{\effbox{\sigs \oplus \sigs'}V}{e}}
   {\can{\Gamma}{\sigs}{d~e}{C}}
-
-\inferrule
-  {c : U(\many{V}) \in \sigs}
-  {\cangs{c}{\many{\effbox{}V} \to \effbox{\sigs}U}}
 
 %% \inferrule
 %%   {c : U(\many{V}) \in \sigs \\
@@ -980,6 +980,8 @@ type environment. The types of polymorphic variables ($f$) are looked
 up and instantiated. In practice this means applying a simple
 unification-based algorithm.
 %
+The type of a command ($c$) is looked up from the ambient effects.
+%
 An inferable computation ($d$) is also an inferable value, providing
 it is a returner whose effects agree with the ambient effects.
 
@@ -995,8 +997,6 @@ first infer the type of $d$, and then check that the argument matches
 the inferred argument type. Note that the effect set on an argument
 must be closed, and thus we may extend the ambient effect set with the
 argument effect set when checking the argument.
-%
-The type of a command ($c$) is looked up from the ambient effects.
 %
 The term $\key{let}~x=d~\key{in}~d'$ binds the result of running $d$
 in $d'$.
@@ -1186,10 +1186,10 @@ Types
 
 Terms
 \begin{syntax}
-\slab{inferable values}&u       &::=& x \mid f \mid d                                \\
+\slab{inferable values}&u       &::=& x \mid f \mid c \mid d \\
 \slab{checkable values}&v       &::=& u \mid k~\many{v} \mid \thunk{e}
 \\[1ex]
-\slab{inferable computations}&d &::=& \force{u} \mid d~v \mid c
+\slab{inferable computations}&d &::=& \force{u} \mid d~v
                                \mid  \key{let}~x=d~\key{in}~d' \\
                              &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
 \slab{checkable computations} &e  &::= & v \mid \lambda x.e \\
@@ -1238,6 +1238,10 @@ $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
   {\makesgs{f}{\theta(Q)}}
 
 \inferrule
+  {c : U(\many{V}) \in \sigs}
+  {\makesgs{c}{\thunk{\many{V} \to \effbox{\sigs}U}}}
+
+\inferrule
   {\cangs{d}{\effbox{\sigs}V}}
   {\makesgs{d}{V}}
 \end{mathpar}
@@ -1270,10 +1274,6 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
   {\cangs{d}{\effbox{\sigs'}V \to C} \\
    \has{\Gamma}{\sigs \oplus \sigs'}{V}{v}}
   {\can{\Gamma}{\sigs}{d~v}{C}}
-
-\inferrule
-  {c : U(\many{V}) \in \sigs}
-  {\cangs{c}{\many{V} \to \effbox{\sigs}U}}
 
 %% \inferrule
 %%   {c : U(\many{V}) \in \sigs \\
@@ -1837,24 +1837,25 @@ homomorphic extension of the following equations:
   %% drop ( <V> ) Sig          = [ drop (Sig) ] drop(V)
   %% drop ( [Sig']V -> C ) Sig = [ drop (Sig') ] drop(V) -> drop(C) drop(Sig)
 %
-In order to simplify the definition of the term translation, we
-annotate instances of polymorphic variables $f$ with the type
-arguments they are instantiated with as a pre-processing step.
+In order to simplify the definition of the term translation, as a
+pre-processing step we annotate instances of polymorphic variables $f$
+with the type arguments they are instantiated with and commands with
+their arities.
 %
 The term translation is a call by value embedding of Core Frank into
 \feff:
 %
 \begin{equations}
 \sem{x} &=& \key{ret}~x \\
-\sem{f^{\many{T}}} &=& f~\sem{\many{T}} \\
+\sem{f^{\many{T}}} &=& \key{ret}~\thunk{f~\sem{\many{T}}} \\
+\sem{c^n} &=& \key{ret}~\thunk{\lambda x_1 \dots x_n.c~x_1~\dots~x_n} \\
 \\
 \sem{k~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~\key{ret}~(k~\many{x}) \\
 \sem{\thunk{e}} &=& \key{ret}~\thunk{\sem{e}} \\
 \\
 %% \sem{c} &=& c \\
-\sem{c : V_1 \to \dots \to V_n \to R} &=& \lambda x_1 \dots x_n.c~x_1~\dots~x_n \\
 %% \sem{c~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~c~\many{x} \\
-\sem{d~v} &=& \key{let}~x=\sem{v} ~\key{in}~d~x \\
+\sem{d~v} &=& \key{let}~x=\sem{v} ~\key{in}~\sem{d}~x \\
 \sem{\force{u}} &=& \key{let}~x=\sem{u} ~\key{in}~\force{x} \\
 \\
 \sem{\lambda x.e} &=& \lambda x.\sem{e} \\
