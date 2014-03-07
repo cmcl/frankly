@@ -79,10 +79,10 @@
 %% \newcommand{\cdoesgs}{\cdoes{\Gamma}{\sigs}}
 
 
-\newcommand{\makes}[4]  {#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
-\newcommand{\has}[4] {#1 \sigentails{#2} {#3} \judgeword{has} {#4}}
-\newcommand{\can}[4]{#1 \sigentails{#2} {#3} \judgeword{is} {#4}}
-\newcommand{\does}[3]{#1 \vdash {#2} \judgeword{has} {#3}}
+\newcommand{\makes}[4]  {#1 \sigentails{#2} {#3} \judgeword{infers} {#4}}
+\newcommand{\has}[4] {#1 \sigentails{#2} {#3} \judgeword{checks} {#4}}
+\newcommand{\can}[4]{#1 \sigentails{#2} {#3} \judgeword{infers} {#4}}
+\newcommand{\does}[3]{#1 \vdash {#2} \judgeword{checks} {#3}}
 
 \newcommand{\effs}[2]{{#1} \judgeword{does} {#2}}
 
@@ -816,18 +816,6 @@ program with.
 %%%%% Frank
 
 \begin{figure*}[float]
-$\boxed{\effs{C}{\sigs}}$
-
-\begin{mathpar}
-\inferrule
-  { }
-  {\effs{\effbox{\sigs}V}{\sigs}}
-
-\inferrule
-  {\effs{C}{\sigs}}
-  {\effs{R \to C}{\sigs}}
-\end{mathpar}
-
 $\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
 \begin{mathpar}
 \inferrule
@@ -863,7 +851,7 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
   {\hasgs{D~\many{U}}{k~\many{v}}}
 
 \inferrule
-  {\does{\Gamma}{C}{e} \\ e \text{ is complete for } C}
+  {\does{\Gamma}{C}{e} \\ e \text{ covers } C}
   {\hasgs{\thunk{C}}{\thunk{e}}}
 \end{mathpar}
 
@@ -913,12 +901,24 @@ $\boxed{\doesg{C}{e}}$
   {\doesg{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
 
 \inferrule
-  {V \text{uninhabited}}
+  {V\, \text{uninhabited}}
   {\doesg{\effbox{\sigs'}V \to C}{()}}
 
 \inferrule
   {\doesg{R \to C}{e} \\ \doesg{R \to C}{e'}}
   {\doesg{R \to C}{e \medvert e'}}
+\end{mathpar}
+
+$\boxed{\effs{C}{\sigs}}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\effs{\effbox{\sigs}V}{\sigs}}
+
+\inferrule
+  {\effs{C}{\sigs}}
+  {\effs{R \to C}{\sigs}}
 \end{mathpar}
 
 $\boxed{\pat{V}{p}{\Delta}}$
@@ -961,19 +961,19 @@ The typing rules for Frank are given in Figure~\ref{fig:frank-typing}.
 %
 The judgement $\makesgs{u}{V}$ says that given type environment
 $\Gamma$, ambient effects $\sigs$, and inferable value term $u$, then
-we can infer that $u$ \emph{is} of type $V$.
+we can \emph{infer} that the type of $u$ is $V$.
 %
 The judgement $\hasgs{V}{v}$ says that given type environment
-$\Gamma$, ambient effects $\sigs$, value type $V$, and checkable
-value term $v$, then we can check that $V$ \emph{has} $v$ as a valid term.
+$\Gamma$, ambient effects $\sigs$, value type $V$, and checkable value
+term $v$, then we can \emph{check} that $V$ is the type of $v$.
 %
 The judgement $\cangs{d}{C}$ says that given type environment
 $\Gamma$, ambient effects $\sigs$, and inferable computation term $d$,
-then we can infer that $d$ \emph{is} of type $C$.
+then we can \emph{infer} that the type of $d$ is $C$.
 %
 The judgement $\doesg{C}{e}$ says that given type environment
 $\Gamma$, computation type $C$, and checkable computation term $e$,
-then we can check that $C$ \emph{has} $e$ as a valid computation term.
+then we can \emph{check} that $C$ is the type of $e$.
 
 The types of monomorphic variables ($x$) are simply looked up in the
 type environment. The types of polymorphic variables ($f$) are looked
@@ -987,7 +987,7 @@ Any inferable value ($u$) is also checkable against its inferred
 type. Datatype ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
 checkable by checking their components. The side condition on the
 thunk introduction rule requires that the pattern matching clauses of
-$e$ be complete with respect to the type $C$ of $e$.
+$e : C$ cover $C$.
 
 A thunk $u$ can by forced ($u!$) if its inferred type agrees with the
 ambient effects. To infer the type of a handler application $d~e$, we
