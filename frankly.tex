@@ -373,7 +373,7 @@ multi-handlers and pattern matching into Core Frank, a language of
 plain call-by-value functions, explicit case analysis and unary
 handler constructs. Section~\ref{sec:feff} gives a call-by-value
 embedding of Core Frank into \feff, a variant of Kammar et al's
-\lameff calculus with shallow handlers, explict polymorphism and
+\lameff calculus with shallow handlers, explicit polymorphism and
 general recursion. Section~\ref{sec:semantics} gives a semantics for
 \feff, which when composed with pattern matching and the call-by-value
 embedding, yields a semantics for Frank. Section~\ref{sec:related}
@@ -763,7 +763,7 @@ $\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to
 is the type of an $n$-handler. For each argument type
 $\effbox{\sigs_i}V_i$ the multi-handler must handle effects in
 $\sigs_i$ on that argument. Such an $n$-handler handles all of its
-arguments simultanesouly. As a result of handling its arguments it
+arguments simultaneously. As a result of handling its arguments it
 returns a value of type $V$ and may perform effects in $\sigs$.
 %
 We often write $\many{\effbox{\sigs}V} \to C$ as an abbreviation for
@@ -1603,7 +1603,7 @@ Of course, because Core Frank takes values as arguments whereas Frank
 takes computations, each argument must be wrapped in a thunk
 constructor.
 %
-The type translation is given simply by the homorphic extension of the
+The type translation is given simply by the homomorphic extension of the
 following equation on function types:
 \begin{equations}
 \pc{\effbox{\sigs}V} \to \pc{C} &=& \thunk{\effbox{\pc{\sigs}}\pc{V}} \to \pc{C} \\
@@ -1624,7 +1624,7 @@ As an extension to Frank, we might allow incomplete and ambiguous
 pattern matching. The former may be permitted if the ambient effects
 contain the $\var{Abort}$ signature, in which case incomplete patterns
 are translated into the $\var{abort}:\var{Zero}$ command, which can
-then be handled however the programmer wishes. Simiarly, we can define
+then be handled however the programmer wishes. Similarly, we can define
 a $\var{choice}:X(X, X)$ command, in order to allow ambiguous pattern
 matches to be handled by the programmer.
 
@@ -1813,7 +1813,7 @@ values. However, this does not give us what we need in the presence of
 effects, as we need to be able to quantify over effects. Our solution
 is to build the universal quantifier into the thunk type (the
 introduction rule for thunks is the place where ambient effects are
-reifed in a type) and build type application into forcing.
+reified in a type) and build type application into forcing.
 
 The type translation from Core Frank to \feff is given by the
 homomorphic extension of the following equations:
@@ -2046,7 +2046,7 @@ Inspired by Bauer and Pretnar's Eff, Visscher has implemented the
 continuation monads in the style of Filinski~\cite{Filinski99}, using
 Haskell type classes to automatically infer lifting between layers.
 
-Filinski's work on monadic reflection and layerd monads is closely
+Filinski's work on monadic reflection and layered monads is closely
 related to effect handlers~\cite{Filinski10}. Monadic reflection
 supports a similar style of composing effects. The key difference is
 that monadic reflection interprets monadic computations in terms of
@@ -2138,116 +2138,12 @@ idiom~\cite{McbrideP08} and arrow~\cite{Hughes04} computations.
 
 \end{document}
 
-Rubbish
--------
-
-
-sig ReadLine
-  = peek : Char
-  | nom  : 0
-
-sig Abort
-  = aborting : 0
-
-if Bool then {X} else {X} -> X
-if tt then t else f = t!
-if ff then t else f = f!
-
-0 >> Y [] Y
-
-
-map {X -> Y} (List X)   []   List Y
-
-top-level functions:
-
-       V == forall Z*.V
-  P -> C == {P -> C}
-
-Anywhere:
-
-    V == [e]V
-   [] == [e]
-
-
-
-d e == d ! e
-
-
-
-
-  P [Sig] V == P -> [Sig]V
-
-
- 
-
-Push sigs inside:
-
-  [[ [Sig]{C} ]] = [[C]] Sig
-
-  [[ <V> ]] Sig          = [ [[Sig]] ] [[V]]
-  [[ [Sig']V -> C ]] Sig = [ [[Sig']] ] [[V]] -> [[C]] Sig
-
-Pull sigs outside:
-
-  [[ {C} ]] = [ ((C)) ]{ [[ C ]]}
-
-  [[ [Sig]V -> C )) = [ [[Sig]] ]V -> [[C]]
-  [[ [Sig]V ]]      = < [[V]] >
-
-  (( [Sig]V -> C )) = ((C))
-  (( [Sig]V ))      = [[Sig]]
-
-foo : Int
-foo = 3
-
-map : {X [] Y} (List X) [] List Y
-
-
-letrec
-  map : forall e X Y.{[0]{[0]X -> [e]Y} [0](List X) -> [e](List Y)}
-  map f nil         = nil
-  map f (cons x xs) = cons (f x) (map f xs)
-in
-  e
-
-letrec
-  map : (X -> Y) -> List X -> List Y
-  map f nil         = nil
-  map f (cons x xs) = cons (f x) (map f xs)
-in
-  e
-
-  
-
-map : forall e X Y.{{[e]X -> <Y>}[e] [e](List X) -> [e](List Y)}[e]
-
-
-
-map : forall e X Y.{[e]{[e]X -> [e]Y} [e](List X) -> [e](List Y)}
-map :              {[e]{[e]X -> [e]Y} [e](List X) -> [e](List Y)}
-map :              {[ ]{[ ]X -> [ ]Y} [ ](List X) -> [ ](List Y)}
-map :              {   {   X ->    Y}    (List X) ->    (List Y)}
-map :                  {   X ->    Y}    (List X) ->    (List Y)
-
-
-map : forall e X Y.[e]{[e]([e]{[e]X -> <Y>}) [e](List X) -> <List Y>}
-
-
-
-map :              [e]{[e]{[e]X -> <Y>} [e](List X) -> <List Y>}
-map :                 {   {   X -> <Y>}    (List X) -> <List Y>}
-map :                     {   X -> <Y>}    (List X) -> <List Y>
-map :                     {   X ->  Y }    (List X) ->  List Y
-
-map : {X -> Y} (List X) -> List Y
-map f nil        = nil
-map f (x :: xs)  = f x :: map f xs
-
-
-main [Console] List ()
-
-main forall e.[e, Console] {<List ()>}
-main          [e, Console] {<List ()>}
-main          [   Console] {<List ()>}
-main          [   Console]   List ()
-main = map ouch ('h' :: ('e' :: ('l' :: ('l' :: ('o' :: nil)))))
+%%  LocalWords:  Lindley Conor Strathclyde Plotkin Pretnar's Multi et
+%%  LocalWords:  effectful modularity polymorphism Kammar al Pretnar
+%%  LocalWords:  Hindley Milner Oury SML Haskell monadic Kiselyov DSL
+%%  LocalWords:  Idris Brady's equational multi unary al's datatypes
+%%  LocalWords:  datatype Vn typecheck Ri catter polytypes inferable
+%%  LocalWords:  checkable letrec monomorphic reifying desugars ret
+%%  LocalWords:  homomorphic monothunks reified pre rewrapped monads
+%%  LocalWords:  denotationally Swierstra Visscher Filinski Daan Koka
+%%  LocalWords:  Filinski's Leijen's Swamy monad
