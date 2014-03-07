@@ -730,7 +730,7 @@ Terms
 \slab{inferable values}&u       &::=& x \mid f \mid d                                \\
 \slab{checkable values}&v        &::=& u \mid k~\many{v} \mid \thunk{e}
 \\[1ex]
-\slab{inferable computations}&d &::=& \force{u} \mid d~e \mid c~\many{v}
+\slab{inferable computations}&d &::=& \force{u} \mid d~e \mid c
                                \mid  \key{let}~x=d~\key{in}~d' \\
                              &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
 \slab{checkable computations} &e &::=& v \mid \many{r} \mapsto e \mid () \mid e \medvert e
@@ -1189,7 +1189,7 @@ Terms
 \slab{inferable values}&u       &::=& x \mid f \mid d                                \\
 \slab{checkable values}&v       &::=& u \mid k~\many{v} \mid \thunk{e}
 \\[1ex]
-\slab{inferable computations}&d &::=& \force{u} \mid d~v \mid c~\many{v}
+\slab{inferable computations}&d &::=& \force{u} \mid d~v \mid c
                                \mid  \key{let}~x=d~\key{in}~d' \\
                              &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
 \slab{checkable computations} &e  &::= & v \mid \lambda x.e \\
@@ -1661,7 +1661,10 @@ annotating value returning computations with effects, we shift such
 labels to the thunk containing the computation. The former design
 seems more convenient to program with, which is why we adopt it in the
 source language. The latter design leads to a more uniform
-presentation of the typing rules, and matches the design of \lameff.
+presentation of the typing rules, and matches the design of
+\lameff. Another minor difference is that in \feff commands must
+always be fully applied, which leads to a slightly cleaner operational
+semantics.
 %
 \begin{figure}
 Types
@@ -1697,6 +1700,7 @@ Terms
                                 \mid \force{(u~\many{T})} \\
                     &     &\mid& \lambda x.e \mid d~v 
                            \mid \key{ret}~v \mid \key{let}~x=e~\key{in}~e'
+%%                           \mid c \\
                            \mid c~\many{v} \\
 %%   \mid \Lambda Z.e \mid d~T \\
                          &&\mid& \key{handle} ~d~ \key{with}~
@@ -1764,6 +1768,11 @@ $\boxed{\compgs{e}{C}}$
   {\compgs{d}{\rt{V}} \\
    \comp{\Gamma, x:V}{\sigs}{e}{C}}
   {\compgs{\key{let}~x=d~\key{in}~e}{C}}
+
+%% \inferrule
+%%   {c : U(\many{V}) \in \sigs}
+%%   {\compgs{c}{\many{V} \to U}}
+
 
 \inferrule
   {c : U(\many{V}) \in \sigs \\
@@ -1842,7 +1851,9 @@ The term translation is a call by value embedding of Core Frank into
 \sem{k~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~\key{ret}~(k~\many{x}) \\
 \sem{\thunk{e}} &=& \key{ret}~\thunk{\sem{e}} \\
 \\
-\sem{c~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~c~\many{x} \\
+%% \sem{c} &=& c \\
+\sem{c : V_1 \to \dots \to V_n \to R} &=& \lambda x_1 \dots x_n.c~x_1~\dots~x_n \\
+%% \sem{c~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~c~\many{x} \\
 \sem{d~v} &=& \key{let}~x=\sem{v} ~\key{in}~d~x \\
 \sem{\force{u}} &=& \key{let}~x=\sem{u} ~\key{in}~\force{x} \\
 \\
