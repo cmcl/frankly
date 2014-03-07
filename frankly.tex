@@ -1522,13 +1522,13 @@ then this becomes:
 \[
 \ba{@{}l@{\quad}l@{~\mapsto~}l@{}}
   (\handle{\var{send}~x}{s}) & (\handle{\var{receive}}{r}) & e_1 \\
-  (\handle{\var{send}~x}{s}) & z & e_2 \\
-  (\handle{\var{abort}}{s})  & z & \var{bind}~x~e' \\
-  \var{unit}                 & z & \var{bind}~z~e_4 \\
+  (\handle{\var{send}~x}{s}) & z                           & e_2 \\
+  (\handle{\var{abort}}{s})  & z                           & e_3~z \\
+  \var{unit}                 & z                           & e_4~z \\
 \ea
 \]
 %
-where $\var{bind}$ is defined in Section~\ref{sec:examples}.
+%where $\var{bind}$ is defined in Section~\ref{sec:examples}.
 %
 Next we generate a vector of fresh variables, one for each argument.
 \[
@@ -1572,22 +1572,24 @@ M = \bstack
     \key{handle}~\force{x_0}~\key{with} \\
     \quad  \handle{\var{send}~x}{s} \mapsto \\
     \quad\quad \key{handle}~\force{x_1}~\key{with} \\
-    \quad\quad\quad \handle{\var{receive}}{r} \mapsto e \\
-    \quad\quad\quad z \mapsto e2 \\
+    \quad\quad\quad \handle{\var{receive}}{r} \mapsto e_1 \\
+    \quad\quad\quad z \mapsto e_2 \\
     \quad  \handle{abort}{s} \mapsto \\
     \quad\quad \key{handle}~\force{x_1}~\key{with} \\
     \quad\quad\quad    \handle{receive}{r} \mapsto \var{bind}~(\force{r}~\force{receive})~e_3 \\
-    \quad\quad\quad    z \mapsto \var{bind}~z~e_3 \\
+    \quad\quad\quad    z \mapsto e_3~z \\
+    %% \quad\quad\quad    z \mapsto \var{bind}~\force{z}~e_3 \\
     \quad  y \mapsto \\
     \quad\quad  \key{case}~y~\key{of} \\
     \quad\quad\quad  \var{unit} \mapsto \key{handle}~\force{x_1}~\key{with} \\
     \quad\quad\quad\quad    \handle{receive}{r} \mapsto \var{bind}~(\force{r}~\force{receive})~e_4 \\
-    \quad\quad\quad\quad    z \mapsto \var{bind}~z~e_4 \\
+    \quad\quad\quad\quad    z \mapsto e_4~z \\
+    %% \quad\quad\quad\quad    z \mapsto \var{bind}~\force{z}~e_4 \\
 \estack
 \]
-%
-from which we obtain the corresponding Core Frank code by abstracting
-over the fresh variables.
+where $\var{bind}$ is defined in Section~\ref{sec:examples}. We obtain
+the corresponding Core Frank code by abstracting over the fresh
+variables.
 %
 \[
 \lambda x_0~x_1.M
