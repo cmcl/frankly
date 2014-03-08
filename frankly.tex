@@ -50,7 +50,10 @@
 \newcommand{\estack}{\end{array}}
 
 \newenvironment{equations}{\[\ba{@{}r@{~}c@{~}l@{}}}{\ea\]}
-%% \newenvironment{eqs}{\ba{@{}r@{~}c@{~}l@{}}}{\ea}
+\newenvironment{eqs}{\ba{@{}r@{~}c@{~}l@{}}}{\ea}
+
+\newenvironment{clauses}{\ba{@{}l@{~}c@{~}l@{}}}{\ea}
+
 
 \newenvironment{syntax}{\[\ba{@{}l@{~}r@{~}c@{~}l@{}}}{\ea\]}
 
@@ -1523,12 +1526,15 @@ then this becomes:
 \ba{@{}l@{\quad}l@{~\mapsto~}l@{}}
   (\handle{\var{send}~x}{s}) & (\handle{\var{receive}}{r}) & e_1 \\
   (\handle{\var{send}~x}{s}) & z                           & e_2 \\
-  (\handle{\var{abort}}{s})  & z                           & e_3~z \\
-  \var{unit}                 & z                           & e_4~z \\
+  (\handle{\var{abort}}{s})  & \force{y} & \var{bind}~\force{y}~e_3 \\
+  \var{unit}                 & \force{y} & \var{bind}~\force{y}~e_4 \\
 \ea
 \]
 %
-%where $\var{bind}$ is defined in Section~\ref{sec:examples}.
+where $\var{bind}$ is defined in Section~\ref{sec:examples}. The
+missing patterns have been inserted as thunk patterns, which match any
+computation. Invoking $\var{bind}$ allows us to forward the
+computation bound by the thunk pattern to the existing continuation.
 %
 Next we generate a vector of fresh variables, one for each argument.
 \[
@@ -1570,26 +1576,32 @@ Our example generates the following pattern matching tree:
 \[
 M = \bstack
     \key{handle}~\force{x_0}~\key{with} \\
-    \quad  \handle{\var{send}~x}{s} \mapsto \\
-    \quad\quad \key{handle}~\force{x_1}~\key{with} \\
-    \quad\quad\quad \handle{\var{receive}}{r} \mapsto e_1 \\
-    \quad\quad\quad z \mapsto e_2 \\
-    \quad  \handle{abort}{s} \mapsto \\
-    \quad\quad \key{handle}~\force{x_1}~\key{with} \\
-    \quad\quad\quad    \handle{receive}{r} \mapsto \var{bind}~(\force{r}~\force{receive})~e_3 \\
-    \quad\quad\quad    z \mapsto e_3~z \\
-    %% \quad\quad\quad    z \mapsto \var{bind}~\force{z}~e_3 \\
+    \quad \handle{\var{send}~x}{s} \mapsto \\
+    \quad\quad \key{handle}~\force{x_1\!}~\key{with} \\
+    \quad\quad\quad \begin{clauses}
+                    \handle{\var{receive}}{r} &\mapsto& e_1 \\
+                    z                         &\mapsto& e_2 \\
+                    \end{clauses} \\
+    \quad \handle{abort}{s} \mapsto \\
+    \quad\quad \key{handle}~\force{x_1\!}~\key{with} \\
+    \quad\quad\quad \begin{clauses}
+                    \handle{receive}{r} &\mapsto&
+                      \var{bind}~(\force{r}~\force{receive})~e_3 \\
+                    z &\mapsto& \var{bind}~z~e_3 \\
+                    \end{clauses} \\
     \quad  y \mapsto \\
     \quad\quad  \key{case}~y~\key{of} \\
-    \quad\quad\quad  \var{unit} \mapsto \key{handle}~\force{x_1}~\key{with} \\
-    \quad\quad\quad\quad    \handle{receive}{r} \mapsto \var{bind}~(\force{r}~\force{receive})~e_4 \\
-    \quad\quad\quad\quad    z \mapsto e_4~z \\
-    %% \quad\quad\quad\quad    z \mapsto \var{bind}~\force{z}~e_4 \\
+    \quad\quad\quad  \var{unit} \mapsto \key{handle}~\force{x_1\!}~\key{with} \\
+    \quad\quad\quad\quad \begin{clauses}
+                         \handle{receive}{r} &\mapsto&
+                            \var{bind}~(\force{r}~\force{receive})~e_4 \\
+                         z &\mapsto& \var{bind}~z~e_4 \\
+                         \end{clauses} \\
 \estack
 \]
-where $\var{bind}$ is defined in Section~\ref{sec:examples}. We obtain
-the corresponding Core Frank code by abstracting over the fresh
-variables.
+Each thunk pattern has been expanded out to explicitly list all of the
+cases according to its type. We obtain the corresponding Core Frank
+code by abstracting over the fresh variables.
 %
 \[
 \lambda x_0~x_1.M
