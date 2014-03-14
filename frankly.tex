@@ -418,7 +418,7 @@ Higher-order functions are passed suspended computations. Braces are
 "suspenders".
 %
 \begin{verbatim}
-map {X -> Y} -> List X -> List Y
+map : {X -> Y} -> List X -> List Y
 map f nil         = nil
 map f (cons x xs) = cons (f x) (map f xs)
 \end{verbatim}
