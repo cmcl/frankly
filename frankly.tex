@@ -475,7 +475,7 @@ The following does not typecheck, because the \verb!Send! effect is
 not permitted in the return type of \verb!bad!.
 
 \begin{verbatim}
-bad List X -> Unit
+bad : List X -> Unit
 bad xs = semi (map send xs) unit
 \end{verbatim}
 
