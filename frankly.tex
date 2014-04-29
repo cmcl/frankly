@@ -1512,9 +1512,9 @@ analysis. Nested pattern matching on multiple computations is realised
 as a pattern matching tree constructed from handlers and case
 statements. 
 
-We may adapt standard algorithms for pattern matching compilation
+Standard algorithms for pattern matching compilation
 apply~(e.g. \cite{Augustsson85} or \cite{Maranget08}). Rather than
-comitting to a particular one, we outline how a pattern matching
+committing to a particular one, we outline how a pattern matching
 compiler fits into our setting, what input it takes, and what kind of
 output it must produce.
 
@@ -1808,8 +1808,7 @@ $\boxed{\compgs{e}{C}}$
 %% \inferrule
 %%   {c : U(\many{V}) \in \sigs}
 %%   {\compgs{c}{\many{V} \to U}}
-
-
+%%
 \inferrule
   {c : U(\many{V}) \in \sigs \\
    \valg{v_i}{V_i}}
@@ -1819,11 +1818,11 @@ $\boxed{\compgs{e}{C}}$
 %%   {\compgs{e}{C} \\
 %%    Z \notin (\FV(\Gamma) \cup \FV(\sigs))}
 %%   {\compgs{\Lambda Z.e}{\forall Z.C}}
-
+%%
 %% \inferrule
 %%   {\compgs{d}{\forall Z.C}}
 %%   {\compgs{d~T}{V[T/Z]}}
-
+%%
 \inferrule
   {\comp{\Gamma}{\sigs \oplus \sigs'}{d}{\rt{V}} \\
    (\comp{\Gamma, \many{x_c}:\many{V},
