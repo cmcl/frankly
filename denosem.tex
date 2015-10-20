@@ -5,6 +5,27 @@ The implementation has a denotational semantics described by an untyped
 evaluator which performs the handling of the effects by monadicly threading
 computations through the thing
 
+we have a compiler that is structured like parser then typechecker
+thenddddddddd untyped evaluator the untyped evaluator does things on a
+mid-level language that has be desugared somewhat
+
+I have some vague notion of what i want here a monadic presentation of the
+denotational semantics everything is a value the operations push unhandled
+computations up the tree and a final value is returned make a point of
+mentioning that this is with the full frank type system and so works for
+multi-handlers not just unary handlers
+
+some questions: how does this compare to ``traditional'' denotational
+semantics? i.e. is it usually monadic? Is the monadic aspect even that
+original/novel/noteworthy?
+
+a figure describing for each construct its interpretation function with
+suitable notation
+
+denotation of contexts/environments
+denotation of terms: values and computations
+anything else?
+
 %%  LocalWords:  Lindley Conor Strathclyde Plotkin Pretnar's Multi et
 %%  LocalWords:  effectful modularity polymorphism Kammar al Pretnar
 %%  LocalWords:  Hindley Milner Oury SML Haskell monadic Kiselyov DSL
@@ -14,4 +35,3 @@ computations through the thing
 %%  LocalWords:  homomorphic monothunks reified pre rewrapped monads
 %%  LocalWords:  denotationally Swierstra Visscher Filinski Daan Koka
 %%  LocalWords:  Filinski's Leijen's Swamy monad
-
