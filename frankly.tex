@@ -226,6 +226,7 @@
 %%   CBPV
 %%   Explicit polymorphism
 %%   Small-step semantics (see handlers in action)
+%%   Denotational semantics for full Frank type system (work in progress)
 %%
 %%   Related work
 %%
@@ -242,9 +243,9 @@
 %%     Relationship with type classes/modules
 
 \begin{abstract}
-We explore the design of Frank, a strict functional programming
-language designed from the ground up around a novel variant of Plotkin
-and Pretnar's \emph{effect handler} abstraction.
+We explore the design and implementation of Frank, a strict functional
+programming language designed from the ground up around a novel variant of
+Plotkin and Pretnar's \emph{effect handler} abstraction.
 %
 Inspired by Levy's call-by-push-value calculus, Frank makes an
 explicit distinction between computation and value types. Frank
@@ -269,6 +270,9 @@ effect typing.
 \section{Introduction}
 
 % TODO: more background on algebraic effects and handlers?
+% CMCL: Need to map directly (categorically?) back to Plotkin+Power (P+P)
+% it is unsatisfying not to have a more explicit relationship even if the
+% connection between P+P and Frank is clearer than, say, Idris and P+P
 
 Plotkin and Power's algebraic effects~\cite{PlotkinP01a, PlotkinP01b,
   PlotkinP02, PlotkinP03}, in conjunction with Plotkin and Pretnar's
