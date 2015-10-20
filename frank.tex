@@ -1,0 +1,464 @@
+\section{Type System}
+\label{sec:frank}
+
+In this section we give a formal presentation of Frank's type system.
+%
+\begin{figure}
+Types
+\begin{syntax}
+\slab{values}       &U, V          &::=& D~\many{U} \mid \thunk{C} \mid X \\
+\slab{computations} &C             &::=& R \mid R \to C \\
+\slab{returners}    &R             &::=& \effbox{\sigs}V
+\\[1ex]
+\slab{quantifiers}  &Z             &::=& X \mid \varepsilon \\
+\slab{polytypes}    &P             &::=& \forall \many{Z}.Q \\
+\slab{thunks}       &Q             &::=& \thunk{C}
+\\[1ex]
+\slab{signatures}   &\sig~\many{X} &::=& \cdot \mid c : U(\many{V}), \sig~\many{X} \\
+\slab{effects}      &\sigs  &::=&
+  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
+\\[1ex]
+\slab{type environments}     &\Gamma        &::=& \cdot \mid \Gamma, x:V \mid f:P \\
+\end{syntax}
+
+Terms
+\begin{syntax}
+\slab{inferable values}&u       &::=& x \mid f \mid c \mid d \\
+\slab{checkable values}&v       &::=& u \mid k~\many{v} \mid \thunk{e}
+\\[1ex]
+\slab{inferable computations}&d &::=& \force{u} \mid d~e \\
+%                               \mid  \key{let}~x=d~\key{in}~d' \\
+                             &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
+\slab{checkable computations} &e &::=& v \mid \many{r} \mapsto e \mid () \mid e \medvert e
+\\[1ex]
+\slab{value patterns}&p       &::=& x \mid k~\many{p}                              \\
+\slab{computation patterns}&r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \force{x} \\
+\end{syntax}
+
+\caption{Frank Syntax}
+\label{fig:frank-syntax}
+\end{figure}
+%
+The syntax of Frank types and terms is given in
+Figure~\ref{fig:frank-syntax}. The types are divided into value types
+and computation types in a similar fashion to Levy's
+call-by-push-value calculus~\cite{Levy2004}.
+%
+Value types are datatypes ($D~\many{U}$), suspended $C$ computations
+($\thunk{C}$), otherwise known as \emph{thunks}, or type variables
+($X$).
+
+Computation types are constructed from \emph{returners}.  A returner
+$(\effbox{\sigs}V)$ represents the type of a computation that returns
+values of type $V$ while performing effects in $\sigs$.
+%
+In general, computation types represent multi-handlers. The type
+$\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to
+\effbox{\sigs}V$,
+%
+is the type of an $n$-handler. For each argument type
+$\effbox{\sigs_i}V_i$ the multi-handler must handle effects in
+$\sigs_i$ on that argument. Such an $n$-handler handles all of its
+arguments simultaneously. As a result of handling its arguments it
+returns a value of type $V$ and may perform effects in $\sigs$.
+%
+We often write $\many{\effbox{\sigs}V} \to C$ as an abbreviation for
+$\effbox{\sigs_1}V_1 \to \dots \to \effbox{\sigs_n}V_n \to C$.
+
+Polytypes are restricted to thunks. Effect polymorphism is restricted
+to a single effect variable $\varepsilon$, which in practice Frank
+programmers need never write.
+
+Datatypes and effect signatures are declared at the top-level. An
+effect signature $S~\many{X}$ consists of a collection of command
+declarations of the form $c:U(\many{V})$, denoting that command $c$
+takes arguments of types $\many{V}$ and returns a value of type
+$U$. The types $\many{V}$ and $U$ may all depend on $\many{X}$. Each
+command many appear only once in a signature, and each command may
+appear in only one signature.
+
+An effect set is a sequence of signatures initiated either with the
+empty effect $\emptyset$ (yielding a \emph{closed effect set}) or the
+only effect variable $\varepsilon$ (yielding an \emph{open effect
+  set}). Order is important, as repeats are permitted, in which case
+the right-most signature overrides all others with the same name.
+
+Shadowing arises naturally in two ways. First, given an open effect
+set $\sigs$ we may substitute an arbitrary effect set for
+$\varepsilon$. Second, we define a notion of effect extension: $\sigs
+\oplus \sigs'$ is the \emph{extension} of effect set $\sigs$ with
+closed effect set $\sigs'$, formally:
+%
+\[\ba{@{\sigs~\oplus~}l@{~}l@{}}
+\emptyset               &= \sigs \\
+(\sigs', \sig~\many{V}) &= (\sigs \oplus \sigs'), \sig~\many{V} \\
+\ea\]
+
+Type environments distinguish monomorphic and polymorphic variables.
+
+Just as with the types, Frank terms are separated into value terms and
+computation terms. With future extensions, such as dependent types, in
+mind, Frank adopts a bidirectional typing
+discipline~\cite{PierceT00}. Thus terms are further sub-divided into
+those whose type is inferable, and those that may be checked against a
+type.
+
+Frank is less strict about the separation between value and
+computation terms than call-by-push-value is. For instance, inferable
+computations can sometimes be treated as inferable values. This is a
+deliberate design decision, with the aim of making Frank convenient to
+program with.
+
+%%%%% Frank
+
+\begin{figure*}[float]
+$\boxed{\makes{\Gamma}{\sigs}{u}{V}}$
+\begin{mathpar}
+\inferrule
+  {x:V \in \Gamma}
+  {\makesgs{x}{V}}
+
+%% \inferrule
+%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%    \theta(\varepsilon) = \sigs}
+%%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
+
+\inferrule
+  {f:\forall \many{Z}.Q \in \Gamma \\
+   \dom(\theta) = \set{\many{Z}} \\
+   \varepsilon \in \dom(\theta) \implies \theta(\varepsilon) = \sigs}
+  {\makesgs{f}{\theta(Q)}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs}
+  {\makesgs{c}{\thunk{\many{\effbox{}V} \to \effbox{\sigs}U}}}
+
+\inferrule
+  {\cangs{d}{\effbox{\sigs}V}}
+  {\makesgs{d}{V}}
+\end{mathpar}
+
+$\boxed{\has{\Gamma}{\sigs}{V}{v}}$
+
+\begin{mathpar}
+\inferrule
+  {\makesgs{u}{U} \\ U = V}
+  {\hasgs{V}{u}}
+
+\inferrule
+  {(\hasgs{V_i}{v_i})_i \\
+   k~\many{V} \in D~\many{U}}
+  {\hasgs{D~\many{U}}{k~\many{v}}}
+
+\inferrule
+  {\does{\Gamma}{C}{e} \\ e \text{ covers } C}
+  {\hasgs{\thunk{C}}{\thunk{e}}}
+\end{mathpar}
+
+$\boxed{\can{\Gamma}{\sigs}{d}{C}}$
+
+\begin{mathpar}
+\inferrule
+  {\makesgs{u}{\thunk{C}} \\ \effs{C}{\sigs}}
+  {\cangs{\force{u}}{C}}
+
+\inferrule
+  {\cangs{d}{\effbox{\sigs'}V \to C} \\
+   \doesg{\effbox{\sigs \oplus \sigs'}V}{e}}
+  {\can{\Gamma}{\sigs}{d~e}{C}}
+
+%% \inferrule
+%%   {c : U(\many{V}) \in \sigs \\
+%%    (\hasgs{V_i}{v_i})_i}
+%%   {\cangs{c~\many{v}}{\effbox{\sigs}U}}
+
+%% \inferrule
+%%   {\cangs{d}{V} \\
+%%    \can{\Gamma, x:V}{\sigs}{d'}{C}}
+%%   {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
+
+\inferrule
+  {(\does{\Gamma, \many{f : \forall \many{Z}.Q}}{e_i}{Q_i})_i \\
+   \can{\Gamma, \many{f : \forall \many{Z}.Q}}{\sigs}{d}{C}}
+  {\cangs{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d}{C}}
+\end{mathpar}
+
+$\boxed{\doesg{C}{e}}$
+
+\begin{mathpar}
+\inferrule
+  {\hasgs{V}{v}}
+  {\doesg{\effbox{\sigs}V}{v}}
+
+\inferrule
+  {\many{\sigs'} \text{ closed} \\
+   (\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
+   \does{\Gamma, \many{\Delta}}{C}{e}}
+  {\doesg{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
+
+\inferrule
+  {V\, \text{uninhabited}}
+  {\doesg{\effbox{\sigs'}V \to C}{()}}
+
+\inferrule
+  {\doesg{R \to C}{e} \\ \doesg{R \to C}{e'}}
+  {\doesg{R \to C}{e \medvert e'}}
+\end{mathpar}
+
+$\boxed{\effs{C}{\sigs}}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\effs{\effbox{\sigs}V}{\sigs}}
+
+\inferrule
+  {\effs{C}{\sigs}}
+  {\effs{R \to C}{\sigs}}
+\end{mathpar}
+
+$\boxed{\pat{V}{p}{\Delta}}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{V}{x}{x:V}}
+
+\inferrule
+  {k~\many{V} \in D~\many{U} \\
+   (\pat{V_i}{p_i}{\Delta_i})_i}
+  {\pat{D~\many{U}}{k~\many{p}}{\many{\Delta}}}
+\end{mathpar}
+
+$\boxed{\pat{R}{r}{\Delta}}$
+
+\begin{mathpar}
+\inferrule
+  {\pat{V}{p}{\Delta}}
+  {\pat{\effbox{\sigs}V}{p}{\Delta}}
+
+\inferrule
+  {c:U(\many{V}) \in \sigs \\
+   (\pat{V_i}{p_i}{\Delta_i})_i}
+  {\pat{\effbox{\sigs}V}
+       {\handle{c~\many{p}}{g}}
+       {\many{\Delta}, g:\thunk{\effbox{\emptyset}U \to \effbox{\sigs}V}}}
+
+\inferrule
+  { }
+  {\pat{\effbox{\sigs}V}{\force{x}}{x:\thunk{\effbox{\sigs}V}}}
+\end{mathpar}
+
+\caption{Frank Typing Rules}
+\label{fig:frank-typing}
+\end{figure*}
+
+The typing rules for Frank are given in Figure~\ref{fig:frank-typing}.
+%
+The judgement $\makesgs{u}{V}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, and inferable value term $u$, then
+we can \emph{infer} that the type of $u$ is $V$.
+%
+The judgement $\hasgs{V}{v}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, value type $V$, and checkable value
+term $v$, then we can \emph{check} that $V$ is the type of $v$.
+%
+The judgement $\cangs{d}{C}$ says that given type environment
+$\Gamma$, ambient effects $\sigs$, and inferable computation term $d$,
+then we can \emph{infer} that the type of $d$ is $C$.
+%
+The judgement $\doesg{C}{e}$ says that given type environment
+$\Gamma$, computation type $C$, and checkable computation term $e$,
+then we can \emph{check} that $C$ is the type of $e$.
+
+The types of monomorphic variables ($x$) are simply looked up in the
+type environment. The types of polymorphic variables ($f$) are looked
+up and instantiated. In practice this means applying a simple
+unification-based algorithm.
+%
+The type of a command ($c$) is looked up from the ambient effects.
+%
+An inferable computation ($d$) is also an inferable value, providing
+it is a returner whose effects agree with the ambient effects.
+
+Any inferable value ($u$) is also checkable against its inferred
+type. Datatype ($k~\many{v}$) and thunk ($\thunk{e}$) terms are
+checkable by checking their components. The side condition on the
+thunk introduction rule requires that the pattern matching clauses of
+$e : C$ cover $C$.
+
+A thunk $u$ can by forced ($u!$) if its inferred type agrees with the
+ambient effects. To infer the type of a handler application $d~e$, we
+first infer the type of $d$, and then check that the argument matches
+the inferred argument type. Note that the effect set on an argument
+must be closed, and thus we may extend the ambient effect set with the
+argument effect set when checking the argument.
+%
+%% The term $\key{let}~x=d~\key{in}~d'$ binds the result of running $d$
+%% in $d'$.
+%
+The term $\key{letrec}~\many{f : P = e}~\key{in}~d$ binds the mutually
+recursive polymorphic functions $\many{f:P}$ in $d$.
+
+Any term $v$ that type checks with ambient effects $\sigs$ at value
+type $V$ also type checks at computation type $\effbox{\sigs}V$.
+%
+A multi-handler of type $\many{\effbox{\sigs'}V} \to C$ is built by
+composing clauses of the form $\many{r} \mapsto e$, where $\many{r}$
+is a sequence of \emph{computation patterns} whose variables are bound
+in $e$.
+%
+The $e \medvert e'$ construct composes the clauses of $e$ with those
+of $e'$. A multi-handler is defined by a collection of clauses that
+provides complete coverage of the input types.
+%
+The $()$ construct allows empty sets of clauses to be constructed in
+the event that the value type of a function argument is uninhabited.
+
+We preclude composition of non-clauses (i.e. returners) by
+constraining $e \medvert e'$ to have function type.
+%
+It is perfectly legitimate to compose clauses with different numbers
+of arguments, though as a preliminary part of pattern matching
+compilation, we first transform the program to ensure that all
+composed clauses do have the same number of arguments.
+
+Value patterns are standard, consisting of variable patterns ($x$) and
+datatype constructor patterns ($k~\many{p}$).
+
+Computation patterns are more interesting. Any value pattern $p$ is
+also a computation pattern (used to match against the value returned
+by the returner computation).
+%
+A request pattern $\handle{c~\many{p}}{g}$ matches against a
+computation of the form $\force{c}~\many{v}$ if the values $v$ match
+against $p$. Furthermore, it also binds $g$ to the continuation of the
+computation delimited by the nearest enclosing multi-handler. This is
+where the real power of multi-handlers arises. A thunk pattern
+$\force{x}$ matches any computation reifying it as a thunk bound to
+$x$.
+
+%% let x = e in e' == bind! e {x -> e'}
+%% bind e e' == let x=e in e' x
+
+\paragraph{Sequencing Computations}
+We write $\key{let}~x=e~\key{in}~e'$ as syntactic sugar for
+$\var{bind}~e~\thunk{x \mapsto e'}$, where $\var{bind}$ is defined in
+Section~\ref{sec:examples}. More verbosely:
+%
+\[
+\bstack
+\key{let}~x=e~\key{in}~e' \equiv \\
+\quad \key{letrec}~
+  (\var{bind} :
+    \forall \varepsilon~X~Y.
+       X \to \thunk{X \to \effbox{\varepsilon}Y} \to \effbox{\varepsilon}Y) = \\
+  \qquad x~f~\mapsto~f~x~\key{in}~\force{\var{bind}}~e~\thunk{x \mapsto e}
+\estack
+\]
+
+\subsection{Effect Polymorphism with an Invisible Effect Variable}
+
+We now give a brief description of how syntactic sugar allows Frank
+programmers to omit effect variables completely.
+%
+Consider the type of \verb!map! in Section~\ref{sec:examples}:
+\[
+\thunk{X \to Y} \to \var{List~X} \to \var{List~Y}
+\]
+Apart from perhaps the curly braces, this looks pretty much the same
+as the type a functional programmer might expect to write in a
+language without support for effect typing.
+
+In fact, this type desugars into the rather more verbose:
+\[
+\thunk{\effbox{\emptyset}X \to \effbox{\varepsilon}Y}
+  \to \effbox{\emptyset}(\var{List~X}) \to \effbox{\varepsilon}(\var{List~Y})
+\]
+
+Let us distinguish between returners $\effbox{\sigs}V$ in argument
+position, whose effects $\sigs$ must be closed, and those in tail
+position, whose effects need not be closed. We call the former
+\emph{ports}, and the latter \emph{pegs}.
+
+Observe that ports are closed, so it is never necessary to write the
+$\emptyset$ in their effects. Pegs, on the other hand, may be open or
+closed. We adopt the convention that $\varepsilon$ may be omitted from
+the start of a peg's effects. Thus, if we know it is a peg, then $V$
+means $\effbox{}V$, which means $\effbox{\varepsilon}V$, and
+$\effbox{\var{Abort}}V$ means $\effbox{\varepsilon, \var{Abort}}V$.
+
+We now summarise the syntactic sugar. For ports and pegs:
+\begin{equations}
+V &\equiv& \effbox{}V \\
+\end{equations}
+For ports:
+\begin{equations}
+\effbox{\many{S~\many{V}}}U &\equiv& \effbox{\emptyset, \many{S~\many{V}}}U \\
+\end{equations}
+For pegs:
+\begin{equations}
+\effbox{\many{S~\many{V}}}U &\equiv& \effbox{\varepsilon, \many{S~\many{V}}}U \\
+\end{equations}
+
+With this syntactic sugar in place, we can now avoid writing the
+effect variable $\varepsilon$ in Frank programs, ever. In addition, we
+need never write $\emptyset$ in port effect sets. It is sometimes
+necessary to explicitly write $\emptyset$ in peg effect sets. In
+particular, a pure top-level program returning values of type $V$ has
+type $\effbox{\emptyset}V$.
+
+%% [already mentioned in the example section]
+%%
+%% Another useful piece of syntactic sugar is for function
+%% application. We often write $u~e$ for $\force{u}~e$.
+
+%% TODO: get rid of GIBBERISH
+
+
+
+
+%% As is made apparent by the call-by-value translation in
+%% Section~\ref{sec:feff}, Frank is morally a call-by-value language
+%% (though multi-handlers complicate the picture somewhat).
+
+
+
+
+%% Frank has a number of distinctive features.
+
+%% Inspired by Levy's call-by-push-value (CBPV) calculus, Frank makes an
+%% explicit distinction between computation and value types. However,
+%% where CBPV also has a clear distinction between value terms and
+%% computation terms, Frank is less rigid. The motivation for this design
+%% is to reduce boilerplate in source programs. Frank combines the
+%% advantages of CBPV, call-by-value (a la ML), and effect typing.
+
+%% With future extensions for dependent types in mind, Frank adopts a
+%% bidirectional typing discipline. A side-effect is that one cannot
+%% write beta-redexes in Frank. We do not view this as a disadvantage.
+
+%% Inspired by the observation that applying a function to a value is
+%% equivalent to applying a handler to a pure computation, handlers and
+%% functions are unified in Frank. Handlers are further generalised to
+%% multi-handlers, which handle multiple computations simulataneously.
+
+%% Frank provides a novel form of effect polymorphism, in which it is
+%% never necessary to mention the names of effect variables.
+
+%% We explain the semantics of Frank programs through a series of program
+%% transformations.
+
+%% First, we take a fairly standard approach to compiling away pattern
+%% matching (Core Frank). As we may match simultaneously against multiple
+%% side-effecting computations, we must be careful about
+%% order. Optionally, we can expose non-exhaustive/incomplete pattern
+%% matching as concrete effects.
+
+%% Second, we make the distinction between values terms and computations
+%% explicit, as in CBPV (\impeff).
+
+%% Finally, we make polymorphism explicit. Our ultimate target is \feff,
+%% an effect-polymorphic variant of Kammar et al's CBPV-inspired
+%% lambda-eff calculus. The small-step semantics of \feff is a
+%% straightforward variant of that of lambda-eff.

@@ -1,0 +1,285 @@
+\section{Explicit Control Flow and Polymorphism}
+\label{sec:feff}
+
+In order to make control flow explicit, and to ease the definition of
+an operational semantics, we translate Core Frank into a
+call-by-push-value calculus \feff based on Kammar et al's
+\lameff~\cite{KammarLO13}.
+
+At the same time, we make polymorphism explicit. The syntax of \feff
+is given in Figure~\ref{fig:feff-syntax}. Broadly, \feff types are
+similar to Frank types, with an explicit division between value type
+and computation types. A superficial difference is that rather than
+annotating value returning computations with effects, we shift such
+labels to the thunk containing the computation. The former design
+seems more convenient to program with, which is why we adopt it in the
+source language. The latter design leads to a more uniform
+presentation of the typing rules, and matches the design of
+\lameff. Another minor difference is that in \feff commands must
+always be fully applied, which leads to a cleaner operational
+semantics.
+%
+Note that $\key{let}$ is actually redundant in \feff, just as it is in
+Frank and Core Frank. We include $\key{let}$ as a special construct
+because doing so makes the semantics cleaner.
+%
+\begin{figure}
+Types
+\begin{syntax}
+\slab{values}       &U, V   &::=& D~\many{U} \mid \forall \many{Z}.\effbox{\sigs}\thunk{C} \mid X \\ % \mid \forall X.V \\
+\slab{computations} &C      &::=& \rt{V} \mid V \to C  % \mid \forall X.C \\
+\\[1ex]
+\slab{quantifiers}  &Z      &::=& X \mid \varepsilon \\
+\slab{arguments}    &T      &::=& V \mid \sigs
+\\[1ex]
+\slab{polytypes}    &P      &::=& \forall \many{Z}.Q \\
+\slab{monothunks}   &Q      &::=& \effbox{\sigs}\thunk{C}
+\\[1ex]
+\slab{signatures}   &\sig   &::=& \cdot \mid c : U(\many{V}), \sig \\
+\slab{effects}      &\sigs  &::=&
+  \emptyset \mid \sigs, \sig~\many{V} \mid \varepsilon
+\\[1ex]
+\slab{type environments}     &\Gamma &::=& \cdot \mid \Gamma, x:V \\
+\end{syntax}
+
+%% Effect extension
+%% \begin{equations}
+%% \sigs \oplus \emptyset               &=& \emptyset \\
+%% \sigs \oplus (\sigs', \sig~\many{V}) &=& (\sigs \oplus \sigs'), \sig~\many{V} \\
+%% \end{equations}
+
+Terms
+\begin{syntax}
+\slab{values}       &u, v &::=& x \mid k~\many{v} \mid \Lambda \many{Z}.\thunk{d} \\
+%%             \mid \Lambda Z.v \mid u~T \\
+\slab{computations} &d, e &::=& \key{case}~u~\key{of}~
+                                   (k~\many{x_k} \mapsto e_k)_k
+                                \mid \force{(u~\many{T})} \\
+                    &     &\mid& \lambda x.e \mid d~v 
+                           \mid \key{ret}~v \mid \key{let}~x=e~\key{in}~e'
+%%                           \mid c \\
+                           \mid c~\many{v} \\
+%%   \mid \Lambda Z.e \mid d~T \\
+                         &&\mid& \key{handle} ~d~ \key{with}~
+                                   (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
+                                   x        \mapsto e \\
+                         &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~e' \\
+\end{syntax}
+\caption{\feff Syntax}
+\label{fig:feff-syntax}
+\end{figure}
+
+
+
+\begin{figure*}
+$\boxed{\valg{v}{V}}$
+\begin{mathpar}
+\inferrule
+  {x:V \in \Gamma}
+  {\valg{x}{V}}
+
+\inferrule
+  {\valg{V_i}{v_i} \\
+   k~\many{V} \in D~\many{U}}
+  {\valg{D~\many{U}}{k~\many{v}}}
+
+\inferrule
+  {\compgs{e}{C}}
+  {\valg{\Lambda \many{Z}.\thunk{e}}{\forall \many{Z}.\effbox{\sigs}\thunk{C}}}
+%% \inferrule
+%%   {\valg{v}{V} \\
+%%    Z \notin \FV(\Gamma)}
+%%   {\valg{\Lambda Z.v}{\forall Z.V}}
+%% \inferrule
+%%   {\valg{u}{\forall Z.V}}
+%%   {\valg{u~T}{V[T/Z]}}
+\end{mathpar}
+
+$\boxed{\compgs{e}{C}}$
+\begin{mathpar}
+\inferrule
+  {\valg{u}{D~\many{U}} \\
+   (\comp{\Gamma, \many{x_k}:\many{V}}{\sigs}{e_k}{C})_{k~\many{V} \in D~\many{U}}}
+  {\compgs{\key{case}~ u ~\key{of}~
+               (k~\many{x_k} \mapsto e_k)_k}
+          {C}}
+
+\inferrule
+  {\valg{u}{\forall \many{Z}.\effbox{\sigs}\thunk{C}}}
+  {\compgs{\force{(u~\many{T})}}{C[\many{T}/\many{Z}]}}
+
+\inferrule
+  {\comp{\Gamma, x:V}{\sigs}{e}{C}}
+  {\compgs{\lambda x.e}{V \to C}}
+
+\inferrule
+  {\compgs{d}{V \to C} \\
+   \valg{v}{V}}
+  {\compgs{d~v}{C}}
+
+\inferrule
+  {\valg{v}{V}}
+  {\compgs{\key{ret}~v}{\rt{V}}}
+
+\inferrule
+  {\compgs{d}{\rt{V}} \\
+   \comp{\Gamma, x:V}{\sigs}{e}{C}}
+  {\compgs{\key{let}~x=d~\key{in}~e}{C}}
+
+%% \inferrule
+%%   {c : U(\many{V}) \in \sigs}
+%%   {\compgs{c}{\many{V} \to U}}
+%%
+\inferrule
+  {c : U(\many{V}) \in \sigs \\
+   \valg{v_i}{V_i}}
+  {\compgs{c~\many{v}}{\rt{U}}}
+
+%% \inferrule
+%%   {\compgs{e}{C} \\
+%%    Z \notin (\FV(\Gamma) \cup \FV(\sigs))}
+%%   {\compgs{\Lambda Z.e}{\forall Z.C}}
+%%
+%% \inferrule
+%%   {\compgs{d}{\forall Z.C}}
+%%   {\compgs{d~T}{V[T/Z]}}
+%%
+\inferrule
+  {\comp{\Gamma}{\sigs \oplus \sigs'}{d}{\rt{V}} \\
+   (\comp{\Gamma, \many{x_c}:\many{V},
+                  g:\effbox{\sigs \oplus \sigs'}\thunk{U \to \rt{V}}}
+       {\sigs}{e_c}{C})_{c : U(\many{V}) \in \sigs'} \\
+   \comp{\Gamma, x:V}{\sigs}{e}{C}}
+  {\compgs
+     {\key{handle}~ d ~\key{with}~
+           (\handle{c~\many{x_c}}{g} \mapsto e_c)_c \medvert
+           x \mapsto e}
+     {C}}
+
+\inferrule
+  {(\comp{\Gamma, \many{f : \forall\many{Z}.Q}}{\sigs}{e_i}{Q_i})_i \\
+   \comp{\Gamma, \many{f : \forall \many{Z}.Q}}{\sigs}{d}{C}}
+  {\compgs{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d}{C}}
+\end{mathpar}
+
+\caption{\feff Typing rules}
+\label{fig:feff-typing}
+\end{figure*}
+%
+The typing rules for \feff are given in
+Figure~\ref{fig:feff-typing}. Typing in \feff is unidirectional.
+
+Call-by-push-value calculi such as \lameff and \feff make a strict
+separation between values and computations, not dissimilar from CPS or
+A-normal form representations, in which all reduction takes place at
+the level of computations. In such a setting it would seem most
+natural to add type abstractions to computations rather than
+values. However, this does not give us what we need in the presence of
+effects, as we need to be able to quantify over effects. Our solution
+is to build the universal quantifier into the thunk type (the
+introduction rule for thunks is the place where ambient effects are
+reified in a type) and build type application into forcing.
+
+The type translation from Core Frank to \feff is given by the
+homomorphic extension of the following equations:
+\begin{equations}
+\sem{\thunk{C}} &=& \effbox{\sem{\sigs}}\thunk{\sem{C}}, \quad \text{where }\effs{C}{\sigs} \\
+\sem{\effbox{\sigs}V \to C} &=& \effbox{\sem{\sigs}}\sem{V} \to \sem{C} \\
+\sem{\effbox{\sigs}V} &=& \rt{\sem{V}}\\
+\end{equations}%
+%
+  %% drop ([Sig]{C}) = {drop(C) drop(Sig)}
+  %%
+  %% drop ( <V> ) Sig          = [ drop (Sig) ] drop(V)
+  %% drop ( [Sig']V -> C ) Sig = [ drop (Sig') ] drop(V) -> drop(C) drop(Sig)
+%
+In order to simplify the definition of the term translation, as a
+pre-processing step we annotate instances of polymorphic variables $f$
+with the type arguments they are instantiated with and commands with
+their arities.
+%
+The term translation is a call by value embedding of Core Frank into
+\feff:
+%
+\begin{equations}
+\sem{x} &=& \key{ret}~x \\
+\sem{f^{\many{T}}} &=& \key{ret}~\thunk{f~\sem{\many{T}}} \\
+\sem{c^n} &=& \key{ret}~\thunk{\lambda x_1 \dots x_n.c~x_1~\dots~x_n} \\
+\\
+\sem{k~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~\key{ret}~(k~\many{x}) \\
+\sem{\thunk{e}} &=& \key{ret}~\thunk{\sem{e}} \\
+\\
+%% \sem{c} &=& c \\
+%% \sem{c~\many{v}} &=& \key{let}~\many{x}=\sem{\many{v}} ~\key{in}~c~\many{x} \\
+\sem{d~v} &=& \key{let}~x=\sem{v} ~\key{in}~\sem{d}~x \\
+\sem{\force{u}} &=& \key{let}~x=\sem{u} ~\key{in}~\force{x} \\
+\sem{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d} &=&
+  \key{letrec}~\many{f : \sem{\forall \many{Z}.Q} = \sem{e}}~\key{in}~\sem{d} \\
+\\
+\sem{\lambda x.e} &=& \lambda x.\sem{e} \\
+\multicolumn{3}{@{}l}{\sem{\key{case}~u~\key{of}~(k~\many{x_k} \mapsto e_k)_k} =} \\
+\multicolumn{3}{@{}l}
+  {\qquad \key{let}~x=\sem{u} ~\key{in}~
+    \key{case}~x~\key{of}~(k~\many{x_k} \mapsto \sem{e_k})_k} \\
+\multicolumn{3}{@{}l}{\sem{\key{handle}~d~\key{with}~(\handle{c~\many{x_c}}{g_c} \mapsto e_c)_c \medvert x \mapsto e} =} \\
+\multicolumn{3}{@{}l}
+  {\qquad \key{handle}~\sem{d}~\key{with}~ 
+            (\handle{c~\many{x_c}}{g_c} \mapsto \sem{e_c})_c
+            \medvert x \mapsto \sem{e}} \\
+\end{equations}%
+%% \[
+%% \bl
+%% \seml
+%%   \inferrule
+%%     {f:\forall \varepsilon \many{X}.V \in \Gamma \\
+%%      \dom(\theta) = \set{\varepsilon, \many{X}} \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\makesgs{f}{\theta(V)}}
+%% \semr \qquad \\[3ex]
+%% \hfill = \force{(f~\sigs~\many{\theta(X)})} \\
+%% \el
+%% \]
+%
+
+\begin{proposition}
+The translation $\sem{-}$ from Core Frank to \feff is type preserving.
+\begin{itemize}
+\item If $\makesgs{u}{V}$ then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{u}}{\rt{\sem{V}}}$.
+\item If $\hasgs{V}{v}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{v}}{\rt{\sem{V}}}$.
+\item If $\cangs{d}{C}$   then $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{d}}{\sem{C}}$.
+\item If $\doesg{C}{e}$ and $\effs{C}{\sigs}$ then
+  $\comp{\sem{\Gamma}}{\sem{\sigs}}{\sem{e}}{\sem{C}}$.
+\end{itemize}
+\end{proposition}
+
+Kammar et al~\cite{KammarLO13} classify a number of different
+varieties of handler.
+%
+The handlers in \feff (and indeed Frank) are \emph{shallow} in that,
+unlike Plotkin and Pretnar's original deep handlers, the handler is
+not automatically rewrapped around the continuation when handling a
+command. Roughly, deep handlers perform a fold over computations,
+whereas shallow handles perform a case split. Deep handlers are
+denotationally better behaved than shallow handlers, but shallow
+handlers sometimes appear more convenient to program with.
+%
+The handlers in \feff (and indeed Frank) are polymorphic forwarding
+handlers. The form of polymorphism amounts to a kind of row
+polymorphism with shadowing, unlike the more conventional kind of row
+polymorphism suggested by Kammar et al.
+
+%% \[
+%% \bl
+%% \seml
+%%   \inferrule
+%%     {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\val{\Gamma, x:V}{x}{\theta(V)}}
+%% \semr
+%% = \\
+%%   \inferrule
+%%     {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%      \theta(\varepsilon) = \sigs}
+%%     {\val{\Gamma, x:\forall \many{Z}.V}{x~\theta(\many{Z})}{\theta{V}}} \\
+%% \el
+%% \]

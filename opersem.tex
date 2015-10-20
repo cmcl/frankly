@@ -1,0 +1,113 @@
+\section{Small-step semantics}
+\label{sec:semantics}
+
+We give a small step operation semantics for \feff inspired by Kammar
+et al's semantics for \lameff~\cite{KammarLO13}.
+%
+All of the rules except the ones for handlers are pretty standard
+$\beta$-reductions.
+%
+The rules for forcing are slightly unusual due to the hard-wiring of
+polymorphism into thunks.
+
+Returns $\key{ret}~v$ are handled by substituting the value into the
+handler's return clause. Commands are handled by capturing the
+continuation up to the current handler and dispatching to the
+appropriate clause for the command. If a clause is defined in the
+handler, then that clause is selected. If not, then the command is
+forwarded to be handled by an outer handler, but its continuation is
+handled by the current handler.
+
+Delimited computation contexts $D$ are used to characterise the
+continuation up to the current handler. Computation contexts $E$
+amount to evaluation contexts for a call-by-push-value setting.
+
+\begin{figure*}
+
+\begin{equations}
+%% (\textrm{Value contexts})\, D
+%%   &::=& [~] \mid \key{case}~D~\key{of}~(k_i~\many{x_i} \mapsto e_i)_i \mid \force{D} \mid D~T \\
+(\textrm{Delimited computation contexts})\, D
+  &::=& [~] \mid D~v \mid \key{let}~x=D~\key{in}~e \\
+(\textrm{Computation contexts})\, E
+  &::=& [~] \mid E~v \mid \key{let}~x=E~\key{in}~e
+            \mid \key{handle}~E~\key{with}~H \\
+               %% (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+               %%   x \mapsto e \\
+\end{equations}%
+
+\begin{equations}
+%% (\Lambda Z.v) T &\reducesto& v[T/Z]
+%% \\[1ex]
+\key{case}~k_j~\many{v}~\key{of}~(k_i~\many{x_i} \mapsto e_i)_i
+  &\reducesto& e_j[\many{v}/\many{x_j}] \\
+\force{((\Lambda \many{Z}.\thunk{e})~\many{T})} &\reducesto& e[\many{T}/\many{Z}]
+\\[1ex]
+(\lambda x.e)~v &\reducesto& e[v/x] \\
+%% (\key{rec}~f~x.e)~v &\reducesto& e[\thunk{\key{rec}~f~x.e}/f, v/x] \\
+\key{let}~x=\key{ret}~v~\key{in}~e &\reducesto& e[v/x] \\
+\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d
+  &\reducesto&
+    d[\many{\Lambda{Z}.\thunk{e}}
+       [\many{\Lambda{Z}.
+                \thunk{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~\force{(f~\many{Z})}}}
+       / \many{f}]
+     /\many{f}]
+\\[1ex]
+\key{handle}~(\key{ret}~v)~\key{with}~H
+  &\reducesto& H(\key{ret}, v) \\
+\key{handle}~D[c~\many{v}]~\key{with}~H
+  &\reducesto& H(c, \many{v}, \thunk{\lambda z.D[\key{ret}~z]}) \\
+%% \key{handle}~(\key{ret}~v)~\key{with}~
+%%    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+%%    x \mapsto e
+%%   &\reducesto&
+%%     \key{let}~x=\key{ret}~v~\key{in}~e \\
+%% \key{handle}~E[c_j~\many{v}]~\key{with}~
+%%    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+%%    x \mapsto e
+%%   &\reducesto&
+%%      e_j[\many{v}/\many{x_j}, \thunk{\lambda z.E[\key{ret}~z]} / g] \\
+%% \key{handle}~E[c~\many{v}]~\key{with}~
+%%    (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+%%    x \mapsto e
+%%   &\reducesto&
+%%      \key{let}~z=c~\many{v}~\key{in}~
+%%        \key{handle}~E[\key{ret}~z]~\key{with}~
+%%           (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert
+%%           x \mapsto e, \quad c \neq c_i \text{ for any }i \\
+\end{equations}%
+where the action of $H = (\handle{c_i~\many{x_i}}{g} \mapsto e_i)_i \medvert x
+\mapsto e$ is given by:
+\begin{equations}%
+H(\key{ret}, v) &=& e[v/x] \\
+H(\key{c_j}, \many{v}, u) &=& e_j[\many{v}/\many{x}, u/g] \\
+H(\key{c}, \many{v}, u)
+  &=& \key{let}~z=c~\many{v}~\key{in}~
+        \key{handle}~\force{u}~z~\key{with}~H,
+           \quad c \neq c_i\text{ for any }i
+\end{equations}%
+
+\begin{mathpar}
+%% \inferrule
+%%   {u \reducesto v}
+%%   {D[u] \reducesto D[v]}
+
+\inferrule
+  {d \reducesto e}
+  {E[d] \reducesto E[e]}
+\end{mathpar}
+
+\caption{Small-step operational semantics for \feff}
+\label{fig:semantics}
+\end{figure*}
+
+\begin{proposition}[Type Soundness]
+~
+\begin{itemize}
+\item If $\compgs{d}{C}$ and $d \reducesto e$ then $\compgs{e}{C}$.
+\item If $\comp{\cdot}{\emptyset}{d}{\rt{V}}$ then either there exists $v$
+  such that $d = \key{ret}~v$ or there exists $e$ such that $d \reducesto
+  e$.
+\end{itemize}
+\end{proposition}

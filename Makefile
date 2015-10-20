@@ -1,14 +1,12 @@
+DEPS:=intro.tex examples.tex frank.tex core.tex feff.tex opersem.tex\
+related.tex future.tex
+
 all: frankly.pdf
 
-frankly.aux: frankly.tex
-	pdflatex frankly
-
-frankly.bbl: frankly.aux frankly.bib
-	bibtex frankly
-
-frankly.pdf: frankly.aux frankly.bbl
-	pdflatex frankly
-	pdflatex frankly
+frankly.pdf:frankly.tex $(DEPS)
+	latexmk -pdf frankly.tex
 
 clean:
-	rm -f frankly.pdf frankly.aux frankly.out frankly.log frankly.blg frankly.bbl
+	rm -f *.log *.aux *.toc *.out
+	rm -f *.bbl *.blg *.fls *.xml
+	rm -f frankly.pdf

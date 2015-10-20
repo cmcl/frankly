@@ -1,0 +1,120 @@
+\section{Introduction}
+\label{sec:intro}
+
+% TODO: more background on algebraic effects and handlers?
+% CMCL: Need to map directly (categorically?) back to Plotkin+Power (P+P)
+% it is unsatisfying not to have a more explicit relationship even if the
+% connection between P+P and Frank is clearer than, say, Idris and P+P
+
+Plotkin and Power's algebraic effects~\cite{PlotkinP01a, PlotkinP01b,
+  PlotkinP02, PlotkinP03}, in conjunction with Plotkin and Pretnar's
+handlers for algebraic effects~\cite{PlotkinP09, PlotkinP13}, provide
+a compelling foundation for effectful programming.
+%
+By separating effect signatures from their implementation, algebraic
+effects provide a high degree of modularity, allowing programmers to
+express effectful programs independently of the concrete
+interpretation of their effects. A handler is an interpretation of the
+effects of an algebraic computation.
+
+%% This paper explores the design of Frank, a strict functional
+%% programming language designed from the ground up around a novel
+%% variant of Plotkin and Pretnar's \emph{effect
+%%   handler}~\cite{PlotkinP09, PlotkinP13} abstraction.
+
+%% Inspired by Levy's call-by-push-value calculus~\cite{Levy2004}, Frank
+%% makes an explicit distinction between computation and value
+%% types. Frank combines the advantages of call-by-push-value,
+%% call-by-value, and effect typing.
+
+Effect handlers in Frank generalise functions. An effect handler acts
+as an interpreter for a specified set of commands whose signatures are
+statically tracked by the type system. A function is the special case
+of an effect handler whose command set is empty.
+
+The contributions of this paper are:
+\begin{itemize}
+\item Frank, a strict functional programming language featuring a
+  bidirectional effect type system, effect polymorphism, and effect
+  handlers.
+\item A novel approach to effect polymorphism which avoids all mention
+  of effect variables, crucially relying on the observation that one
+  must always instantiate the effects of a function being applied with
+  the current \emph{ambient} effects.
+\item The combination of pattern matching and effect handlers in such
+  a way that incomplete or ambiguous pattern matching can be realised
+  as concrete effects that can be handled however the programmer
+  chooses using further effect handlers.
+\item Multi-handlers as both an abstraction for handling multiple
+  computations over different effect sets simultaneously and a
+  characterisation of effect-handlers as generalised functions.
+\item A description of pattern matching compilation from Frank into a
+  core language, \emph{Core Frank}.
+\item A translation from Core Frank into \feff, a polymorphic variant
+  of the \lameff calculus of Kammar et al~\cite{KammarLO13}, which in
+  turn extends Levy's call-by-push-value calculus~\cite{Levy2004}.
+\item A straightforward small-step operational semantics for \feff,
+  yielding, in combination with the translation to \feff, a type
+  soundness result for Frank.
+\end{itemize}
+
+A number of other languages and libraries are built around effect
+handlers and algebraic effects.
+
+Bauer and Pretnar's Eff~\cite{BauerP12}. A significant difference
+between Frank and the original version of Eff~\cite{BauerP12} is that
+the latter provides no support for effect typing. Recently Bauer and
+Pretnar have designed an effect type system for
+Eff~\cite{BauerP13}. Their implementation~\cite{Pretnar13} supports
+Hindley-Milner type inference, and the type system incorporates effect
+sub-typing. In contrast, Frank uses bidirectional type inference, and
+avoids sub-typing altogether.
+
+Handlers in action~\cite{KammarLO13}. In previous work with Kammar and
+Oury~\cite{KammarLO13}, the first author designed and experimented
+with a number of effect handler libraries for languages ranging from
+Racket, to SML, to Haskell. Apart from the Haskell library, these
+other libraries have no effect typing support. The Haskell library
+takes advantage of type classes to simulate an effect type system not
+entirely dissimilar to that of Frank. As Haskell is lazy, the Haskell
+library cannot be used to write direct-style effectful programs - one
+must instead adopt a monadic style. Furthermore, although there are a
+number of ways of almost simulating effect type systems in Haskell,
+none is without its flaws. Kiselyov et al~\cite{KiselyovSS13} have
+designed another Haskell library for effect handlers, making a
+different collection of design choices.
+
+Brady~\cite{Brady13} has designed a library and DSL for programming
+with effects in his dependently typed Idris language. Like the Haskell
+libraries, Brady's library currently requires the programmer to write
+effectful code in a monadic style.
+
+In Plotkin and Power’s setting, one defines algebraic effects with
+respect to an equational theory. In all of the above implementations,
+and in Frank, the equational theory is taken to be the free theory, in
+which there are no equations.
+%
+
+The second author has been plotting Frank since
+2007~\cite{McBride07}. He has implemented a prototype of a previous
+version of Frank~\cite{McBride12}. The design described in the current
+paper has much in common with that implementation, but there are some
+syntactic and semantic differences. The most important change in the
+current design is the introduction of multi-handlers as a
+generalisation of both functions and handlers.
+
+The rest of the paper is structured as follows.
+%
+Section~\ref{sec:examples} introduces Frank by
+example. Section~\ref{sec:frank} presents a type system for
+Frank. Section~\ref{sec:core} describes how to elaborate
+multi-handlers and pattern matching into Core Frank, a language of
+plain call-by-value functions, explicit case analysis and unary
+handler constructs. Section~\ref{sec:feff} gives a call-by-value
+embedding of Core Frank into \feff, a variant of Kammar et al's
+\lameff calculus with shallow handlers, explicit polymorphism and
+general recursion. Section~\ref{sec:semantics} gives a semantics for
+\feff, which when composed with pattern matching and the call-by-value
+embedding, yields a semantics for Frank. Section~\ref{sec:related}
+outlines related work and Section~\ref{sec:future} discusses future
+work.

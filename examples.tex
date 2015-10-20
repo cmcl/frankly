@@ -1,0 +1,317 @@
+\section{Introducing Frank}
+\label{sec:examples}
+
+Frank is a functional programming language with effects and handlers
+in the style of Eff controlled by a type system inspired by Levy's
+call-by-push-value~\cite{Levy2004}.
+%
+Doing and Being are clearly separated, and managed by distinguished
+notions of computation and value types.
+
+Concrete values live in inductive datatypes.
+%
+\begin{verbatim}
+data List X
+   = nil
+   | cons X (List X)
+
+data Zero =
+
+data Unit = unit
+\end{verbatim}
+
+We can write perfectly ordinary functional programs, with (compulsory)
+type signatures.
+%
+\begin{verbatim}
+append : List X -> List X -> List X
+append nil       ys = ys
+append (x :: xs) ys = cons x (append xs ys)
+\end{verbatim}
+
+Higher-order functions are passed suspended computations. Braces are
+"suspenders".
+%
+\begin{verbatim}
+map : {X -> Y} -> List X -> List Y
+map f nil         = nil
+map f (cons x xs) = cons (f x) (map f xs)
+\end{verbatim}
+
+A value type \verb!V! is a datatype \verb!D V1 ... Vn!, a suspended
+computation type \verb!{C}!, or a type variable \verb!X!.
+%
+A computation type can be a function type \verb!V -> C! or an
+effect-annotated value type \verb![S1 ... Sn]V!, where an empty
+bracket may be omitted.
+
+Effects are collections of signatures, which describe a choice of
+commands. Here are some simple signatures.
+%
+\begin{verbatim}
+sig Send X
+  = send : Unit(X)
+
+sig Receive X
+  = receive : X
+
+sig Abort
+  = aborting : Zero
+\end{verbatim}
+%
+The \verb!send! command takes an argument of type \verb!X! and returns
+a value of type \verb!Unit!. The \verb!receive! command returns a
+value of type \verb!X!. The abort command returns an element of the
+empty type, \verb!Zero!.
+
+Frank is a call-by-value language, but it naturally distinguishes
+\verb![]V!, the type of suspended pure computations which deliver a
+\verb!V!, from \verb!V! itself. We can thus define a kind of
+"semicolon" just as the function which ignores its first argument.
+%
+\begin{verbatim}
+semi : X Y -> Y
+semi x y = y
+\end{verbatim}
+
+Frank has effect polymorphism, enough to allow higher-order functions
+to pass effect permissions to their parameters. The following uses map
+to send a list of things, one at a time.
+%
+\begin{verbatim}
+sends : List X -> [Send X]Unit
+sends xs = semi (map send xs) unit
+\end{verbatim}
+%
+The reason this type checks at all is because \verb!map! is implicitly
+polymorphic in its effects.
+
+The following does not typecheck, because the \verb!Send! effect is
+not permitted in the return type of \verb!bad!.
+
+\begin{verbatim}
+bad : List X -> Unit
+bad xs = semi (map send xs) unit
+\end{verbatim}
+
+Writing control operators is not too tricky.
+\begin{verbatim}
+bind : X -> {X -> Y} -> Y
+bind x f = f x
+\end{verbatim}
+
+We can use \verb!bind! to define a polymorphic \verb!abort! function.
+\begin{verbatim}
+abort : [Abort]X
+abort = bind aborting! {}
+\end{verbatim}
+The term \verb!{}! denotes a suspended computation containing an empty
+collection of pattern matching clauses covering the \verb!Zero! return
+type of \verb!aborting!.
+
+Here is a computation which receives and concatenates lists until one
+is empty.
+%
+\begin{verbatim}
+catter : [Receive (List X)]List X
+catter = bind receive!
+           { nil -> nil
+           | xs  -> append xs catter!
+           }
+\end{verbatim}
+%
+The command \verb!receive! is a suspended computation of type
+\verb!{[Receive (List X)]List X}! that delivers a list when
+forced. The notation \verb|receive!| forces a thunk.
+
+If \verb!f! is a suspended computation of function type, then
+\verb!f x! is syntactic sugar for \verb|f! x|. Thus we need only
+explicitly force computations that take no arguments.
+
+Effects are handled by special functions called \emph{effect
+  handlers}. Effect handlers in Frank can take multiple computations
+as arguments, hence they are \emph{multi-handlers}. In fact standard
+functions like the ones we have seen so far are just special cases of
+multi-handlers in which the all the arguments are pure.
+
+A multi-handler has type \verb!R1 -> ... -> Rm -> R! where each
+\verb!Ri! and \verb!R! is an effect-annotated value type. For
+instance, we can write a \verb!pipe! multi-handler which handles
+\verb!send! commands from one computation by matching them against
+corresponding \verb!receive! commands from another.
+%
+\begin{verbatim}
+pipe : [Send X]Unit -> [Receive X]Y -> [Abort]Y
+pipe _            y             = y
+pipe unit         _             = abort!
+pipe (send x ? s) (receive ? r) =
+  pipe (s unit) (r x)
+\end{verbatim}
+%
+The type signature conveys several different things. The \verb!pipe!
+  handler must handle all \verb!Send X! commands in its first argument
+  and all \verb!Receive X! commands in its second argument. The first
+  argument returns values of type \verb!Unit! and the second argument
+  returns values of type \verb!Y!. The handler itself is allowed to
+  perform \verb!Abort!  commands and returns a final value of type
+  \verb!Y!.
+
+Here are some things to send.
+\begin{verbatim}
+hello : List Char
+hello =
+  cons 'h' (cons 'e' (cons 'l'
+    (cons 'l' (cons 'o' nil))))
+
+space : List Char
+space = cons ' ' nil
+
+world : List Char
+world =
+  cons 'w' (cons 'o' (cons 'r'
+    (cons 'l' (cons 'd' nil))))
+\end{verbatim}
+%
+Here is a computation which sends them.
+%
+\begin{verbatim}
+sender : [Send (List Char)]Unit
+sender =
+  sends (cons (hello
+           (cons space (cons world nil))))
+\end{verbatim}
+
+Here is a \verb!main! function, which plugs \verb!sender! and
+\verb!catter!  together and sends their output to the console.
+%
+\begin{verbatim}
+main : [Abort, Console](List Unit)
+main = map ouch (pipe sender catter)
+\end{verbatim}
+where the \verb!Console! operations are handled specially at the
+top-level according to the following signature.
+\begin{verbatim}
+sig Console
+  = inch : Char(Unit)
+  | ouch : Unit(Char)
+\end{verbatim}
+
+The type system does two separate things:
+\begin{itemize}
+\item It ensures that value types coincide.
+\item It ensures that effects required are included in effects
+  enabled.
+\end{itemize}
+
+The fun of Frank is that one can say what it is to \emph{be} a
+computation without saying what it is to \emph{do} it. Doing and being
+are separately negotiable, and readily interleaved in different
+ways. Or as Frank Sinatra put it,
+\begin{center}
+do be do be do
+\end{center}
+
+%% TODO: some illustration of forwarding?
+
+%% \subsection{Modular rollback}
+
+%% TODO: probably scrap this section
+
+%% \subsection{Effect polymorphism with an invisible effect variable}
+
+%% TODO: move this discussion after the type system for Frank has been
+%% introduced
+
+%% Let us consider the canonical example of a polymorphic higher-order
+%% function \verb|map|.
+%% \begin{verbatim}
+%% data List X = nil | cons X (List X)
+
+%% map : (X -> Y) -> List X -> List Y
+%% map f nil         = nil
+%% map f (cons x xs) = cons (f x) (map f xs)
+%% \end{verbatim}
+%% The type we have given to map is the standard one a functional
+%% programmer might expect to write in a language without support for
+%% effect typing.
+%% %
+%% Though it looks polymorphic
+
+
+
+%% %
+%% We automatically translate it into a valid Frank type by applying a
+%% series of desugaring rules.
+
+%% The valid Frank type we are after is:
+%% \begin{verbatim}
+%% forall e X Y.{[0]{[0]X -> [e]Y} -> [0](List X) -> [e](List Y)}
+%% \end{verbatim}
+
+%% First, for readability we allow the signature for recursively defined
+%% functions to be defined on a separate line, as in Haskell.
+%% %
+%% Second, we allow the quantifiers to be omitted, just like in Haskell.
+%% \begin{verbatim}
+%% {[0]{[0]X -> [e]Y} -> [0](List X) -> [e](List Y)}
+%% \end{verbatim}
+%% Third, we allow the outer braces to be omitted, as the type must always be a thunk.
+%% \begin{verbatim}
+%% [0]{[0]X -> [e]Y} -> [0](List X) -> [e](List Y)
+%% \end{verbatim}
+
+%% %% S~\many{V} == 0, S~\many{V}
+%% %% S~\many{V} == e, S~\many{V}
+
+%% Let us distinguish between returners $\effbox{\sigs}V$ in argument
+%% position, whose effects $\sigs$ must be closed, and those in tail
+%% position, whose effects need not be closed. We call the former
+%% \emph{ports}, and the latter \emph{pegs}.
+
+%% Now we take advantage of some more general desugaring rules.
+%% \begin{equations}
+%%                       V &\equiv& \effbox{\varepsilon}V \\
+%%                 V \to C &\equiv& \effbox{\emptyset}V \to C \\
+%% \effbox{\sigs}(R \to C) &\equiv& \effbox{\sigs}\thunk{R \to C} \\
+%% \end{equations}
+%% where the first rule is restricted to pegs (it would be nonsensical
+%% for ports anyway, as their effects must always be closed).
+
+%% The first rule is the critical one. It allows us to avoid writing down
+%% the effect variable. The second rule makes sense as ports being closed
+%% means that writing down $\emptyset$ is redundant. The third rule is
+%% superficial.
+
+%% Applying each rule in turn we obtain:
+%% \begin{verbatim}
+%% [0]{[0]X -> [e]Y} -> [0](List X) -> [e](List Y)
+%% [0]([0]X -> [e]Y) -> [0](List X) -> [e](List Y)
+%% [0]([0]X ->    Y) -> [0](List X) ->     List Y 
+%%    (   X ->    Y) ->     List X  ->     List Y 
+%% \end{verbatim}
+
+%% In order to account for non-empty effect sets, we also apply the
+%% following rules:
+%% \begin{equations}
+%% S~\many{V} &\equiv& \varepsilon, S~\many{V} \\
+%% S~\many{V} &\equiv& \emptyset, S~\many{V} \\
+%% \end{equations}
+%% where the first only applies to peg effect sets, and the second only
+%% applies to port effect sets.
+
+%% For instance:
+%% \[
+%% \bstack
+%% \thunk{\effbox{\var{Abort}}\var{Int} \to \effbox{\var{State}~\var{Int}}\var{Bool}} \to \var{Int}
+%% \equiv \\
+%%   \qquad \thunk{\effbox{\emptyset, \var{Abort}}\var{Int} \to
+%%        \effbox{\varepsilon, \var{State}~\var{Int}}\var{Bool}} \to \effbox{\varepsilon}\var{Int}
+%% \estack
+%% \]
+
+%% With the syntactic sugar in place, we can now avoid writing the effect
+%% variable $\varepsilon$ ever. In addition, we need never write
+%% $\emptyset$ in port effect sets. It is sometimes necessary to
+%% explicitly write $\emptyset$ in peg effect sets. In particular, a pure
+%% top-level program returning values of type $V$ has type
+%% $\effbox{\emptyset}V$.
