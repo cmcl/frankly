@@ -153,6 +153,16 @@ $\boxed{\has{\Gamma}{\sigs}{V}{v}}$
 \inferrule
   {\does{\Gamma}{C}{e} \\ e \text{ covers } C}
   {\hasgs{\thunk{C}}{\thunk{e}}}
+
+\inferrule*[right=\Star]
+  {k : D~\many{U} \\ \hasgs{D~\many{U}}{k~\many{v}} \\
+    D~\many{U} = V}
+  {\hasgs{V}{k~\many{v}}}
+
+\inferrule*[right=\Star]
+  {\does{\Gamma}{\thunk{C}}{\thunk{e}} \\ \thunk{C} = V}
+  {\hasgs{V}{\thunk{e}}}
+
 \end{mathpar}
 
 $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
@@ -203,6 +213,24 @@ $\boxed{\doesg{C}{e}}$
 \inferrule
   {\doesg{R \to C}{e} \\ \doesg{R \to C}{e'}}
   {\doesg{R \to C}{e \medvert e'}}
+
+\inferrule*[right=\Star]
+  {\doesg{\effbox{\sigs}V}{v} \\ \effbox{\sigs}V = C}
+  {\doesg{C}{v}}
+
+\inferrule*[right=\Star]
+  {\doesg{\many{\effbox{\sigs'}V} \to C'}{\many{r} \mapsto e} \\
+   \many{\effbox{\sigs'}V} \to C' = C}
+  {\doesg{C}{\many{r} \mapsto e}}
+
+\inferrule*[right=\Star]
+  {\effbox{\sigs}V \to C' = C}
+  {\doesg{C}{()}}
+
+\inferrule*[right=\Star]
+  {\doesg{R \to C'}{e} \\ \doesg{R \to C'}{e'} \\ R \to C' = C}
+  {\doesg{C}{e \medvert e'}}
+
 \end{mathpar}
 
 $\boxed{\effs{C}{\sigs}}$
