@@ -17,6 +17,7 @@
 \usepackage{stmaryrd}
 \usepackage{xspace}
 \usepackage{hyperref}
+\usepackage{xcolor}
 \usepackage{url}
 
 \usepackage{MnSymbol}
@@ -32,13 +33,13 @@
 
 \newcommand{\seml}{\left\llbracket}
 \newcommand{\semr}{\right\rrbracket}
-
+\newcommand{\todo}[1]{\textbf{\textcolor{red}{TODO:#1}}}
 \newcommand{\pc}[1]{\llparenthesis{#1}\rrparenthesis}
 
 \newcommand{\FV}{\mathit{FV}}
 \newcommand{\dom}{\mathit{dom}}
-
-\newcommand{\Star}{\Large$\star$}
+\newcommand{\sub}{\subseteq}
+\newcommand{\Star}{{\Large$\star$}}
 
 \newcommand{\reducesto}{\longrightarrow}
 
@@ -145,7 +146,7 @@
 \newcommand{\key}[1]{\mathsf{#1}}
 \newcommand{\var}{\mathit}
 
-\newcommand{\handleSymbol}{\mathbin{?}}
+\newcommand{\handleSymbol}{\rightarrow}
 %% \newcommand{\yieldSymbol}{\mathbin{\prec}}
 %% \newcommand{\continueSymbol}{\mathbin{\triangleleft}}
 %% \newcommand{\handleType}[3]{\effbox{{#1} \yieldSymbol \ret{#2}{#3}}}

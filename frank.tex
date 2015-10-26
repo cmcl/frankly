@@ -31,8 +31,9 @@ Terms
                              &&\mid& \key{letrec}~\many{f : P = e}~\key{in}~d \\
 \slab{checkable computations} &e &::=& v \mid \many{r} \mapsto e \mid () \mid e \medvert e
 \\[1ex]
-\slab{value patterns}&p       &::=& x \mid k~\many{p}                              \\
-\slab{computation patterns}&r &::=& p \mid \handle{c~\many{p}\,}{g} \mid \force{x} \\
+\slab{value patterns}&p       &::=& x \mid k~\many{p}        \\
+\slab{computation patterns}&r &::=& p \mid [\handle{c~\many{p}\,}{g}]
+                               \mid [x] \\
 \end{syntax}
 
 \caption{Frank Syntax}
@@ -77,17 +78,19 @@ $U$. The types $\many{V}$ and $U$ may all depend on $\many{X}$. Each
 command many appear only once in a signature, and each command may
 appear in only one signature.
 
-An effect set is a sequence of signatures initiated either with the
-empty effect $\emptyset$ (yielding a \emph{closed effect set}) or the
-only effect variable $\varepsilon$ (yielding an \emph{open effect
-  set}). Order is important, as repeats are permitted, in which case
-the right-most signature overrides all others with the same name.
+An effect set is a sequence of interfaces initiated either with the empty
+effect $\emptyset$ (yielding a \emph{closed effect set}) or the only effect
+variable $\varepsilon$ (yielding an \emph{open effect set}). Order is
+important, as repeats are permitted, in which case the right-most interface
+overrides all others with the same name. This ordering property is encoded in
+the $\sub$ relation for effect sets. The restriction on $\varepsilon$ prevents
+it being used in some thing...it is for its own safety i suppose
 
-Shadowing arises naturally in two ways. First, given an open effect
-set $\sigs$ we may substitute an arbitrary effect set for
-$\varepsilon$. Second, we define a notion of effect extension: $\sigs
-\oplus \sigs'$ is the \emph{extension} of effect set $\sigs$ with
-closed effect set $\sigs'$, formally:
+\todo{REMOVE this paragaraph? Not used in handler call rule}Shadowing arises
+naturally in two ways. First, given an open effect set $\sigs$ we may
+substitute an arbitrary effect set for $\varepsilon$. Second, we define a
+notion of effect extension: $\sigs \oplus \sigs'$ is the \emph{extension} of
+effect set $\sigs$ with closed effect set $\sigs'$, formally:
 %
 \[\ba{@{\sigs~\oplus~}l@{~}l@{}}
 \emptyset               &= \sigs \\
@@ -174,7 +177,7 @@ $\boxed{\can{\Gamma}{\sigs}{d}{C}}$
 
 \inferrule
   {\cangs{d}{\effbox{\sigs'}V \to C} \\
-   \doesg{\effbox{\sigs \oplus \sigs'}V}{e}}
+   \doesg{\effbox{\sigs'}V}{e}}
   {\can{\Gamma}{\sigs}{d~e}{C}}
 
 %% \inferrule
@@ -237,12 +240,28 @@ $\boxed{\effs{C}{\sigs}}$
 
 \begin{mathpar}
 \inferrule
-  { }
-  {\effs{\effbox{\sigs}V}{\sigs}}
+  {\sigs' \sub \sigs}
+  {\effs{\effbox{\sigs'}V}{\sigs}}
 
 \inferrule
   {\effs{C}{\sigs}}
   {\effs{R \to C}{\sigs}}
+\end{mathpar}
+
+$\boxed{\sigs \sub \sigs'}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\varepsilon \sub \varepsilon}
+
+\inferrule
+  { }
+  {\emptyset \sub \sigs}
+
+\inferrule
+  {\sigs' \sub \sigs',\sigs'' \\ S~\many{V} \notin \sigs''}
+  {\sigs,S~\many{V} \sub \sigs',S~\many{V},\sigs''}
 \end{mathpar}
 
 $\boxed{\pat{V}{p}{\Delta}}$
@@ -256,6 +275,7 @@ $\boxed{\pat{V}{p}{\Delta}}$
   {k~\many{V} \in D~\many{U} \\
    (\pat{V_i}{p_i}{\Delta_i})_i}
   {\pat{D~\many{U}}{k~\many{p}}{\many{\Delta}}}
+
 \end{mathpar}
 
 $\boxed{\pat{R}{r}{\Delta}}$
@@ -274,7 +294,7 @@ $\boxed{\pat{R}{r}{\Delta}}$
 
 \inferrule
   { }
-  {\pat{\effbox{\sigs}V}{\force{x}}{x:\thunk{\effbox{\sigs}V}}}
+  {\pat{\effbox{\sigs}V}{[x]}{\Delta, x:\thunk{\effbox{\sigs}V}}}
 \end{mathpar}
 
 \caption{Frank Typing Rules}
@@ -298,6 +318,10 @@ then we can \emph{infer} that the type of $d$ is $C$.
 The judgement $\doesg{C}{e}$ says that given type environment
 $\Gamma$, computation type $C$, and checkable computation term $e$,
 then we can \emph{check} that $C$ is the type of $e$.
+
+Judgements labelled with a \Star{} indicate generation and unification of
+flexible type variables within the unification algorithm to construct a type
+of the appropriate shape in order to check against the computation or value.
 
 The types of monomorphic variables ($x$) are simply looked up in the
 type environment. The types of polymorphic variables ($f$) are looked
