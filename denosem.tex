@@ -6,7 +6,7 @@ evaluator which performs the handling of the effects by monadicly threading
 computations through the thing
 
 we have a compiler that is structured like parser then typechecker
-thenddddddddd untyped evaluator the untyped evaluator does things on a
+then untyped evaluator the untyped evaluator does things on a
 mid-level language that has be desugared somewhat
 
 I have some vague notion of what i want here a monadic presentation of the
@@ -25,6 +25,16 @@ suitable notation
 denotation of contexts/environments
 denotation of terms: values and computations
 anything else?
+
+\begin{figure}[float]
+Terms
+\begin{syntax}
+\slab{handler application}& \deno{d~e} &::=& \deno{d}~\deno{e}
+\end{syntax}
+
+\caption{Frank Denotational Semantics}
+\label{fig:frank-deno-sem}
+\end{figure}
 
 %%  LocalWords:  Lindley Conor Strathclyde Plotkin Pretnar's Multi et
 %%  LocalWords:  effectful modularity polymorphism Kammar al Pretnar

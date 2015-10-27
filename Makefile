@@ -1,5 +1,5 @@
-DEPS:=intro.tex examples.tex frank.tex core.tex feff.tex opersem.tex\
-related.tex future.tex
+DEPS:=intro.tex examples.tex frank.tex core.tex feff.tex denosem.tex\
+opersem.tex related.tex future.tex
 
 all: frankly.pdf
 
