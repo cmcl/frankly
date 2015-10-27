@@ -1,7 +1,16 @@
 \section{Denotational Semantics for Frank}
 \label{sec:denote}
 
-The implementation has a denotational semantics described by an untyped
+The prototype interpreter contains an evaluator implementing a denotational
+semantics operating on untyped Frank programs. The denotational semantics is
+described formally in Figure~\ref{fig:frank-deno-sem}. The interpretation
+function $\sem{\cdot}$ takes syntactic constructs in Frank to the domain of
+computations and values. Every Frank program must have a \verb!main! function
+which is called by the evaluator after populating the environment with
+builtins and the (potentially) mutually recursive top-level function
+definitions.
+
+described by an untyped
 evaluator which performs the handling of the effects by monadicly threading
 computations through the thing
 
@@ -29,7 +38,11 @@ anything else?
 \begin{figure}[float]
 Terms
 \begin{syntax}
-\slab{handler application}& \deno{d~e} &::=& \deno{d}~\deno{e}
+\slab{inter. function}& \sem{\cdots} &:& \textbf{Syn} \longrightarrow
+ \textbf{Env} \longrightarrow \textbf{Comp} \\
+\slab{variable lookup}& \deno{x}              &::=& \rho(x) \\
+\slab{command lookup}&  \deno{c}              &::=& \ldots \\
+\slab{handler application}& \deno{d~\many{e}} &::=& \text{let}~f = \deno{d}~\text{in} f~\many{\deno{e}}
 \end{syntax}
 
 \caption{Frank Denotational Semantics}
