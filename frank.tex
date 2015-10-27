@@ -83,8 +83,23 @@ effect $\emptyset$ (yielding a \emph{closed effect set}) or the only effect
 variable $\varepsilon$ (yielding an \emph{open effect set}). Order is
 important, as repeats are permitted, in which case the right-most interface
 overrides all others with the same name. This ordering property is encoded in
-the $\sub$ relation for effect sets. The restriction on $\varepsilon$ prevents
-it being used in some thing...it is for its own safety i suppose
+the subtyping relation ($\sub$) for effect sets. The relation consists of an
+ordered set (or list) of effect interfaces along with two distinguished
+elements $\emptyset$ and $\varepsilon$ which are mutually exclusive. There are
+some restrictions on $\varepsilon$: (1) it may only occur as the right-most
+element of any set to prevent it from overriding any effects within the set
+when it is instantiated; (2) it may only be compared with itself or
+$\emptyset$. So for example:
+%
+\begin{mathpar}
+\varepsilon \nsubseteq \verb!State Int!, \varepsilon
+\end{mathpar}
+
+because otherwise instantiating $\varepsilon$ to, say, \verb!State Bool!,
+would override the state effect on the left. The inductive case for $\sub$ has
+restrictions on $\sigs''$ to ensure it is closed (the restriction on
+$\varepsilon$) and does not contain the effect interface $\sig$ (the
+right-most element property).
 
 \todo{REMOVE this paragaraph? Not used in handler call rule}Shadowing arises
 naturally in two ways. First, given an open effect set $\sigs$ we may
@@ -260,7 +275,8 @@ $\boxed{\sigs \sub \sigs'}$
   {\emptyset \sub \sigs}
 
 \inferrule
-  {\sigs' \sub \sigs',\sigs'' \\ S~\many{V} \notin \sigs''}
+  {\sigs \sub \sigs',\sigs'' \\ S \notin \dom(\sigs'') \\
+    \sigs'' \text{ closed}}
   {\sigs,S~\many{V} \sub \sigs',S~\many{V},\sigs''}
 \end{mathpar}
 
