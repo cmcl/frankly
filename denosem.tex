@@ -2,13 +2,25 @@
 \label{sec:denote}
 
 The prototype interpreter contains an evaluator implementing a denotational
-semantics operating on untyped Frank programs. The denotational semantics is
-described formally in Figure~\ref{fig:frank-deno-sem}. The interpretation
-function $\sem{\cdot}$ takes syntactic constructs in Frank to the domain of
-computations and values. Every Frank program must have a \verb!main! function
-which is called by the evaluator after populating the environment with
-builtins and the (potentially) mutually recursive top-level function
-definitions.
+semantics operating on untyped Frank programs. The interpretation function
+$\sem{\cdot}$ interprets Frank programs (\textbf{Syn}) in an ML-like meta
+language represented by the semantic domain \textbf{Comp}. \textbf{Comp} is a
+monad (\textbf{CommandMonad} or \textbf{CM})
+over a collection of primitive values as defined in
+Figure~\ref{fig:eval-comp}. Booleans and integers are ranged over by $b$ and
+$i$, respectively. Constructors in Frank are encoded as $k~\many{v}$ where
+$k$ ranges over strings (considered builtins to the meta language). $h$ ranges
+over function spaces
+$\text{\textbf{Comp}}^n \longrightarrow \text{\textbf{Comp}}$,
+$\forall n \in \NN$. Commands are represented by $c~\many{v}~r$
+where $c$ ranges over strings and $r$ ranges over function spaces
+$\text{\textbf{Value}} \longrightarrow \text{\textbf{Comp}}$.
+The interpretation function is defined in Figure~\ref{fig:frank-deno-sem}.
+
+Every Frank
+program must have a \verb!main!  function which is called by the evaluator
+after populating the environment with builtins and the (potentially) mutually
+recursive top-level function definitions.
 
 described by an untyped
 evaluator which performs the handling of the effects by monadicly threading
@@ -36,13 +48,40 @@ denotation of terms: values and computations
 anything else?
 
 \begin{figure}[float]
+\begin{syntax}
+\slab{\textbf{Value}}& v &::=& b \mid i \mid k~\many{v} \mid h\\
+\slab{\textbf{CommandMonad}}& m~a &::=& a \mid c~\many{a}~r\\
+\slab{\textbf{Comp}}&  e &::=& m~v
+\end{syntax}
+\caption{Semantic Domains}
+\label{fig:eval-comp}
+\end{figure}
+
+\begin{figure}[float]
+Monadic Operations
+\begin{seqdef}
+seq :& \textbf{[Comp]} & \longrightarrow & \textbf{CM [Value]} & \\
+seq  & []        &=& [] & \\
+seq  & m  :: ms  &=& \begin{array}{ll}
+                       \text{do} & x \leftarrow m\\
+                                 & xs \leftarrow ms\\
+                                 & x :: xs
+                     \end{array}
+\end{seqdef}
 Terms
 \begin{syntax}
 \slab{inter. function}& \sem{\cdots} &:& \textbf{Syn} \longrightarrow
- \textbf{Env} \longrightarrow \textbf{Comp} \\
+ \textbf{Env} \longrightarrow \textbf{Comp}\\
 \slab{variable lookup}& \deno{x}              &::=& \rho(x) \\
-\slab{command lookup}&  \deno{c}              &::=& \ldots \\
-\slab{handler application}& \deno{d~\many{e}} &::=& \text{let}~f = \deno{d}~\text{in} f~\many{\deno{e}}
+\slab{command lookup}&  \deno{c}              &::=&
+  \lambda~\many{e}.\text{do}~\many{v} \leftarrow \text{seq}~\many{e} \seq
+                             c~\many{v}~(\lambda~v.v) \\
+\slab{constructor}&   \deno{k~\many{v}} &::=& k~\many{\deno{v}}\\
+\slab{thunked value}& \deno{\thunk{v}} &::=& \lambda (). \deno{v}\\
+\slab{thunked clauses}& \deno{\thunk{\many{\many{r} \to e}}} &::=&
+  \lambda cs. \deno{e}\\
+\slab{handler application}& \deno{d~\many{e}} &::=&
+  \text{let}~f = \deno{d}~\text{in} f~\many{\deno{e}}\\
 \end{syntax}
 
 \caption{Frank Denotational Semantics}
