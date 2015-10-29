@@ -14,6 +14,8 @@
 \usepackage{mathpartir}
 \usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{comment}
+\usepackage{listings}
 \usepackage{stmaryrd}
 \usepackage{xspace}
 \usepackage{hyperref}
@@ -32,7 +34,12 @@
 \newcommand{\sem}[1]{\llbracket{#1}\rrbracket}
 \newcommand{\seml}{\left\llbracket}
 \newcommand{\semr}{\right\rrbracket}
+
+\newcommand{\mdo}{~\textbf{do}~}
 \newcommand{\seq}{~\textbf{;}~}
+\newcommand{\assn}[2]{{#1}~\leftarrow~{#2}}
+\newcommand{\func}[2]{\text{#1}~{#2}}
+
 \newcommand{\deno}[1]{\sem{#1}\rho}
 \newcommand{\denoex}[2]{\sem{#1}#2}
 \newcommand{\todo}[1]{\textbf{\textcolor{red}{TODO:#1}}}
@@ -61,8 +68,6 @@
 
 
 \newenvironment{syntax}{\[\ba{@{}l@{~}r@{~}c@{~}l@{}}}{\ea\]}
-\newenvironment{seqdef}{\[\ba{@{}l@{~}c@{~}c@{~}l@{~}l@{}}}{\ea\]}
-
 
 \newcommand{\judgeword}[1]{~\mathbf{#1}~}
 
@@ -191,6 +196,22 @@
 
 \newcommand\slab[1]{(\textrm{#1})}
 
+\lstset{language=Haskell,
+  extendedchars=true,
+  escapechar=!,
+%  showstringspaces=false,
+  basicstyle=\sffamily\small\upshape,
+  commentstyle=\footnotesize\itshape,
+  morekeywords={do, return},
+  morecomment=[l]--,%
+  literate=
+    {lambda}{$\lambda$}1
+    {\{}{$\llbracket$}1
+    {\}}{$\rrbracket$}1
+    {->}{$\rightarrow$}1
+    {<-}{$\leftarrow$}1
+    {=>}{$\Rightarrow$}1
+}
 
 \begin{document}
 

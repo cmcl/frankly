@@ -47,43 +47,122 @@ denotation of contexts/environments
 denotation of terms: values and computations
 anything else?
 
+\begin{comment}
 \begin{figure}[float]
 \begin{syntax}
 \slab{\textbf{Value}}& v &::=& b \mid i \mid k~\many{v} \mid h\\
 \slab{\textbf{CommandMonad}}& m~a &::=& a \mid c~\many{a}~r\\
-\slab{\textbf{Comp}}&  e &::=& m~v
+\slab{\textbf{Comp}}& e &::=& m~v
 \end{syntax}
+\caption{Semantic Domains}
+\label{fig:eval-comp}
+\end{figure}
+\end{comment}
+
+\begin{figure}[float]
+\begin{lstlisting}[language=Haskell,basicstyle=\sffamily\scriptsize\upshape]
+data Val = VBool Bool
+         | VInt Int
+         | VCon String [Val]
+         | VMHdr ([Comp] -> Comp)
+
+data CmdMonad a = Cmd String [Val] (Val -> CmdMonad a)
+                | Return a
+
+type Comp = CmdMonad Val
+
+instance Monad CmdMonad where
+    return v = Return v
+    Return v >>= k = k v
+    (Cmd c vs r) >>= k = Cmd c vs (lambdax.r x >>= k)
+\end{lstlisting}
 \caption{Semantic Domains}
 \label{fig:eval-comp}
 \end{figure}
 
 \begin{figure}[float]
-Monadic Operations
-\begin{seqdef}
-seq :& \textbf{[Comp]} & \longrightarrow & \textbf{CM [Value]} & \\
-seq  & []        &=& [] & \\
-seq  & m  :: ms  &=& \begin{array}{ll}
-                       \text{do} & x \leftarrow m\\
-                                 & xs \leftarrow ms\\
-                                 & x :: xs
-                     \end{array}
-\end{seqdef}
-Terms
-\begin{syntax}
-\slab{inter. function}& \sem{\cdots} &:& \textbf{Syn} \longrightarrow
- \textbf{Env} \longrightarrow \textbf{Comp}\\
-\slab{variable lookup}& \deno{x}              &::=& \rho(x) \\
-\slab{command lookup}&  \deno{c}              &::=&
-  \lambda~\many{e}.\text{do}~\many{v} \leftarrow \text{seq}~\many{e} \seq
-                             c~\many{v}~(\lambda~v.v) \\
-\slab{constructor}&   \deno{k~\many{v}} &::=& k~\many{\deno{v}}\\
-\slab{thunked value}& \deno{\thunk{v}} &::=& \lambda (). \deno{v}\\
-\slab{thunked clauses}& \deno{\thunk{\many{\many{r} \to e}}} &::=&
-  \lambda cs. \deno{e}\\
-\slab{handler application}& \deno{d~\many{e}} &::=&
-  \text{let}~f = \deno{d}~\text{in} f~\many{\deno{e}}\\
-\end{syntax}
 
+Monadic Operations
+\begin{lstlisting}[language=Haskell]
+seq : [CmdMonad a] -> CmdMonad [a]
+seq      []     =  []
+seq    (x::xs)  = do v <- x
+                     vs <- seq xs
+                     return (v::vs) 
+\end{lstlisting}
+Inferable Values
+\begin{lstlisting}[language=Haskell]
+IV{!$\cdot$!} : Syn -> Env -> Comp
+IV{v} p = p(x)
+IV{c} p = do vs <- seq cs
+             Cmd c vs (lambdav.return v)
+IV{i} p = return i
+!$\ldots \text{similar for other base types} \ldots$!
+\end{lstlisting}
+%% \begin{syntax}
+%% \slab{evaluate variable}& \deno{x}              &::=& \rho(x) \\
+%% \slab{evaluate command}&  \deno{c}              &::=&
+%%   \lambda~\many{e}.\mdo \assn{\many{v}}{\func{seq}{\many{e}}} \seq
+%%                          c~\many{v}~(\lambda~v.v) \\
+%% \slab{evaluate integer}& \deno{i}               &::=& i\\
+%% \end{syntax}
+Checkable Values
+\begin{lstlisting}
+CV{!$\cdot$!} : Syn -> Env -> Comp
+CV{v}    p = IV{v}
+CV{k xs} p = do vs <- seq $ map ({!$\cdot$!} p) xs
+                return (VCon k vs)
+CV{!\thunk{v}!} p = return $ VMHdr (lambda[].CV{v} p)
+CV{!\thunk{e}!} p = lambda_.CC{e} p
+\end{lstlisting}
+%% \begin{syntax}
+%% \slab{thunked clauses}& \deno{\thunk{\many{\many{r} \to e}}} &::=&
+%%   \lambda cs. \deno{e}\\
+%% \end{syntax}
+Inferable Computation
+\begin{lstlisting}
+IC{!$\cdot$!} : Syn -> Env -> Comp
+IC{d xs} p =
+  do v <- IV{d}
+     case v of
+       VMHdr f -> do cs <- map (CC{!$\cdot$!} p) xs
+                    f cs
+          _    -> !$\ldots \text{failure command} \ldots$!
+\end{lstlisting}
+%% \begin{syntax}
+%% \slab{handler application}& \deno{d~\many{e}} &::=&
+%%   \mdo \assn{f}{\deno{d}} \seq f~\many{\deno{e}}\\
+%% \end{syntax}
+Checkable Computations
+\begin{lstlisting}
+CC{!$\cdot$!} : Syn -> Env -> Comp
+CC{v} p = CV{v}
+CC{!$\many{\many{r} \to e}$!} p = return $ VMHdr (lambdacs.f !$\many{\many{r} \to e}$! p cs)
+  where f : [Syn] -> Env -> [Syn] -> Comp
+        f cls p cs =
+            case (foldl (L{!$\cdot$!} p cs) Nothing cls) of
+              Nothing -> !$\ldots \text{perform command forwarding} \ldots$!
+              Just c  -> c)
+\end{lstlisting}
+Clauses
+\begin{lstlisting}
+L{!$\cdot$!} : Syn -> Env -> Maybe Comp -> [Syn]
+          -> Maybe Comp
+L{!$\many{r} \to e$!} p cs a =
+   case a of
+     Just _ -> a
+     Nothing -> case pat_matches p cs !$\many{r}$! of
+                 Just p' -> CC{e} p'
+                 Nothing -> Nothing
+\end{lstlisting}
+%% \begin{syntax}
+%% \slab{evaluate clauses}& \deno{\many{\many{r} \to e}} &::=&
+%%   \lambda~\many{e_1}.
+%%              \func{foldl}
+%%                   {(\sem{\cdot}~\many{e_1}~\rho)~(\many{\many{r} \to e})}\\
+%% \slab{evaluate clause}& \sem{\many{r}~e}~\many{e_1}~r~\rho &::=&
+%%   \text{if} \func{match}{\many{e_1}}{\many{r}} \text{then} \deno{e} \text{else} None
+%% \end{syntax}
 \caption{Frank Denotational Semantics}
 \label{fig:frank-deno-sem}
 \end{figure}
