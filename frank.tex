@@ -219,8 +219,7 @@ $\boxed{\doesg{C}{e}}$
   {\doesg{\effbox{\sigs}V}{v}}
 
 \inferrule
-  {\many{\sigs'} \text{ closed} \\
-   (\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
+  {(\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
    \does{\Gamma, \many{\Delta}}{C}{e}}
   {\doesg{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
 
@@ -268,16 +267,16 @@ $\boxed{\sigs \sub \sigs'}$
 \begin{mathpar}
 \inferrule
   { }
-  {\varepsilon \sub \varepsilon}
+  {\sigs \sub \sigs}
 
 \inferrule
   { }
   {\emptyset \sub \sigs}
 
 \inferrule
-  {\sigs \sub \sigs',\sigs'' \\ S \notin \dom(\sigs'') \\
-    \sigs'' \text{ closed}}
-  {\sigs,S~\many{V} \sub \sigs',S~\many{V},\sigs''}
+  {\sigs \sub \sigs',\sigs'' \\ S \notin \dom(\sigs') \\
+    \sigs' \text{ closed}}
+  {S~\many{V},\sigs \sub \sigs',S~\many{V},\sigs''}
 \end{mathpar}
 
 $\boxed{\pat{V}{p}{\Delta}}$
