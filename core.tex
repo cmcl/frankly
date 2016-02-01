@@ -21,7 +21,16 @@ coupled with a mid-level computation (a clause). the algorithm compiles this
 to a decision tree using an adapted version of maranget's approach (without
 optimisations such as necessity). we convert the matrix to a column-first
 representation. then pick the first column which has a pattern that is not a
-wildcard.
+wildcard. if the column is not the zeroth column then we perform a swap and
+recurse (this will need to take account of forwarding). otherwise we compute
+the type signature for the column (head constructors). we then compute the
+type signature of the type for the column of patterns. comparing these will
+determine whether or not we need a default/forwarding case. specifically, if
+we have an open effect set. otherwise any discrepancy means that the user did
+not specify all patterns and so this is a type error. constructing the
+forwarding clauses shouldn't be too difficult. don't we just ignore the column
+in question? or do we need to do some value threading? i think the answer
+depends on the evaluation procedure.
 
 We take a fairly standard approach to compiling away pattern
 matching. As we may match simultaneously against multiple
