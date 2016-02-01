@@ -1,6 +1,28 @@
 \section{Pattern Matching Compilation}
 \label{sec:core}
 
+the pattern matching algorithm of maranget~\cite{Maranget08} has been extended
+to the setting of frank. here we need to be careful about order in the case of
+open effect sets since forwarding is performed left-to-right. we do not
+translate to core frank but instead compile to decision trees in the full
+frank language (multi-handlers). how do we detect incomplete pattern
+matching. we typecheck against the concrete set of effects and the value
+signature. open sets have allow a implicit forwarding clause. it is overridden
+if the user provides their own forwarding clause. closed effect sets must be
+fully specified. special wildcard pattern for computations desugars to perform
+forwarding of unhandled commands. this transformation results in additional
+rows for the clause matrix and also requires a transformation of the
+expression on the right hand side. it must execute the command and bind the
+result to be used in a recursive call to the forwarding handler.
+
+here is a rough description of what the algorithm does. we start with the
+clause matrix of a multi-handler consisting of rows of source-level patterns
+coupled with a mid-level computation (a clause). the algorithm compiles this
+to a decision tree using an adapted version of maranget's approach (without
+optimisations such as necessity). we convert the matrix to a column-first
+representation. then pick the first column which has a pattern that is not a
+wildcard.
+
 We take a fairly standard approach to compiling away pattern
 matching. As we may match simultaneously against multiple
 side-effecting computations, we must be somewhat careful about
@@ -340,10 +362,11 @@ as a pattern matching tree constructed from handlers and case
 statements. 
 
 Standard algorithms for pattern matching compilation
-apply~(e.g. \cite{Augustsson85} or \cite{Maranget08}). Rather than
-committing to a particular one, we outline how a pattern matching
-compiler fits into our setting, what input it takes, and what kind of
-output it must produce.
+apply~(e.g. \cite{Augustsson85} or \cite{Maranget08}). we commit to the
+algorithm set out by Maranget in the implementation but adapted to handle the
+value/computation distinction. Rather than committing to a particular one, we
+outline how a pattern matching compiler fits into our setting, what input it
+takes, and what kind of output it must produce.
 
 \begin{sloppypar}
 Given a Frank expression $\thunk{e}$ such that $\doesg{R_1 \dots R_n

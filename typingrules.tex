@@ -1,0 +1,169 @@
+\begin{figure*}[float]
+$\boxed{\makes{\Gamma}{\sigs}{u}{D}}$
+\begin{mathpar}
+\inferrule
+  {x:V \in \Gamma}
+  {\makesgs{x}{V}}
+
+%% \inferrule
+%%   {\dom(\theta) = \set{\varepsilon} \cup \FV(V) \backslash (\FV(\Gamma) \cup \FV(\sigs)) \\
+%%    \theta(\varepsilon) = \sigs}
+%%   {\makes{\Gamma, x:V}{\sigs}{x}{\theta(V)}}
+
+\inferrule
+  {f:\forall \many{Z}.Q \in \Gamma \\
+   \dom(\theta) = \set{\many{Z}} \\
+   \varepsilon \in \dom(\theta) \implies \theta(\varepsilon) = \sigs}
+  {\makesgs{f}{\theta(Q)}}
+
+\inferrule
+  {c : U(\many{V}) \in \sigs}
+  {\makesgs{c}{\thunk{\many{\effbox{}V} \to \effbox{\sigs}U}}}
+
+\inferrule
+  {\makesgs{u}{\thunk{C}} \\ \effs{C}{\sigs}}
+  {\cangs{\force{u}}{C}}
+
+\inferrule
+  {\cangs{u}{\effbox{\sigs'}V \to C} \\
+   \doesg{\effbox{\sigs'}V}{e}}
+  {\can{\Gamma}{\sigs}{u~e}{C}}
+
+%% \inferrule
+%%   {c : U(\many{V}) \in \sigs \\
+%%    (\hasgs{V_i}{v_i})_i}
+%%   {\cangs{c~\many{v}}{\effbox{\sigs}U}}
+
+%% \inferrule
+%%   {\cangs{d}{V} \\
+%%    \can{\Gamma, x:V}{\sigs}{d'}{C}}
+%%   {\cangs{\key{let}~x=d~\key{in}~d'}{C}}
+
+\inferrule
+  {(\does{\Gamma, \many{f : \forall \many{Z}.Q}}{e_i}{Q_i})_i \\
+   \can{\Gamma, \many{f : \forall \many{Z}.Q}}{\sigs}{d}{C}}
+  {\cangs{\key{letrec}~\many{f : \forall \many{Z}.Q = e}~\key{in}~d}{C}}
+\end{mathpar}
+
+$\boxed{\has{\Gamma}{\sigs}{D}{v}}$
+
+\begin{mathpar}
+\inferrule
+  {\makesgs{u}{U} \\ U = V}
+  {\hasgs{V}{u}}
+
+\inferrule
+  {(\hasgs{V_i}{v_i})_i \\
+   k~\many{V} \in D~\many{U}}
+  {\hasgs{D~\many{U}}{k~\many{v}}}
+
+\inferrule
+  {\does{\Gamma}{C}{e} \\ e \text{ covers } C}
+  {\hasgs{\thunk{C}}{\thunk{e}}}
+
+%% \inferrule*[right=\Star]
+%%   {k : D~\many{U} \\ \hasgs{D~\many{U}}{k~\many{v}} \\
+%%     D~\many{U} = V}
+%%   {\hasgs{V}{k~\many{v}}}
+
+%% \inferrule*[right=\Star]
+%%   {\does{\Gamma}{\thunk{C}}{\thunk{e}} \\ \thunk{C} = V}
+%%   {\hasgs{V}{\thunk{e}}}
+
+\inferrule
+  {(\pat{\effbox{\sigs'_i}V_i}{r_i}{\Delta_i})_i \\
+   \does{\Gamma, \many{\Delta}}{C}{e}}
+  {\hasgs{\many{\effbox{\sigs'}V} \to C}{\many{r} \mapsto e}}
+
+\inferrule
+  {V\, \text{uninhabited}}
+  {\hasgs{\effbox{\sigs'}V \to C}{()}}
+
+\inferrule
+  {\hasgs{R \to C}{e} \\ \hasgs{R \to C}{e'}}
+  {\hasgs{R \to C}{e \medvert e'}}
+
+%% \inferrule*[right=\Star]
+%%   {\hasgs{\effbox{\sigs}V}{v} \\ \effbox{\sigs}V = C}
+%%   {\hasgs{C}{v}}
+
+%% \inferrule*[right=\Star]
+%%   {\hasgs{\many{\effbox{\sigs'}V} \to C'}{\many{r} \mapsto e} \\
+%%    \many{\effbox{\sigs'}V} \to C' = C}
+%%   {\hasgs{C}{\many{r} \mapsto e}}
+
+%% \inferrule*[right=\Star]
+%%   {\effbox{\sigs}V \to C' = C}
+%%   {\hasgs{C}{()}}
+
+%% \inferrule*[right=\Star]
+%%   {\hasgs{R \to C'}{e} \\ \hasgs{R \to C'}{e'} \\ R \to C' = C}
+%%   {\hasgs{C}{e \medvert e'}}
+
+\end{mathpar}
+
+$\boxed{\effs{C}{\sigs}}$
+
+\begin{mathpar}
+\inferrule
+  {\sigs' \sub \sigs}
+  {\effs{\effbox{\sigs'}V}{\sigs}}
+
+\inferrule
+  {\effs{C}{\sigs}}
+  {\effs{R \to C}{\sigs}}
+\end{mathpar}
+
+$\boxed{\sigs \sub \sigs'}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\sigs \sub \sigs}
+
+\inferrule
+  { }
+  {\emptyset \sub \sigs}
+
+\inferrule
+  {\sigs \sub \sigs',\sigs'' \\ S \notin \dom(\sigs') \\
+    \sigs' \text{ closed}}
+  {S~\many{V},\sigs \sub \sigs',S~\many{V},\sigs''}
+\end{mathpar}
+
+$\boxed{\pat{V}{p}{\Delta}}$
+
+\begin{mathpar}
+\inferrule
+  { }
+  {\pat{V}{x}{x:V}}
+
+\inferrule
+  {k~\many{V} \in D~\many{U} \\
+   (\pat{V_i}{p_i}{\Delta_i})_i}
+  {\pat{D~\many{U}}{k~\many{p}}{\many{\Delta}}}
+
+\end{mathpar}
+
+$\boxed{\pat{R}{r}{\Delta}}$
+
+\begin{mathpar}
+\inferrule
+  {\pat{V}{p}{\Delta}}
+  {\pat{\effbox{\sigs}V}{p}{\Delta}}
+
+\inferrule
+  {c:U(\many{V}) \in \sigs \\
+   (\pat{V_i}{p_i}{\Delta_i})_i}
+  {\pat{\effbox{\sigs}V}
+       {\handle{c~\many{p}}{g}}
+       {\many{\Delta}, g:\thunk{\effbox{\emptyset}U \to \effbox{\sigs}V}}}
+
+\inferrule
+  { }
+  {\pat{\effbox{\sigs}V}{[x]}{\Delta, x:\thunk{\effbox{\sigs}V}}}
+\end{mathpar}
+
+\caption{Frank Typing Rules}
+\label{fig:frank-typing-combined}
+\end{figure*}
