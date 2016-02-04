@@ -44,6 +44,11 @@ for a match on the first column, if no match, we check the next row, and so
 on. the only difference is that the ``row-first'' approach would match on a
 wildcard pattern (a thunk)...and in fact maybe this is what we should do...
 
+picking a column that is not a wildcard. does not appear to be a valid
+operation. because once we have picked a column. we are committed to
+evaluating that particular argument. no wildcards. desugar patterns.
+translate to core frank.
+
 We take a fairly standard approach to compiling away pattern
 matching. As we may match simultaneously against multiple
 side-effecting computations, we must be somewhat careful about
