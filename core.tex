@@ -6,14 +6,15 @@ to the setting of frank. here we need to be careful about order in the case of
 open effect sets since forwarding is performed left-to-right. we do not
 translate to core frank but instead compile to decision trees in the full
 frank language (multi-handlers). how do we detect incomplete pattern
-matching. we typecheck against the concrete set of effects and the value
-signature. open sets have allow a implicit forwarding clause. it is overridden
-if the user provides their own forwarding clause. closed effect sets must be
+matching. we typecheck against the concrete set of effects and the type
+signature. open sets allow an implicit forwarding clause. it is overridden if
+the user provides their own forwarding clause. closed effect sets must be
 fully specified. special wildcard pattern for computations desugars to perform
-forwarding of unhandled commands. this transformation results in additional
-rows for the clause matrix and also requires a transformation of the
-expression on the right hand side. it must execute the command and bind the
-result to be used in a recursive call to the forwarding handler.
+forwarding of unhandled commands -- this wildcard pattern is invalid in the
+case of closed effect sets. the transformation results in additional rows for
+the clause matrix and also requires a transformation of the expression on the
+right hand side. it must execute the command and bind the result to be used in
+a recursive call to the forwarding handler.
 
 here is a rough description of what the algorithm does. we start with the
 clause matrix of a multi-handler consisting of rows of source-level patterns
@@ -31,6 +32,17 @@ not specify all patterns and so this is a type error. constructing the
 forwarding clauses shouldn't be too difficult. don't we just ignore the column
 in question? or do we need to do some value threading? i think the answer
 depends on the evaluation procedure.
+
+one can think of the evaluation of a decision tree as column-first as opposed
+to the row first approach that was previously taken in the evaluator. choosing
+a column to compile should not alter the semantics of forwarding. so if we
+cannot find a non-wildcard pattern to apply for the first column, what should
+be done? i believe we should forward unhandled commands for that column. this
+is column-first semantics. and indeed this will match the semantics of the
+``row-first'' approach since even though the procedure checks by rows, we look
+for a match on the first column, if no match, we check the next row, and so
+on. the only difference is that the ``row-first'' approach would match on a
+wildcard pattern (a thunk)...and in fact maybe this is what we should do...
 
 We take a fairly standard approach to compiling away pattern
 matching. As we may match simultaneously against multiple
